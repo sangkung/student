@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_9114Mapper">
+
+	<select id="selectTR_9114" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT A.BR_C,
+		    BR_NM,
+		    A.ACCT_C,
+            C.ACCT_C_NM,
+		    '',
+		    BS_BAL          / #{AMT_UNIT} as BS_BAL,
+		    LDGR_BAL        / #{AMT_UNIT} as LDGR_BAL,
+		    CSFL_BAL        / #{AMT_UNIT} as CSFL_BAL,
+		    (BS_BAL-LDGR_BAL) / #{AMT_UNIT} as BSLD,
+		    (BS_BAL-CSFL_BAL) / #{AMT_UNIT} as BSCSFL,
+		    (BS_MMW_AVG_BAL)  / #{AMT_UNIT} as BS_MMW_AVG_BAL,
+		    (LDGR_MMW_AVG_BAL) / #{AMT_UNIT} as LDGR_MMW_AVG_BAL,
+		    (BS_MMW_AVG_BAL-LDGR_MMW_AVG_BAL) / #{AMT_UNIT} AS M_BSLD,
+		    a.EXTR_UNIT_C
+		 FROM TIG_BAL_CNST_VRFC a, TTL_BR_C_INFO B, 
+             (SELECT * FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE = (SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE &lt;= #{BASE_DATE})) C
+		WHERE A.BR_C = B.BR_C
+        AND A.ACCT_C = C.ACCT_C
+        AND A.AC_BUSI_TC = C.AC_BUSI_TC
+		AND A.BASE_DATE = #{BASE_DATE}
+  		<choose>
+              <when test="BR_C == '001' and AC_BUSI_TC == '0000'">
+                  AND A.ORG_CLAS_C = '10'
+              </when>
+              <when test="BR_C == '001' and AC_BUSI_TC != '0000'">
+                  AND A.AC_BUSI_TC = #{AC_BUSI_TC}
+                  AND A.ORG_CLAS_C = '10'
+              </when>
+              <otherwise>
+                  AND A.AC_BUSI_TC = #{AC_BUSI_TC}
+                  AND (A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{BR_C})) /*단위조합별 조회*/
+              </otherwise>
+        </choose>
+		AND A.ALM_WORK_TC  =  #{ALM_WORK_TC} 
+		
+		ORDER BY A.BR_C, ACCT_C
+	</select>
+
+</mapper>

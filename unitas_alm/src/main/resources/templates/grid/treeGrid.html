@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ko"
+	xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:th="http://www.thymeleaf.org"
+    xmlns:sec="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <title>14. Tree</title>
+    <link rel="stylesheet" th:href="@{css/tui-example-style.css}" />
+    <link rel="stylesheet" th:href="@{css/tui-grid.css}" />
+  </head>
+
+  <body>
+<!--   	<form th:action="@{/treeGrid}" method="get" th:object="${gridForm}"> -->
+  	<form th:object="${gridForm}" id="frm">
+	    <div>
+	    	<label for="base_date">기준년월: </label>
+	    	<input type="date" required="required" th:field="*{base_date}" id="base_date"/>
+	    </div>
+	    <div>
+	    	<label for="br_c">점소코드: </label>
+	    	<input type="text" required="required" th:field="*{br_c}" id="br_c"/>
+	    </div>
+	    <div>
+	    	<label for="mo_br_c">모점소코드: </label>
+	    	<input type="text" required="required" th:field="*{mo_br_c}" id="mo_br_c"/>
+	    </div>
+	    <div>
+	    	<label for="ac_busi_tc">회계사업구분코드: </label>
+	    	<input type="number" required="required" th:field="*{ac_busi_tc}" id="ac_busi_tc"/>
+	    </div>
+	    <div>
+	    	<label for="futu_pot_sect_cnt">미래시점: </label>
+	    	<input type="text" th:field="*{futu_pot_sect_cnt}" id="futu_pot_sect_cnt"/>
+	    </div>
+	    <div>
+	    	<label for="new_cap_qty_tc">신규자금량구분코드: </label>
+	    	<input type="text" th:field="*{new_cap_qty_tc}" id="new_cap_qty_tc"/>
+	    </div>
+	    <div>
+	    	<label for="cap_qty_snro_no">자금량시나리오번호: </label>
+	    	<input type="text" th:field="*{cap_qty_snro_no}" id="cap_qty_snro_no"/>
+	    </div>
+	    <div>
+	    	<label for="cs_bhor_refl_yn">고객행동: </label>
+	    	<select th:field="*{cs_bhor_refl_yn}" id="cs_bhor_refl_yn" name="cs_bhor_refl_yn">
+	    		<option value="Y">Y</option>
+	    		<option value="N">N</option>
+	    	</select>
+	    </div>
+	    <div>
+	    	<label for="level">계정레벨: </label>
+			<select th:field="*{level}" id="level" name="level">
+				<option th:each="i : ${#numbers.sequence(1, 7)}" th:value="${i}" th:text="${i}" 
+			      th:selected="${i==level}"></option>
+			</select>
+	    </div>
+	    <div>
+	    	<label for="dimension1_num">디멘전1: </label>
+	    	<select th:field="*{dimension1_num}" id="dimension1_num" name="dimension1_num">
+	    		<option value="">선택</option>
+	    		<option value="1">1</option>
+	    		<option value="2">2</option>
+	    		<option value="3">3</option>
+	    		<option value="4">4</option>
+	    		<option value="5">5</option>
+	    		<option value="6">6</option>
+	    		<option value="7">7</option>
+	    	</select>
+	    </div>
+	    <div>
+	    	<label for="dimension2_num">디멘전2: </label>
+	    	<select th:field="*{dimension2_num}" id="dimension2_num" name="dimension2_num">
+	    		<option value="">선택</option>
+	    		<option value="1">1</option>
+	    		<option value="2">2</option>
+	    		<option value="3">3</option>
+	    		<option value="4">4</option>
+	    		<option value="5">5</option>
+	    		<option value="6">6</option>
+	    		<option value="7">7</option>
+	    	</select>
+	    </div>
+	    <div>
+	    	<label for="int_yn">이자포함: </label>
+	    	<input type="checkbox" th:field="*{int_yn}" id="int_yn"></input>
+	   	</div>
+	    <div>
+	    	<label for="sub_yn">지소포함: </label>
+	    	<input type="checkbox" th:field="*{sub_yn}" id="sub_yn"></input>
+	   	</div>
+	    <div>
+	    	<label for="amt_unit">금액단위: </label>
+	    	<select th:field="*{amt_unit}" id="amt_unit" name="amt_unit">
+	    		<option value="1">원</option>
+	    		<option value="1000000" selected>백만원</option>
+	    		<option value="100000000">억원</option>
+	    	</select>
+	   	</div>
+	    <div>
+	    	<label for="org_clas_c">기관분류코드: </label>
+	    	<input type="text" th:field="*{org_clas_c}" id="org_clas_c"></input>
+	   	</div>
+	    <div>
+	    	<label for="blng_hq_br_c">소속본부점소코드: </label>
+	    	<input type="text" th:field="*{blng_hq_br_c}" id="blng_hq_br_c"></input>
+	   	</div>
+		<div>
+	    	<label for="rate_yn">이율표시여부: </label>
+	    	<input type="checkbox" th:field="*{rate_yn}" id="rate_yn"></input>
+	   	</div>
+	   	
+	   	<input type="button" id="searchBtn" value="조회" onclick="search();"/>
+	   	   
+    </form>
+    
+    <div class="contents">
+      <div class="code-html">
+        <div id="grid"></div>
+      </div>
+    </div>
+  </body>
+  
+  <script type="text/javascript" th:src="@{/js/babel.min.js}"></script>
+  <script type="text/javascript" th:src="@{/js/tui-grid.min.js}"></script>
+  <script type="text/javascript" th:src="@{/js/jquery-3.7.1.min.js}"></script>
+<!--   <script type="text/javascript" th:src="@{/data/tree-dummy.js}"></script> -->
+  
+  <script type="text/javascript">
+  	function search(){
+		$.ajax({
+			method: "POST",
+			url: "/treeGrid",
+			data: $('#frm').serialize(),
+			success: function(data){
+				const dataObj = JSON.parse(data);
+				//console.log(dataObj);
+				makeGrid(dataObj);
+			},
+			error: function onError(error){
+				console.error(error);
+			}
+		});	
+	}
+  </script>
+  
+  <script type="text/babel" class="code-js">
+	function makeGrid(gridData){
+		document.getElementById('grid').innerHTML = "";
+
+	    const grid = new tui.Grid({
+	      el: document.getElementById('grid'),
+	      data: gridData,
+	      scrollX: true,
+	      bodyHeight: 300,
+	      rowHeaders: ['rowNum'],
+	      columns: [
+	        {
+	          header: '레벨1',
+	          name: 'L1_NM',
+	          align: 'center',
+	          //editor: 'text'
+	        },
+	        {
+	          header: '금리부여부',
+	          name: 'RATE_SSTV_NM',
+	          //className: 'clickable',
+	          //editor: 'text'
+	        },
+	        {
+	          header: '레벨2',
+	          name: 'L2_NM',
+	        },
+	        {
+	          header: '레벨3',
+	          name: 'L3_NM',
+	        },
+	        {
+	          header: '레벨4',
+	          name: 'L4_NM',
+	        },
+	        {
+	          header: '디멘전1',
+	          name: 'DIMENSION1',
+	        },
+	        {
+	          header: '디멘전2',
+	          name: 'DIMENSION2',
+	        },
+	        {
+	          header: '합계 금액',
+	          name: 'TOT_AMT',
+	        },
+	        {
+	          header: '합계 이율',
+	          name: 'TOT_RATE',
+	        },
+	      ],
+	      summary: {
+	        height: 40,
+	        position: 'bottom', // or 'top'
+	        columnContent: {
+	          TOT_AMT: {
+	            template: function(valueMap) {
+	              return `TOTAL: ${valueMap.sum}}`;
+	            }
+	          },
+	          M0_AMT: {
+	            template: function(valueMap) {
+	              return `TOTAL: ${valueMap.sum}}`;
+	            }
+	          }
+	        }
+	      }
+	    });	
+	}
+
+  </script>
+</html>

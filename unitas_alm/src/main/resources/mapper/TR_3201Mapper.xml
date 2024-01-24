@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_3201Mapper">
+
+	
+	<select id="selectTR_3201List" parameterType='java.util.Map' resultType="java.util.HashMap">
+
+		
+		-- LCR 항목 리스트 조회
+		WITH LCR_RPRT AS(
+		
+		    SELECT 
+		           A.BSL3_LQDT_RPRT_C               
+		         , A.BSL3_LQDT_RPRT_ITEM_VAL              
+		         , A.BSL3_LQDT_RPRT_ITEM_NM
+		         , A.BSL3_RPRT_ITEM_LVL
+		         , A.UP_BSL3_LQDT_RPRT_ITEM_VAL
+		         , A.RPRT_SECT_VAL
+		         , A.RPRT_SECT_WVAL_VAL
+		         , B.RPRT_SECT_1_AMT
+		         , B.RPRT_SECT_1_APLY_AMT
+		         , B.RPRT_SECT_2_AMT
+		         , B.RPRT_SECT_2_APLY_AMT
+		         , B.RPRT_SECT_3_AMT
+		         , B.RPRT_SECT_3_APLY_AMT
+		         , B.RPRT_SECT_4_AMT
+		         , B.RPRT_SECT_4_APLY_AMT
+		      FROM 
+		    (
+		        SELECT
+		               BSL3_LQDT_RPRT_C
+		             , BSL3_LQDT_RPRT_ITEM_VAL
+		             , BSL3_LQDT_RPRT_ITEM_NM
+		             , BSL3_RPRT_ITEM_LVL
+		             , UP_BSL3_LQDT_RPRT_ITEM_VAL
+		             , RPRT_SECT_VAL
+		             , RPRT_SECT_WVAL_VAL
+		          FROM TII_BSL3_RPRT_ITEM_INFO
+		         WHERE BSL3_LQDT_RPRT_C   = '10' 
+		    )A 
+		    ,
+		    (
+		        SELECT 
+		               BASE_DATE
+		             , ORG_CLAS_C
+		             , AC_BUSI_TC
+		             , BSL3_LQDT_RPRT_C
+		             , BSL3_LQDT_RPRT_ITEM_VAL
+                     , SUM(RPRT_SECT_1_AMT     )  AS RPRT_SECT_1_AMT     
+                     , SUM(RPRT_SECT_1_APLY_AMT)  AS RPRT_SECT_1_APLY_AMT
+                     , SUM(RPRT_SECT_2_AMT     )  AS RPRT_SECT_2_AMT     
+                     , SUM(RPRT_SECT_2_APLY_AMT)  AS RPRT_SECT_2_APLY_AMT
+                     , SUM(RPRT_SECT_3_AMT     )  AS RPRT_SECT_3_AMT     
+                     , SUM(RPRT_SECT_3_APLY_AMT)  AS RPRT_SECT_3_APLY_AMT
+                     , SUM(RPRT_SECT_4_AMT     )  AS RPRT_SECT_4_AMT     
+                     , SUM(RPRT_SECT_4_APLY_AMT)  AS RPRT_SECT_4_APLY_AMT
+		          FROM TBI_LQDT_RSLT_TOT
+		         WHERE BSL3_LQDT_RPRT_C = '10'
+		           AND BASE_DATE        = #{BASE_DATE}
+		           AND ORG_CLAS_C       = #{ORG_CLAS_C}
+		           AND AC_BUSI_TC 		= #{AC_BUSI_TC} -- 이쪽 회계구분코드는 전체합산이 코드가 따로 존재하기 때문에 다른데와 다르게 처리함.   
+		           
+				 -- 전체조합 조회 시 
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'">
+				 	-- 모든 점소코드 나오기
+				 </if>
+				 -- 단위조합별 조회 시 (지소포함여부  yes/no)
+				 <if test="JISO_INCLUDE == 'yes' and BLNG_HQ_BR_C != ''">   
+				 	AND BR_C 			IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{BR_C} ) 
+				 </if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+				 	AND BR_C     		= #{BR_C}
+				 </if>
+				 -- 도지회별 조회 시 
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+				 	AND BR_C 			IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} )
+				 </if>
+				 -- 중앙회 조회 시  
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == '001'">
+					AND BR_C     		= #{BR_C}
+				 </if>
+			 	GROUP BY
+		              BASE_DATE
+		            , ORG_CLAS_C
+		            , AC_BUSI_TC
+		            , BSL3_LQDT_RPRT_C
+		            , BSL3_LQDT_RPRT_ITEM_VAL
+			)B
+			WHERE 1 = 1
+		      AND A.BSL3_LQDT_RPRT_C        = B.BSL3_LQDT_RPRT_C(+)  
+		      AND A.BSL3_LQDT_RPRT_ITEM_VAL = B.BSL3_LQDT_RPRT_ITEM_VAL(+)  
+		)
+		
+      SELECT
+              ITEM_VAL
+            , ITEM_NM 
+            , NVL(RPRT_SECT_1_AMT     ,0)                                       AS RPRT_SECT_1_AMT     
+            , NVL(RPRT_SECT_WVAL_VAL  ,0)                                       AS RPRT_SECT_WVAL_VAL  
+            , NVL(RPRT_SECT_1_APLY_AMT,0)                                       AS RPRT_SECT_1_APLY_AMT
+        FROM
+        (
+            SELECT  
+                   BSL3_LQDT_RPRT_ITEM_VAL                                      AS ITEM_VAL
+                 , LPAD( ' ' , BSL3_RPRT_ITEM_LVL * 5 , ' ' ) ||   
+                   CASE 
+                    WHEN BSL3_LQDT_RPRT_ITEM_VAL = 'A'   THEN 'I.'    || BSL3_LQDT_RPRT_ITEM_NM || '(A)'
+                    WHEN BSL3_LQDT_RPRT_ITEM_VAL = 'BC'  THEN 'II.'   || BSL3_LQDT_RPRT_ITEM_NM
+                    WHEN BSL3_LQDT_RPRT_ITEM_VAL = 'D'   THEN 'III.'  || BSL3_LQDT_RPRT_ITEM_NM
+                    WHEN BSL3_LQDT_RPRT_ITEM_VAL = 'B'   THEN BSL3_LQDT_RPRT_ITEM_NM || '(B)'
+                    WHEN BSL3_LQDT_RPRT_ITEM_VAL = 'C'   THEN BSL3_LQDT_RPRT_ITEM_NM || '(C)'
+                    WHEN BSL3_LQDT_RPRT_ITEM_VAL = 'D1'  THEN BSL3_LQDT_RPRT_ITEM_NM || '(D) = 고유동성자산(A)'
+                    WHEN BSL3_LQDT_RPRT_ITEM_VAL = 'D2'  THEN BSL3_LQDT_RPRT_ITEM_NM || '(E) = (현금유출(B) - MIN[ 현금유입(C),현금유출(B)*75% ] )'
+                    WHEN BSL3_LQDT_RPRT_ITEM_VAL = 'D3'  THEN BSL3_LQDT_RPRT_ITEM_NM || ' = ( D / E )'
+                    ELSE BSL3_LQDT_RPRT_ITEM_NM 
+                   END                               			                AS ITEM_NM
+                 , UP_BSL3_LQDT_RPRT_ITEM_VAL                                   AS UP_ITEM_VAL
+                 , BSL3_LQDT_RPRT_C                                             AS BSL3_LQDT_RPRT_C
+                 , RPRT_SECT_VAL                                                AS RPRT_SECT_VAL
+                 -----------------------------------------------------------------------------------
+                 , NVL(ROUND(RPRT_SECT_1_AMT / #{AMT_UNIT}),0)                  AS RPRT_SECT_1_AMT
+                 -----------------------------------------------------------------------------------
+                 , NVL(RPRT_SECT_WVAL_VAL,0)					                AS RPRT_SECT_WVAL_VAL
+                 -----------------------------------------------------------------------------------
+                 , CASE 
+                    WHEN BSL3_LQDT_RPRT_ITEM_VAL = 'D3' 
+                    THEN ROUND(RPRT_SECT_1_APLY_AMT,2)
+                    ELSE NVL(ROUND(RPRT_SECT_1_APLY_AMT / #{AMT_UNIT} ),0)
+                   END       	                                                AS RPRT_SECT_1_APLY_AMT
+                 -----------------------------------------------------------------------------------
+              FROM LCR_RPRT
+		) 
+		START WITH UP_ITEM_VAL IS NULL
+		CONNECT BY
+                PRIOR ITEM_VAL         = UP_ITEM_VAL
+            AND PRIOR BSL3_LQDT_RPRT_C = BSL3_LQDT_RPRT_C  	
+
+	
+	</select>
+
+</mapper>

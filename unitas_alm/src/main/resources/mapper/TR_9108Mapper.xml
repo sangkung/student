@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_9108Mapper">
+
+	<select id="selectTr9108List" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT A.ALM_BASE_RATE_C       /* ALM기준금리코드   */
+		     , A.ALM_BASE_RATE_NM      /* ALM기준금리코드명 */
+		     , B.ALM_BASE_RATE_SEQ     /* 일련번호          */
+		     , B.MRKT_RATE_KIND_VAL    /* 시장금리종류값    */
+		     , B.SNB_GD_TC             /* 유가증권상품구분코드*/
+		     , B.RATE_ID               /* 금리ID            */
+		     , B.RATE_GRP_ID           /* 금리그룹ID        */
+		     , B.ORG_CLAS_C            /* 기관분류코드      */
+		     , B.ACCT_C                /* 계정코드          */
+		     , B.USE_YN                /* 사용여부          */
+		  FROM (
+		        SELECT ALM_BASE_RATE_C       AS ALM_BASE_RATE_C
+		             , MAX(ALM_BASE_RATE_NM) AS ALM_BASE_RATE_NM
+		          FROM TSY_ALM_BASE_RATE_MNG
+		         WHERE 1=1
+		           <if test="searchparam != null and searchparam != ''">
+		           AND ALM_BASE_RATE_C LIKE '%' || #{searchparam} || '%' OR ALM_BASE_RATE_NM LIKE '%' || #{searchparam} || '%'
+		           </if>
+                 GROUP BY ALM_BASE_RATE_C
+               )  A
+		     , TSY_ALM_BASE_RATE_MAP_MNG  B
+		 WHERE A.ALM_BASE_RATE_C       = B.ALM_BASE_RATE_C
+		 ORDER BY A.ALM_BASE_RATE_C
+		        , B.ALM_BASE_RATE_SEQ
+	</select>
+	
+	<select id="selectTr9108AlmBaseRatePopup" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT ALM_BASE_RATE_C            AS ALM_BASE_RATE_C
+		     , ALM_BASE_RATE_TRM_CNT      AS ALM_BASE_RATE_TRM_CNT
+		     , ALM_BASE_RATE_NM           AS ALM_BASE_RATE_NM
+		     , ALM_REP_RATE_YN            AS ALM_REP_RATE_YN
+		  FROM TSY_ALM_BASE_RATE_MNG
+		 WHERE USE_YN = 'Y'
+		<if test="searchparam != null and searchparam != ''">
+		   AND ALM_BASE_RATE_C LIKE '%' || #{searchparam} || '%' OR ALM_BASE_RATE_NM LIKE '%' || #{searchparam} || '%'
+		</if>
+		 ORDER BY ALM_BASE_RATE_C
+		        , ALM_BASE_RATE_TRM_CNT
+	</select>
+	
+	
+	<select id="selectTr9108AcctPopup" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT ACCT_C
+		     , ACCT_C_NM
+		     , ACCT_LVL
+		  FROM TSY_ACCT_MSTR_MNG
+		 WHERE BASE_DATE = (SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG)
+		   AND ORG_CLAS_C = #{orgLcasC}
+		<if test="searchparam != null and searchparam != ''">
+		   AND ACCT_C LIKE '%' || #{searchparam} || '%' OR ACCT_C_NM LIKE '%' || #{searchparam} || '%'
+		</if>
+		 GROUP BY ACCT_C, ACCT_C_NM, ACCT_LVL
+		 ORDER BY ACCT_C
+	</select>
+	
+	
+	<insert id="insertTr9108" parameterType="java.util.Map">
+		INSERT INTO TSY_ALM_BASE_RATE_MAP_MNG
+		(
+		    ALM_BASE_RATE_C
+		  , ALM_BASE_RATE_SEQ
+		  , MRKT_RATE_KIND_VAL
+		  , SNB_GD_TC
+		  , RATE_ID
+		  , RATE_GRP_ID
+		  , SECT_BAL
+		  , ORG_CLAS_C
+		  , ACCT_C
+		  , USE_YN
+		  , LAST_CHNG_ID
+		  , LAST_CHNG_DT
+		) VALUES (
+		    #{ALM_BASE_RATE_C}
+		  , (SELECT NVL((SELECT MAX(ALM_BASE_RATE_SEQ) FROM TSY_ALM_BASE_RATE_MAP_MNG WHERE ALM_BASE_RATE_C = #{ALM_BASE_RATE_C}), 0)+1 FROM DUAL)
+		  , #{MRKT_RATE_KIND_VAL}
+		  , #{SNB_GD_TC}
+		  , #{RATE_ID}
+		  , #{RATE_GRP_ID}
+		  , NULL
+		  , #{ORG_CLAS_C}
+		  , #{ACCT_C}
+		  , 'Y'
+		  , #{LAST_CHNG_ID}
+		  , SYSDATE
+		)
+	</insert>
+	
+	<update id="updateTr9108" parameterType="java.util.Map">
+		UPDATE TSY_ALM_BASE_RATE_MAP_MNG
+		   SET MRKT_RATE_KIND_VAL = #{MRKT_RATE_KIND_VAL}
+		     , SNB_GD_TC          = #{SNB_GD_TC}
+		     , RATE_ID            = #{RATE_ID}
+		     , RATE_GRP_ID        = #{RATE_GRP_ID}
+		     , ORG_CLAS_C         = #{ORG_CLAS_C}
+		     , ACCT_C             = #{ACCT_C}
+		     , USE_YN             = #{USE_YN}
+		     , LAST_CHNG_ID       = #{LAST_CHNG_ID}
+		     , LAST_CHNG_DT       = SYSDATE      
+		 WHERE ALM_BASE_RATE_C    = #{ALM_BASE_RATE_C}
+		   AND ALM_BASE_RATE_SEQ  = TO_NUMBER(#{ALM_BASE_RATE_SEQ})
+	</update>
+
+	<update id="deleteTr9108" parameterType="java.util.Map">
+		UPDATE TSY_ALM_BASE_RATE_MAP_MNG
+		   SET USE_YN             = 'N'
+		     , LAST_CHNG_ID       = #{LAST_CHNG_ID}
+		     , LAST_CHNG_DT       = SYSDATE      
+		 WHERE ALM_BASE_RATE_C    = #{ALM_BASE_RATE_C}
+		   AND ALM_BASE_RATE_SEQ  = TO_NUMBER(#{ALM_BASE_RATE_SEQ})
+	</update>
+	
+	
+	<select id="selectTr9108SnbGdTcPopup" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT DTL_CLAS_VAL 
+		     , DTL_CLAS_NM
+		  FROM TSY_CO_MNG 
+		 WHERE USE_YN = 'Y'
+		   AND DTL_CLAS_VAL != '-'
+		   AND CO_C = 'SNB_GD_TC'
+		<if test="searchparam != null and searchparam != ''">
+		   AND DTL_CLAS_VAL LIKE '%' || #{searchparam} || '%' OR DTL_CLAS_NM LIKE '%' || #{searchparam} || '%'
+		</if>
+		 ORDER BY PRNT_ORD
+
+	</select>
+
+</mapper>

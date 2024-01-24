@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_9112Mapper">
+
+	
+	<select id="selectTR_9112List_1" parameterType='java.util.Map' resultType="java.util.HashMap">
+
+		  SELECT  
+			      A.BASE_DATE								AS BASE_DATE
+			    , A.ORG_CLAS_C								AS ORG_CLAS_C
+			    , A.AC_BUSI_TC								AS AC_BUSI_TC
+			    , A.STAT_RPRT_ID							AS STAT_RPRT_ID
+			    , A.STAT_RPRT_ITEM_ID						AS STAT_RPRT_ITEM_ID
+			    , B.STAT_RPRT_ITEM_NM						AS STAT_RPRT_ITEM_NM
+			    , A.LQDT_CRSS_STAG_C					    AS LQDT_CRSS_STAG_C
+			    , CASE
+			        WHEN A.LQDT_CRSS_STAG_C = 0 THEN '정상'
+			        WHEN A.LQDT_CRSS_STAG_C = 1 THEN '관심'
+			        WHEN A.LQDT_CRSS_STAG_C = 2 THEN '경계'
+			        WHEN A.LQDT_CRSS_STAG_C = 3 THEN '주의'
+			        ELSE '심각'
+			      END                                       AS LQDT_CRSS_STAG_NM
+			    , A.STRT_STAG_ASTS_SCAL			            AS STRT_STAG_ASTS_SCAL	
+			    , TRIM(A.STRT_STAG_RANG_COND_VAL   )		AS STRT_STAG_RANG_COND_VAL
+			    , A.END_STAG_ASTS_SCAL	       				AS END_STAG_ASTS_SCAL	
+			    , TRIM(A.END_STAG_RANG_COND_VAL    )		AS END_STAG_RANG_COND_VAL
+			    , ROUND(A.STRT_CRIV_RT * 100 ,2    )        AS STRT_CRIV_RT          
+			    , TRIM(A.STRT_RNAG_COND_VAL        )		AS STRT_RNAG_COND_VAL
+			    , ROUND(A.END_CRIV_RT * 100 ,2     )		AS END_CRIV_RT    
+			    , TRIM(A.END_RNAG_COND_VAL         )		AS END_RNAG_COND_VAL
+			    , ROUND(A.STAG_REP_CRIV_RT * 100 ,2)        AS STAG_REP_CRIV_RT    
+			    , TRIM(A.STAG_REP_RNAG_COND_VAL    )		AS STAG_REP_RNAG_COND_VAL
+			    , A.STRT_STAG_ASTS_SCAL			            AS COPY_STRT_VAL	
+			    , TRIM(A.STRT_STAG_RANG_COND_VAL   )		AS COPY_STRT_COND_VAL
+			 FROM TSY_EARL_ALRM_CRIV_MNG A , TII_STAT_ANAL_RPRT_INFO B
+			WHERE 1 = 1
+			  AND A.ORG_CLAS_C         = B.ORG_CLAS_C
+			  AND A.STAT_RPRT_ID       = B.STAT_RPRT_ID
+			  AND A.STAT_RPRT_ITEM_ID  = B.STAT_RPRT_ITEM_ID
+			  AND A.BASE_DATE      	   = ( SELECT MAX(BASE_DATE) FROM TSY_EARL_ALRM_CRIV_MNG WHERE BASE_DATE <![CDATA[<]]>= #{BASE_DATE} )
+			  AND A.ORG_CLAS_C     	   = '10'
+			ORDER BY
+			      STAT_RPRT_ITEM_ID
+			    , STRT_STAG_ASTS_SCAL  
+			    , STRT_STAG_RANG_COND_VAL 
+			    , LQDT_CRSS_STAG_C
+		
+	</select>
+
+
+	<select id="selectTR_9112List_2" parameterType='java.util.Map' resultType="java.util.HashMap">
+
+		  SELECT  
+			      A.BASE_DATE								AS BASE_DATE
+			    , A.ORG_CLAS_C								AS ORG_CLAS_C
+			    , A.AC_BUSI_TC								AS AC_BUSI_TC
+			    , A.STAT_RPRT_ID							AS STAT_RPRT_ID
+			    , A.STAT_RPRT_ITEM_ID						AS STAT_RPRT_ITEM_ID
+			    , B.STAT_RPRT_ITEM_NM						AS STAT_RPRT_ITEM_NM
+			    , A.LQDT_CRSS_STAG_C					    AS LQDT_CRSS_STAG_C
+			    , CASE
+			        WHEN A.LQDT_CRSS_STAG_C = 0 THEN '정상'
+			        WHEN A.LQDT_CRSS_STAG_C = 1 THEN '관심'
+			        WHEN A.LQDT_CRSS_STAG_C = 2 THEN '경계'
+			        WHEN A.LQDT_CRSS_STAG_C = 3 THEN '주의'
+			        ELSE '심각'
+			      END                                       AS LQDT_CRSS_STAG_NM
+			    , A.STRT_STAG_ASTS_SCAL			            AS STRT_STAG_ASTS_SCAL	
+			    , TRIM(A.STRT_STAG_RANG_COND_VAL   )		AS STRT_STAG_RANG_COND_VAL
+			    , A.END_STAG_ASTS_SCAL	       				AS END_STAG_ASTS_SCAL	
+			    , TRIM(A.END_STAG_RANG_COND_VAL    )		AS END_STAG_RANG_COND_VAL
+			    , ROUND(A.STRT_CRIV_RT * 100 ,2    )        AS STRT_CRIV_RT          
+			    , TRIM(A.STRT_RNAG_COND_VAL        )		AS STRT_RNAG_COND_VAL
+			    , ROUND(A.END_CRIV_RT * 100 ,2     )		AS END_CRIV_RT    
+			    , TRIM(A.END_RNAG_COND_VAL         )		AS END_RNAG_COND_VAL
+			    , ROUND(A.STAG_REP_CRIV_RT * 100 ,2)        AS STAG_REP_CRIV_RT    
+			    , TRIM(A.STAG_REP_RNAG_COND_VAL    )		AS STAG_REP_RNAG_COND_VAL
+			    , A.STRT_STAG_ASTS_SCAL			            AS COPY_STRT_VAL	
+			    , TRIM(A.STRT_STAG_RANG_COND_VAL   )		AS COPY_STRT_COND_VAL
+			 FROM TSY_EARL_ALRM_CRIV_MNG A , TII_STAT_ANAL_RPRT_INFO B
+			WHERE 1 = 1
+			  AND A.ORG_CLAS_C         = B.ORG_CLAS_C
+			  AND A.STAT_RPRT_ID       = B.STAT_RPRT_ID
+			  AND A.STAT_RPRT_ITEM_ID  = B.STAT_RPRT_ITEM_ID
+			  AND A.BASE_DATE          = ( SELECT MAX(BASE_DATE) FROM TSY_EARL_ALRM_CRIV_MNG WHERE BASE_DATE <![CDATA[<]]>= #{BASE_DATE} )
+			  AND A.ORG_CLAS_C         = '30'
+			ORDER BY
+			      STAT_RPRT_ITEM_ID
+			    , STRT_STAG_ASTS_SCAL  
+			    , STRT_STAG_RANG_COND_VAL 
+			    , LQDT_CRSS_STAG_C
+		
+	</select>
+
+	
+	<insert id="insertTR_9112" parameterType="java.util.Map">
+		
+		 INSERT INTO TSY_EARL_ALRM_CRIV_MNG
+		 (
+		 	     BASE_DATE
+			   , ORG_CLAS_C
+			   , AC_BUSI_TC
+			   , STAT_RPRT_ID
+			   , STAT_RPRT_ITEM_ID
+			   , LQDT_CRSS_STAG_C
+			   , STRT_STAG_ASTS_SCAL     
+			   , STRT_STAG_RANG_COND_VAL 
+			   , END_STAG_ASTS_SCAL	   
+			   , END_STAG_RANG_COND_VAL  
+			   , STRT_CRIV_RT            
+			   , STRT_RNAG_COND_VAL      
+			   , END_CRIV_RT             
+			   , END_RNAG_COND_VAL       
+			   , STAG_REP_CRIV_RT        
+			   , STAG_REP_RNAG_COND_VAL  
+			   , USE_YN
+			   , LAST_CHNG_ID            
+			   , LAST_CHNG_DT            
+		 )
+		VALUES
+		(				
+			  #{BASE_DATE}
+			, #{org_clas_c}
+			, #{ac_busi_tc}	
+			, 'A100'
+			, #{STAT_RPRT_ITEM_ID}
+			, #{LQDT_CRSS_STAG_C}				
+			, #{STRT_STAG_ASTS_SCAL}
+			, #{STRT_STAG_RANG_COND_VAL}
+			, #{END_STAG_ASTS_SCAL}	
+			, #{END_STAG_RANG_COND_VAL}
+			, #{STRT_CRIV_RT}        / 100
+			, #{STRT_RNAG_COND_VAL}
+			, #{END_CRIV_RT}         / 100
+			, #{END_RNAG_COND_VAL}
+			, #{STAG_REP_CRIV_RT}    / 100
+			, #{STAG_REP_RNAG_COND_VAL}
+			, 'Y'
+			, #{usid}
+			, SYSDATE			
+		 )
+		 
+		 
+	</insert>
+	
+	
+	
+	<delete id="deleteTR_9112" parameterType="java.util.Map">
+	
+		DELETE FROM TSY_EARL_ALRM_CRIV_MNG
+		 WHERE 1 = 1
+		   AND BASE_DATE 				= #{BASE_DATE}
+		   AND ORG_CLAS_C 				= #{org_clas_c}
+		   AND AC_BUSI_TC 				= #{ac_busi_tc}
+		   AND STAT_RPRT_ID 		 	= 'A100'
+		   AND STAT_RPRT_ITEM_ID	    = #{STAT_RPRT_ITEM_ID}
+		   AND LQDT_CRSS_STAG_C 		= #{LQDT_CRSS_STAG_C}
+		   AND STRT_STAG_ASTS_SCAL      = #{COPY_STRT_VAL}
+		   AND STRT_STAG_RANG_COND_VAL  = #{COPY_STRT_COND_VAL}
+		   
+	</delete>
+	
+	
+	
+
+	
+
+</mapper>

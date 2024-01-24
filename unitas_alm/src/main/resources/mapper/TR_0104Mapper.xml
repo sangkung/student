@@ -1,0 +1,720 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_0104Mapper">
+
+
+	<sql id="mainTbl_BDE"> -- B,D,E 항목코드 메인테이블
+	
+		SELECT
+		       A.STAT_RPRT_ITEM_ID
+		     , A.UP_STAT_RPRT_ITEM_ID
+		     , A.STAT_RPRT_ITEM_NM
+		     , A.STAT_RPRT_LVL
+		     , B.AMG_SESN_ABAL
+		     , B.AMG_SESN_PRFT_CST_AMT
+		  FROM 
+		  ( 
+		
+		    SELECT 
+		         ORG_CLAS_C
+		       , STAT_RPRT_ID
+		       , STAT_RPRT_NM
+		       , STAT_RPRT_ITEM_ID
+		       , STAT_RPRT_LVL
+		       , CASE 
+		            WHEN STAT_RPRT_LVL = '1' THEN '-'
+		            WHEN STAT_RPRT_LVL = '2' THEN SUBSTR(STAT_RPRT_ITEM_ID,1,1)
+		            WHEN STAT_RPRT_LVL = '3' THEN SUBSTR(STAT_RPRT_ITEM_ID,1,2)
+		         END AS UP_STAT_RPRT_ITEM_ID
+		       , STAT_RPRT_ITEM_NM
+		    FROM TII_STAT_ANAL_RPRT_INFO -- 기초_현황분석보고서정보
+		    WHERE STAT_RPRT_ID = 'M300' 
+			  AND 
+			  (
+			   STAT_RPRT_ITEM_ID LIKE 'B%'
+		       OR
+		       STAT_RPRT_ITEM_ID LIKE 'D%'
+		       OR 
+		       STAT_RPRT_ITEM_ID LIKE 'E%'
+		      )
+		
+		    )A,
+		    (
+		    
+		    SELECT 
+		         BASE_DATE
+		       , ALM_WORK_TC
+		       , ORG_CLAS_C
+		       , CUR_C
+		       , AC_BUSI_TC
+		       , STAT_RPRT_ID
+		       , STAT_RPRT_ITEM_ID
+		       , SUM(AMG_SESN_ABAL        )  AS AMG_SESN_ABAL        
+		       , SUM(AMG_SESN_PRFT_CST_AMT)  AS AMG_SESN_PRFT_CST_AMT
+		    FROM TSR_PRRT_STAT_RPRT
+		    WHERE STAT_RPRT_ID      = 'M300'
+		      AND BASE_DATE         = #{BASE_DATE}
+		      AND ORG_CLAS_C 		= '30'
+		      AND AC_BUSI_TC        = '2102'
+			  AND 
+			  (
+			   STAT_RPRT_ITEM_ID LIKE 'B%'
+		       OR
+		       STAT_RPRT_ITEM_ID LIKE 'D%'
+		       OR 
+		       STAT_RPRT_ITEM_ID LIKE 'E%'
+		      )
+			 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'">
+			 	-- 모든 점소코드 나오기
+			 </if>
+			 <if test="JISO_INCLUDE == 'yes' and BLNG_HQ_BR_C != ''">   
+			 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{BR_C} ) 
+			 </if>
+			 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+			 	AND BR_C     = #{BR_C}
+			 </if>
+			 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+			 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} )
+			 </if>
+		    GROUP BY
+		         BASE_DATE
+		       , ALM_WORK_TC
+		       , ORG_CLAS_C
+		       , CUR_C
+		       , AC_BUSI_TC
+		       , STAT_RPRT_ID
+		       , STAT_RPRT_ITEM_ID  
+		      
+		    )B
+		    WHERE 1 = 1
+		      AND A.ORG_CLAS_C        = B.ORG_CLAS_C       (+)
+		      AND A.STAT_RPRT_ID      = B.STAT_RPRT_ID     (+)
+		      AND A.STAT_RPRT_ITEM_ID = B.STAT_RPRT_ITEM_ID(+)
+		    ORDER BY A.STAT_RPRT_ITEM_ID
+		
+	
+	</sql>
+	
+
+
+	
+	<sql id="get_amg_sesn_day_count"> -- 기중일수 구하기
+	
+		( TO_DATE(#{BASE_DATE},'YYYYMMDD') - TO_DATE(SUBSTR(#{BASE_DATE},1,4) || '0101' ,'YYYYMMDD')  + 1 )  
+	
+	</sql>
+
+
+	<select id="selectTR_0104_BDE" parameterType="java.util.Map" resultType="java.util.HashMap">
+	
+		WITH TEMP AS(
+		
+			<include refid="mainTbl_BDE"></include>
+		    
+		)
+	
+		SELECT STAT_RPRT_ITEM_ID
+		     , LPAD(' ', (STAT_RPRT_LVL - 1) * 5 ) || STAT_RPRT_ITEM_NM  AS STAT_RPRT_ITEM_NM  
+		     , AMG_SESN_ABAL
+		     , AMG_SESN_PRFT_CST_AMT
+		     , CASE 
+		        WHEN NVL(AMG_SESN_ABAL,0) = 0 THEN 0 
+		        ELSE ROUND((AMG_SESN_PRFT_CST_AMT / AMG_SESN_ABAL) * 100 ,2)
+		       END  AS PROF_RTO
+		     , CASE 
+		        WHEN NVL(AMG_SESN_ABAL,0) = 0 THEN 0 
+		        ELSE ROUND( ( ( (AMG_SESN_PRFT_CST_AMT / AMG_SESN_ABAL) * 365 ) / <include refid="get_amg_sesn_day_count"></include>  ) * 100 ,2)
+		       END  AS Y_CNVRS_PROF_RTO  
+		  FROM
+		  (
+		    SELECT 
+		           A.STAT_RPRT_ITEM_ID
+		         , A.UP_STAT_RPRT_ITEM_ID
+		         , A.STAT_RPRT_ITEM_NM
+		         , A.STAT_RPRT_LVL
+		         , CASE 
+		            WHEN A.STAT_RPRT_LVL = '1' THEN (SELECT SUM(B.AMG_SESN_ABAL) FROM TEMP B WHERE A.STAT_RPRT_ITEM_ID = SUBSTR(B.UP_STAT_RPRT_ITEM_ID,1,1) )
+		            WHEN A.STAT_RPRT_LVL = '2' THEN (SELECT SUM(B.AMG_SESN_ABAL) FROM TEMP B WHERE A.STAT_RPRT_ITEM_ID = B.UP_STAT_RPRT_ITEM_ID ) 
+		            ELSE A.AMG_SESN_ABAL
+		           END AS AMG_SESN_ABAL
+		         , CASE 
+		            WHEN A.STAT_RPRT_LVL = '1' THEN (SELECT SUM(B.AMG_SESN_PRFT_CST_AMT) FROM TEMP B WHERE A.STAT_RPRT_ITEM_ID = SUBSTR(B.UP_STAT_RPRT_ITEM_ID,1,1) )
+		            WHEN A.STAT_RPRT_LVL = '2' THEN (SELECT SUM(B.AMG_SESN_PRFT_CST_AMT) FROM TEMP B WHERE A.STAT_RPRT_ITEM_ID = B.UP_STAT_RPRT_ITEM_ID ) 
+		            ELSE A.AMG_SESN_PRFT_CST_AMT
+		           END AS AMG_SESN_PRFT_CST_AMT
+		      FROM TEMP A
+		    )
+		    WHERE 1 = 1
+		      AND AMG_SESN_ABAL IS NOT NULL
+		      AND AMG_SESN_PRFT_CST_AMT IS NOT NULL
+	        ORDER BY STAT_RPRT_ITEM_ID 
+	        
+	</select>
+	
+	
+	<select id="selectTR_0104_C" parameterType="java.util.Map" resultType="java.util.HashMap">
+	
+		WITH TEMP AS(
+			
+			SELECT
+			       A.STAT_RPRT_ITEM_ID
+			     , A.UP_STAT_RPRT_ITEM_ID
+			     , A.STAT_RPRT_ITEM_NM
+			     , A.STAT_RPRT_LVL
+			     , B.AMG_SESN_ABAL
+			     , B.AMG_SESN_PRFT_CST_AMT
+			  FROM 
+			  ( 
+			
+			    SELECT 
+			         ORG_CLAS_C
+			       , STAT_RPRT_ID
+			       , STAT_RPRT_NM
+			       , STAT_RPRT_ITEM_ID
+			       , STAT_RPRT_LVL
+			       , CASE 
+			            WHEN STAT_RPRT_LVL = '1' THEN '-'
+			            WHEN STAT_RPRT_LVL = '2' THEN SUBSTR(STAT_RPRT_ITEM_ID,1,1)
+			            WHEN STAT_RPRT_LVL = '3' THEN SUBSTR(STAT_RPRT_ITEM_ID,1,2)
+			         END AS UP_STAT_RPRT_ITEM_ID
+			       , STAT_RPRT_ITEM_NM
+			    FROM TII_STAT_ANAL_RPRT_INFO -- 기초_현황분석보고서정보
+			    WHERE STAT_RPRT_ID = 'M300' 
+				  AND STAT_RPRT_ITEM_ID LIKE 'C1%'
+			
+			    )A,
+			    (
+			    
+			    SELECT 
+			         BASE_DATE
+			       , ALM_WORK_TC
+			       , ORG_CLAS_C
+			       , CUR_C
+			       , AC_BUSI_TC
+			       , STAT_RPRT_ID
+			       , STAT_RPRT_ITEM_ID
+			       , SUM(AMG_SESN_ABAL        )  AS AMG_SESN_ABAL        
+			       , SUM(AMG_SESN_PRFT_CST_AMT)  AS AMG_SESN_PRFT_CST_AMT
+			    FROM TSR_PRRT_STAT_RPRT
+			    WHERE STAT_RPRT_ID      = 'M300'
+			      AND BASE_DATE         = #{BASE_DATE}
+			      AND ORG_CLAS_C 		= '30'
+			      AND AC_BUSI_TC        = '2102'
+				  AND STAT_RPRT_ITEM_ID LIKE 'C1%'
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'">  
+				 	-- 모든 점소코드 나오기
+				 </if>
+				 <if test="JISO_INCLUDE == 'yes' and BLNG_HQ_BR_C != ''">   
+				 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{BR_C} ) 
+				 </if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+				 	AND BR_C     = #{BR_C}
+				 </if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+				 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} )
+				 </if>
+			    GROUP BY
+			         BASE_DATE
+			       , ALM_WORK_TC
+			       , ORG_CLAS_C
+			       , CUR_C
+			       , AC_BUSI_TC
+			       , STAT_RPRT_ID
+			       , STAT_RPRT_ITEM_ID  
+			      
+			    )B
+			    WHERE 1 = 1
+			      AND A.ORG_CLAS_C        = B.ORG_CLAS_C       (+)
+			      AND A.STAT_RPRT_ID      = B.STAT_RPRT_ID     (+)
+			      AND A.STAT_RPRT_ITEM_ID = B.STAT_RPRT_ITEM_ID(+)
+			    ORDER BY A.STAT_RPRT_ITEM_ID
+		)
+		,TEMP2 AS(
+		
+			SELECT
+			       A.STAT_RPRT_ITEM_ID
+			     , A.UP_STAT_RPRT_ITEM_ID
+			     , CASE 
+                    WHEN A.STAT_RPRT_LVL = '2' THEN REGEXP_SUBSTR( A.STAT_RPRT_ITEM_NM, '[^ ]+',1,2) || ':' || REGEXP_SUBSTR( A.STAT_RPRT_ITEM_NM, '[^ ]+',1,1)
+                    ELSE A.STAT_RPRT_ITEM_NM
+			       END                           AS STAT_RPRT_ITEM_NM
+			     , A.STAT_RPRT_LVL
+			     , B.AMG_SESN_ABAL
+			     , B.AMG_SESN_PRFT_CST_AMT
+			  FROM 
+			  ( 
+			
+			    SELECT 
+			         ORG_CLAS_C
+			       , STAT_RPRT_ID
+			       , STAT_RPRT_NM
+			       , STAT_RPRT_ITEM_ID
+			       , STAT_RPRT_LVL
+			       , CASE 
+			            WHEN STAT_RPRT_LVL = '1' THEN '-'
+			            WHEN STAT_RPRT_LVL = '2' THEN SUBSTR(STAT_RPRT_ITEM_ID,1,1)
+			            WHEN STAT_RPRT_LVL = '3' THEN SUBSTR(STAT_RPRT_ITEM_ID,1,2)
+			         END AS UP_STAT_RPRT_ITEM_ID
+			       , STAT_RPRT_ITEM_NM
+			    FROM TII_STAT_ANAL_RPRT_INFO -- 기초_현황분석보고서정보
+			    WHERE STAT_RPRT_ID = 'M300' 
+				  AND STAT_RPRT_ITEM_ID LIKE 'C2%'
+			
+			    )A,
+			    (
+			    
+			    SELECT 
+			         BASE_DATE
+			       , ALM_WORK_TC
+			       , ORG_CLAS_C
+			       , CUR_C
+			       , AC_BUSI_TC
+			       , STAT_RPRT_ID
+			       , STAT_RPRT_ITEM_ID
+			       , SUM(AMG_SESN_ABAL        )  AS AMG_SESN_ABAL        
+			       , SUM(AMG_SESN_PRFT_CST_AMT)  AS AMG_SESN_PRFT_CST_AMT
+			    FROM TSR_PRRT_STAT_RPRT
+			    WHERE STAT_RPRT_ID      = 'M300'
+			      AND BASE_DATE         = #{BASE_DATE}
+			      AND ORG_CLAS_C 		= '30'
+			      AND AC_BUSI_TC        = '2102'
+				  AND STAT_RPRT_ITEM_ID LIKE 'C2%'
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'">
+				 	-- 모든 점소코드 나오기
+				 </if>
+				 <if test="JISO_INCLUDE == 'yes' and BLNG_HQ_BR_C != ''">   
+				 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{BR_C} ) 
+				 </if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+				 	AND BR_C     = #{BR_C}
+				 </if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+				 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} )
+				 </if>
+			    GROUP BY
+			         BASE_DATE
+			       , ALM_WORK_TC
+			       , ORG_CLAS_C
+			       , CUR_C
+			       , AC_BUSI_TC
+			       , STAT_RPRT_ID
+			       , STAT_RPRT_ITEM_ID  
+			      
+			    )B
+			    WHERE 1 = 1
+			      AND A.ORG_CLAS_C        = B.ORG_CLAS_C       (+)
+			      AND A.STAT_RPRT_ID      = B.STAT_RPRT_ID     (+)
+			      AND A.STAT_RPRT_ITEM_ID = B.STAT_RPRT_ITEM_ID(+)
+			    ORDER BY A.STAT_RPRT_ITEM_ID
+		
+		)
+		
+		SELECT A.STAT_RPRT_ITEM_ID
+			 , LPAD(' ', (A.STAT_RPRT_LVL - 2) * 5 ) || A.STAT_RPRT_ITEM_NM  AS STAT_RPRT_ITEM_NM
+		     , A.AMG_SESN_ABAL         
+		     , A.AMG_SESN_PRFT_CST_AMT
+		     , B.AMG_SESN_ABAL			AS BAD_DEBT_PROVISION_AMT
+		     , CASE 
+		        WHEN (A.AMG_SESN_ABAL - B.AMG_SESN_ABAL) = 0 THEN 0
+		        ELSE ROUND( ( A.AMG_SESN_PRFT_CST_AMT / (A.AMG_SESN_ABAL + B.AMG_SESN_ABAL) ) * 100 ,2)
+		       END  					AS PROF_RTO
+		     , CASE 
+		        WHEN (A.AMG_SESN_ABAL - B.AMG_SESN_ABAL) = 0 THEN 0
+		        ELSE ROUND( ( ( ( A.AMG_SESN_PRFT_CST_AMT / (A.AMG_SESN_ABAL + (B.AMG_SESN_ABAL) ) ) * 365 ) / <include refid="get_amg_sesn_day_count"></include> ) * 100 ,2)
+		       END  					AS Y_CNVRS_PROF_RTO
+		  FROM
+		  (
+		  	SELECT 
+			       STAT_RPRT_ITEM_ID
+			     , UP_STAT_RPRT_ITEM_ID
+			     , STAT_RPRT_ITEM_NM
+			     , STAT_RPRT_LVL
+			     , AMG_SESN_ABAL
+			     , AMG_SESN_PRFT_CST_AMT
+			  FROM
+			  (
+			    SELECT 
+			           A.STAT_RPRT_ITEM_ID
+			         , A.UP_STAT_RPRT_ITEM_ID
+			         , A.STAT_RPRT_ITEM_NM
+			         , A.STAT_RPRT_LVL
+			         , CASE 
+			            WHEN A.STAT_RPRT_LVL = '1' THEN (SELECT SUM(B.AMG_SESN_ABAL) FROM TEMP B WHERE A.STAT_RPRT_ITEM_ID = SUBSTR(B.UP_STAT_RPRT_ITEM_ID,1,1) )
+			            WHEN A.STAT_RPRT_LVL = '2' THEN (SELECT SUM(B.AMG_SESN_ABAL) FROM TEMP B WHERE A.STAT_RPRT_ITEM_ID = B.UP_STAT_RPRT_ITEM_ID ) 
+			            ELSE A.AMG_SESN_ABAL
+			           END AS AMG_SESN_ABAL
+			         , CASE 
+			            WHEN A.STAT_RPRT_LVL = '1' THEN (SELECT SUM(B.AMG_SESN_PRFT_CST_AMT) FROM TEMP B WHERE A.STAT_RPRT_ITEM_ID = SUBSTR(B.UP_STAT_RPRT_ITEM_ID,1,1) ) 
+			            WHEN A.STAT_RPRT_LVL = '2' THEN (SELECT SUM(B.AMG_SESN_PRFT_CST_AMT) FROM TEMP B WHERE A.STAT_RPRT_ITEM_ID = B.UP_STAT_RPRT_ITEM_ID ) 
+			            ELSE A.AMG_SESN_PRFT_CST_AMT
+			           END AS AMG_SESN_PRFT_CST_AMT
+			      FROM TEMP A
+			     ORDER BY A.STAT_RPRT_ITEM_ID 
+			    )
+			    WHERE 1 = 1
+			      AND AMG_SESN_ABAL IS NOT NULL
+			      AND AMG_SESN_PRFT_CST_AMT IS NOT NULL
+		  )A
+		  ,
+		  (
+					  
+			SELECT
+			       STAT_RPRT_ITEM_ID
+			     , UP_STAT_RPRT_ITEM_ID
+			     , STAT_RPRT_ITEM_NM
+			     , STAT_RPRT_LVL
+			     , AMG_SESN_ABAL
+			     , AMG_SESN_PRFT_CST_AMT
+			  FROM
+			  (
+			    SELECT 
+			           A.STAT_RPRT_ITEM_ID
+			         , A.UP_STAT_RPRT_ITEM_ID
+			         , A.STAT_RPRT_ITEM_NM
+			         , A.STAT_RPRT_LVL
+			         , CASE 
+			            WHEN A.STAT_RPRT_LVL = '1' THEN (SELECT SUM(B.AMG_SESN_ABAL) FROM TEMP2 B WHERE A.STAT_RPRT_ITEM_ID = SUBSTR(B.UP_STAT_RPRT_ITEM_ID,1,1) )
+			            WHEN A.STAT_RPRT_LVL = '2' THEN (SELECT SUM(B.AMG_SESN_ABAL) FROM TEMP2 B WHERE A.STAT_RPRT_ITEM_ID = B.UP_STAT_RPRT_ITEM_ID ) 
+			            ELSE A.AMG_SESN_ABAL
+			           END AS AMG_SESN_ABAL
+			         , CASE 
+			            WHEN A.STAT_RPRT_LVL = '1' THEN (SELECT SUM(B.AMG_SESN_PRFT_CST_AMT) FROM TEMP2 B WHERE A.STAT_RPRT_ITEM_ID = SUBSTR(B.UP_STAT_RPRT_ITEM_ID,1,1) )
+			            WHEN A.STAT_RPRT_LVL = '2' THEN (SELECT SUM(B.AMG_SESN_PRFT_CST_AMT) FROM TEMP2 B WHERE A.STAT_RPRT_ITEM_ID = B.UP_STAT_RPRT_ITEM_ID ) 
+			            ELSE A.AMG_SESN_PRFT_CST_AMT
+			           END AS AMG_SESN_PRFT_CST_AMT
+			      FROM TEMP2 A
+			     ORDER BY A.STAT_RPRT_ITEM_ID 
+			    )
+			    WHERE 1 = 1
+			      AND AMG_SESN_ABAL IS NOT NULL
+			      AND AMG_SESN_PRFT_CST_AMT IS NOT NULL
+		  )B
+		 WHERE 1 = 1
+		   AND A.STAT_RPRT_ITEM_NM = REGEXP_SUBSTR( B.STAT_RPRT_ITEM_NM(+), '[^:]+', 1, 2 ) 
+		 ORDER BY A.STAT_RPRT_ITEM_ID  
+		
+	</select>
+	
+	
+	
+	
+	
+	
+	<sql id="get_select_tr0104_grd1">
+	
+	   SELECT
+               STAT_RPRT_ITEM_ID          
+             , SUM(RPRT_FACN_AMT_LAST_YEAR)     AS RPRT_FACN_AMT_LAST_YEAR
+             , SUM(RPRT_FACN_AMT1         )     AS RPRT_FACN_AMT1         
+             , SUM(RPRT_FACN_AMT2         )     AS RPRT_FACN_AMT2         
+             , SUM(RPRT_FACN_AMT3         )     AS RPRT_FACN_AMT3         
+             , SUM(RPRT_FACN_AMT4         )     AS RPRT_FACN_AMT4         
+             , SUM(RPRT_FACN_AMT5         )     AS RPRT_FACN_AMT5         
+             , SUM(RPRT_FACN_AMT6         )     AS RPRT_FACN_AMT6         
+             , SUM(RPRT_FACN_AMT7         )     AS RPRT_FACN_AMT7         
+             , SUM(RPRT_FACN_AMT8         )     AS RPRT_FACN_AMT8         
+             , SUM(RPRT_FACN_AMT9         )     AS RPRT_FACN_AMT9         
+             , SUM(RPRT_FACN_AMT10        )     AS RPRT_FACN_AMT10        
+             , SUM(RPRT_FACN_AMT11        )     AS RPRT_FACN_AMT11                                  
+             , SUM(RPRT_FACN_AMT12        )     AS RPRT_FACN_AMT12        
+             , SUM(RPRT_DVSR_AMT_LAST_YEAR)     AS RPRT_DVSR_AMT_LAST_YEAR
+             , SUM(RPRT_DVSR_AMT1         )     AS RPRT_DVSR_AMT1         
+             , SUM(RPRT_DVSR_AMT2         )     AS RPRT_DVSR_AMT2         
+             , SUM(RPRT_DVSR_AMT3         )     AS RPRT_DVSR_AMT3         
+             , SUM(RPRT_DVSR_AMT4         )     AS RPRT_DVSR_AMT4         
+             , SUM(RPRT_DVSR_AMT5         )     AS RPRT_DVSR_AMT5         
+             , SUM(RPRT_DVSR_AMT6         )     AS RPRT_DVSR_AMT6         
+             , SUM(RPRT_DVSR_AMT7         )     AS RPRT_DVSR_AMT7         
+             , SUM(RPRT_DVSR_AMT8         )     AS RPRT_DVSR_AMT8         
+             , SUM(RPRT_DVSR_AMT9         )     AS RPRT_DVSR_AMT9         
+             , SUM(RPRT_DVSR_AMT10        )     AS RPRT_DVSR_AMT10        
+             , SUM(RPRT_DVSR_AMT11        )     AS RPRT_DVSR_AMT11        
+             , SUM(RPRT_DVSR_AMT12        )     AS RPRT_DVSR_AMT12        
+             , SUM(RPRT_RTO_LAST_YEAR     )     AS RPRT_RTO_LAST_YEAR     
+             , SUM(RPRT_RTO1              )     AS RPRT_RTO1              
+             , SUM(RPRT_RTO2              )     AS RPRT_RTO2              
+             , SUM(RPRT_RTO3              )     AS RPRT_RTO3              
+             , SUM(RPRT_RTO4              )     AS RPRT_RTO4              
+             , SUM(RPRT_RTO5              )     AS RPRT_RTO5              
+             , SUM(RPRT_RTO6              )     AS RPRT_RTO6              
+             , SUM(RPRT_RTO7              )     AS RPRT_RTO7              
+             , SUM(RPRT_RTO8              )     AS RPRT_RTO8              
+             , SUM(RPRT_RTO9              )     AS RPRT_RTO9              
+             , SUM(RPRT_RTO10             )     AS RPRT_RTO10             
+             , SUM(RPRT_RTO11             )     AS RPRT_RTO11             
+             , SUM(RPRT_RTO12             )     AS RPRT_RTO12    
+		 FROM	
+			(
+			SELECT     
+				   BASE_DATE                                                                                                                             AS BASE_DATE
+			     , STAT_RPRT_ITEM_ID
+			     , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 12),'YYYY') || '1231' THEN RPRT_FACN_AMT ELSE 0 END) AS RPRT_FACN_AMT_LAST_YEAR
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '01' THEN RPRT_FACN_AMT ELSE 0 END)                                                             AS RPRT_FACN_AMT1
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '02' THEN RPRT_FACN_AMT ELSE 0 END)                                                             AS RPRT_FACN_AMT2
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '03' THEN RPRT_FACN_AMT ELSE 0 END)                                                             AS RPRT_FACN_AMT3
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '04' THEN RPRT_FACN_AMT ELSE 0 END)                                                             AS RPRT_FACN_AMT4
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '05' THEN RPRT_FACN_AMT ELSE 0 END)                                                             AS RPRT_FACN_AMT5
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '06' THEN RPRT_FACN_AMT ELSE 0 END)                                                             AS RPRT_FACN_AMT6
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '07' THEN RPRT_FACN_AMT ELSE 0 END)                                                             AS RPRT_FACN_AMT7
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '08' THEN RPRT_FACN_AMT ELSE 0 END)                                                             AS RPRT_FACN_AMT8
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '09' THEN RPRT_FACN_AMT ELSE 0 END)                                                             AS RPRT_FACN_AMT9
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '10' THEN RPRT_FACN_AMT ELSE 0 END)                                                             AS RPRT_FACN_AMT10
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '11' THEN RPRT_FACN_AMT ELSE 0 END)                                                             AS RPRT_FACN_AMT11                                    
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '12' AND SUBSTR(#{BASE_DATE},1,4) = SUBSTR(BASE_DATE,1,4) THEN RPRT_FACN_AMT ELSE 0 END)        AS RPRT_FACN_AMT12
+			     , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 12),'YYYY') || '1231' THEN RPRT_DVSR_AMT ELSE 0 END) AS RPRT_DVSR_AMT_LAST_YEAR
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '01' THEN RPRT_DVSR_AMT ELSE 0 END)                                                             AS RPRT_DVSR_AMT1
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '02' THEN RPRT_DVSR_AMT ELSE 0 END)                                                             AS RPRT_DVSR_AMT2
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '03' THEN RPRT_DVSR_AMT ELSE 0 END)                                                             AS RPRT_DVSR_AMT3
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '04' THEN RPRT_DVSR_AMT ELSE 0 END)                                                             AS RPRT_DVSR_AMT4
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '05' THEN RPRT_DVSR_AMT ELSE 0 END)                                                             AS RPRT_DVSR_AMT5
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '06' THEN RPRT_DVSR_AMT ELSE 0 END)                                                             AS RPRT_DVSR_AMT6
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '07' THEN RPRT_DVSR_AMT ELSE 0 END)                                                             AS RPRT_DVSR_AMT7
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '08' THEN RPRT_DVSR_AMT ELSE 0 END)                                                             AS RPRT_DVSR_AMT8
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '09' THEN RPRT_DVSR_AMT ELSE 0 END)                                                             AS RPRT_DVSR_AMT9
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '10' THEN RPRT_DVSR_AMT ELSE 0 END)                                                             AS RPRT_DVSR_AMT10
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '11' THEN RPRT_DVSR_AMT ELSE 0 END)                                                             AS RPRT_DVSR_AMT11
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '12' AND SUBSTR(#{BASE_DATE},1,4) = SUBSTR(BASE_DATE,1,4) THEN RPRT_DVSR_AMT ELSE 0 END)        AS RPRT_DVSR_AMT12
+			     <if test="BLNG_HQ_BR_C == null or BLNG_HQ_BR_C == ''">
+			     , AVG(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 12),'YYYY') || '1231' THEN RPRT_RTO ELSE 0 END)      AS RPRT_RTO_LAST_YEAR
+			     , AVG(CASE WHEN SUBSTR(BASE_DATE,5,2) = '01' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO1
+			     , AVG(CASE WHEN SUBSTR(BASE_DATE,5,2) = '02' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO2
+			     , AVG(CASE WHEN SUBSTR(BASE_DATE,5,2) = '03' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO3
+			     , AVG(CASE WHEN SUBSTR(BASE_DATE,5,2) = '04' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO4
+			     , AVG(CASE WHEN SUBSTR(BASE_DATE,5,2) = '05' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO5
+			     , AVG(CASE WHEN SUBSTR(BASE_DATE,5,2) = '06' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO6
+			     , AVG(CASE WHEN SUBSTR(BASE_DATE,5,2) = '07' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO7
+			     , AVG(CASE WHEN SUBSTR(BASE_DATE,5,2) = '08' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO8
+			     , AVG(CASE WHEN SUBSTR(BASE_DATE,5,2) = '09' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO9
+			     , AVG(CASE WHEN SUBSTR(BASE_DATE,5,2) = '10' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO10
+			     , AVG(CASE WHEN SUBSTR(BASE_DATE,5,2) = '11' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO11
+			     , AVG(CASE WHEN SUBSTR(BASE_DATE,5,2) = '12' AND SUBSTR(#{BASE_DATE},1,4) = SUBSTR(BASE_DATE,1,4) THEN RPRT_RTO ELSE 0 END)             AS RPRT_RTO12
+			 	 </if>
+			     <if test="BLNG_HQ_BR_C != null and BLNG_HQ_BR_C != ''">
+			     , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 12),'YYYY') || '1231' THEN RPRT_RTO ELSE 0 END)      AS RPRT_RTO_LAST_YEAR
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '01' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO1
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '02' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO2
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '03' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO3
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '04' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO4
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '05' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO5
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '06' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO6
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '07' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO7
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '08' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO8
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '09' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO9
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '10' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO10
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '11' THEN RPRT_RTO ELSE 0 END)                                                                  AS RPRT_RTO11
+			     , SUM(CASE WHEN SUBSTR(BASE_DATE,5,2) = '12' AND SUBSTR(#{BASE_DATE},1,4) = SUBSTR(BASE_DATE,1,4) THEN RPRT_RTO ELSE 0 END)             AS RPRT_RTO12
+			 	 </if>
+			  FROM TSR_MNG_STAT_RPRT -- 현황보고서_경영현황보고서
+			 WHERE 1 = 1
+			   AND 
+			      (
+			           BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 12),'YYYY') || '1231'
+			        OR 
+			           TO_DATE(BASE_DATE,'YYYYMMDD') BETWEEN TO_DATE(SUBSTR(#{BASE_DATE},1,4)||'0101','YYYYMMDD') AND TO_DATE(SUBSTR(#{BASE_DATE},1,4)||'1231','YYYYMMDD')
+			      )
+			   AND ALM_WORK_TC   = 'M'
+			   AND CUR_C		 = 'KRW'
+			   AND STAT_RPRT_ID  = 'M100'
+			   AND ORG_CLAS_C    = '30'
+			 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'"> --전체조합
+			   AND BR_C 	     IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BR_TC = '03')
+			   AND MNBR_TOT_YN   = 'Y'
+			 </if> 
+			 <if test="JISO_INCLUDE == 'yes' and BLNG_HQ_BR_C != ''"> --단위조합별(지소포함 O)   
+			   AND BR_C          = #{BR_C}
+			   AND MNBR_TOT_YN   = 'Y'
+			 </if>
+			 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> --단위조합별(지소포함 X)
+			   AND BR_C          = #{BR_C}
+			   AND MNBR_TOT_YN   = 'N'
+			 </if>
+			 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'"> --지역본부
+			   AND BR_C          IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} )
+			   AND MNBR_TOT_YN   = 'Y'
+			 </if>
+			 GROUP BY STAT_RPRT_ITEM_ID, BASE_DATE
+		   )
+		   GROUP BY STAT_RPRT_ITEM_ID	
+	
+	</sql>
+	
+	
+	<select id="get_selectTR_0104_A_cnt" parameterType="java.util.Map" resultType="int">
+	
+		SELECT COUNT(*) FROM(<include refid="get_select_tr0104_grd1" ></include>)
+	
+	</select>
+	
+	
+	<select id="selectTR_0104_A" parameterType="java.util.Map" resultType="java.util.HashMap">
+	
+				
+		WITH TEMP AS(
+		
+			<include refid="get_select_tr0104_grd1" ></include>
+		
+		)
+		SELECT 
+               CASE
+                WHEN STAT_RPRT_LVL = 2 THEN STAT_RPRT_ITEM_NM || '(신용사업)'
+                ELSE STAT_RPRT_ITEM_NM
+               END  											                                               			   AS STAT_RPRT_ITEM_NM
+		     , SUMMARY_LAST_YEAR
+		     , CASE WHEN TO_NUMBER(SUBSTR(#{BASE_DATE},5,2)) <![CDATA[<]]> TO_NUMBER('01') THEN NULL ELSE SUMMARY_M1  END  AS SUMMARY_M1 
+		     , CASE WHEN TO_NUMBER(SUBSTR(#{BASE_DATE},5,2)) <![CDATA[<]]> TO_NUMBER('02') THEN NULL ELSE SUMMARY_M2  END  AS SUMMARY_M2 
+		     , CASE WHEN TO_NUMBER(SUBSTR(#{BASE_DATE},5,2)) <![CDATA[<]]> TO_NUMBER('03') THEN NULL ELSE SUMMARY_M3  END  AS SUMMARY_M3 
+		     , CASE WHEN TO_NUMBER(SUBSTR(#{BASE_DATE},5,2)) <![CDATA[<]]> TO_NUMBER('04') THEN NULL ELSE SUMMARY_M4  END  AS SUMMARY_M4 
+		     , CASE WHEN TO_NUMBER(SUBSTR(#{BASE_DATE},5,2)) <![CDATA[<]]> TO_NUMBER('05') THEN NULL ELSE SUMMARY_M5  END  AS SUMMARY_M5 
+		     , CASE WHEN TO_NUMBER(SUBSTR(#{BASE_DATE},5,2)) <![CDATA[<]]> TO_NUMBER('06') THEN NULL ELSE SUMMARY_M6  END  AS SUMMARY_M6 
+		     , CASE WHEN TO_NUMBER(SUBSTR(#{BASE_DATE},5,2)) <![CDATA[<]]> TO_NUMBER('07') THEN NULL ELSE SUMMARY_M7  END  AS SUMMARY_M7 
+		     , CASE WHEN TO_NUMBER(SUBSTR(#{BASE_DATE},5,2)) <![CDATA[<]]> TO_NUMBER('08') THEN NULL ELSE SUMMARY_M8  END  AS SUMMARY_M8 
+		     , CASE WHEN TO_NUMBER(SUBSTR(#{BASE_DATE},5,2)) <![CDATA[<]]> TO_NUMBER('09') THEN NULL ELSE SUMMARY_M9  END  AS SUMMARY_M9 
+		     , CASE WHEN TO_NUMBER(SUBSTR(#{BASE_DATE},5,2)) <![CDATA[<]]> TO_NUMBER('10') THEN NULL ELSE SUMMARY_M10 END  AS SUMMARY_M10
+		     , CASE WHEN TO_NUMBER(SUBSTR(#{BASE_DATE},5,2)) <![CDATA[<]]> TO_NUMBER('11') THEN NULL ELSE SUMMARY_M11 END  AS SUMMARY_M11
+		     , CASE WHEN TO_NUMBER(SUBSTR(#{BASE_DATE},5,2)) <![CDATA[<]]> TO_NUMBER('12') THEN NULL ELSE SUMMARY_M12 END  AS SUMMARY_M12
+		  FROM
+		  (
+		    SELECT STAT_RPRT_ITEM_ID
+		         , LPAD(' ',( STAT_RPRT_LVL - 2 ) * 5 ) || REGEXP_REPLACE( STAT_RPRT_ITEM_NM, '[^가-힝]' ) AS STAT_RPRT_ITEM_NM
+         		 , STAT_RPRT_LVL
+		         , CASE
+		            WHEN STAT_RPRT_ITEM_ID = 'A1'  THEN NVL(( SELECT RPRT_FACN_AMT_LAST_YEAR FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                                          = 'B11' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A2'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT_LAST_YEAR,0), 0, 0, ROUND((RPRT_FACN_AMT_LAST_YEAR / RPRT_DVSR_AMT_LAST_YEAR)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID = 'B31' ),0) 
+		            WHEN STAT_RPRT_ITEM_ID = 'A3'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT_LAST_YEAR,0), 0, 0, ROUND((RPRT_FACN_AMT_LAST_YEAR / RPRT_DVSR_AMT_LAST_YEAR)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID = 'B2' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A4'  THEN NVL(( SELECT ROUND(RPRT_RTO_LAST_YEAR,2) FROM TEMP WHERE STAT_RPRT_ITEM_ID = 'B6' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A5'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT_LAST_YEAR,0), 0, 0, ROUND((RPRT_FACN_AMT_LAST_YEAR / RPRT_DVSR_AMT_LAST_YEAR)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID = 'B5' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A51' THEN NVL(( SELECT RPRT_FACN_AMT_LAST_YEAR FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                                          = 'B51'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A52' THEN NVL(( SELECT RPRT_FACN_AMT_LAST_YEAR FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                                          = 'B52'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A6'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT_LAST_YEAR,0), 0, 0, ROUND((RPRT_FACN_AMT_LAST_YEAR / RPRT_DVSR_AMT_LAST_YEAR)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID = 'B4' ),0)
+		           END                                                                                                                                                                                      AS SUMMARY_LAST_YEAR 
+		         , CASE
+		            WHEN STAT_RPRT_ITEM_ID = 'A1'  THEN NVL(( SELECT RPRT_FACN_AMT1 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B11' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A2'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT1,0), 0, 0, ROUND((RPRT_FACN_AMT1 / RPRT_DVSR_AMT1)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B31' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A3'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT1,0), 0, 0, ROUND((RPRT_FACN_AMT1 / RPRT_DVSR_AMT1)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B2' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A4'  THEN NVL(( SELECT ROUND(RPRT_RTO1,2) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B6' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A5'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT1,0), 0, 0, ROUND((RPRT_FACN_AMT1 / RPRT_DVSR_AMT1)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B5' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A51' THEN NVL(( SELECT RPRT_FACN_AMT1 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B51'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A52' THEN NVL(( SELECT RPRT_FACN_AMT1 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B52'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A6'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT1,0), 0, 0, ROUND((RPRT_FACN_AMT1 / RPRT_DVSR_AMT1)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B4' ),0)
+		            END                                                                                                                                                                                     AS SUMMARY_M1                                                        
+		         , CASE                                                                                                                                                                          
+		            WHEN STAT_RPRT_ITEM_ID = 'A1'  THEN NVL(( SELECT RPRT_FACN_AMT2 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B11' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A2'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT2,0), 0, 0, ROUND((RPRT_FACN_AMT2 / RPRT_DVSR_AMT2)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B31' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A3'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT2,0), 0, 0, ROUND((RPRT_FACN_AMT2 / RPRT_DVSR_AMT2)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B2' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A4'  THEN NVL(( SELECT ROUND(RPRT_RTO2,2) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B6' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A5'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT2,0), 0, 0, ROUND((RPRT_FACN_AMT2 / RPRT_DVSR_AMT2)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B5' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A51' THEN NVL(( SELECT RPRT_FACN_AMT2 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B51'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A52' THEN NVL(( SELECT RPRT_FACN_AMT2 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B52'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A6'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT2,0), 0, 0, ROUND((RPRT_FACN_AMT2 / RPRT_DVSR_AMT2)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B4' ),0)
+		           END                                                                                                                                                                                      AS SUMMARY_M2                                                        
+		         , CASE                                                                                                                                                                          
+		            WHEN STAT_RPRT_ITEM_ID = 'A1'  THEN NVL(( SELECT RPRT_FACN_AMT3 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B11' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A2'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT3,0), 0, 0, ROUND((RPRT_FACN_AMT3 / RPRT_DVSR_AMT3)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B31' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A3'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT3,0), 0, 0, ROUND((RPRT_FACN_AMT3 / RPRT_DVSR_AMT3)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B2' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A4'  THEN NVL(( SELECT ROUND(RPRT_RTO3,2) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B6' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A5'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT3,0), 0, 0, ROUND((RPRT_FACN_AMT3 / RPRT_DVSR_AMT3)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B5' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A51' THEN NVL(( SELECT RPRT_FACN_AMT3 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B51'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A52' THEN NVL(( SELECT RPRT_FACN_AMT3 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B52'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A6'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT3,0), 0, 0, ROUND((RPRT_FACN_AMT3 / RPRT_DVSR_AMT3)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B4' ),0)
+		           END                                                                                                                                                                                      AS SUMMARY_M3                                                        
+		         , CASE                                                                                                                                                                          
+		            WHEN STAT_RPRT_ITEM_ID = 'A1'  THEN NVL(( SELECT RPRT_FACN_AMT4 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B11' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A2'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT4,0), 0, 0, ROUND((RPRT_FACN_AMT4 / RPRT_DVSR_AMT4)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B31' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A3'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT4,0), 0, 0, ROUND((RPRT_FACN_AMT4 / RPRT_DVSR_AMT4)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B2' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A4'  THEN NVL(( SELECT ROUND(RPRT_RTO4,2) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B6' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A5'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT4,0), 0, 0, ROUND((RPRT_FACN_AMT4 / RPRT_DVSR_AMT4)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B5' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A51' THEN NVL(( SELECT RPRT_FACN_AMT4 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B51'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A52' THEN NVL(( SELECT RPRT_FACN_AMT4 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B52'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A6'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT4,0), 0, 0, ROUND((RPRT_FACN_AMT4 / RPRT_DVSR_AMT4)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B4' ),0)
+		           END                                                                                                                                                                                      AS SUMMARY_M4                                                        
+		         , CASE                                                                                                                                                                          
+		            WHEN STAT_RPRT_ITEM_ID = 'A1'  THEN NVL(( SELECT RPRT_FACN_AMT5 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B11' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A2'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT5,0), 0, 0, ROUND((RPRT_FACN_AMT5 / RPRT_DVSR_AMT5)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B31' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A3'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT5,0), 0, 0, ROUND((RPRT_FACN_AMT5 / RPRT_DVSR_AMT5)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B2' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A4'  THEN NVL(( SELECT ROUND(RPRT_RTO5,2) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B6' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A5'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT5,0), 0, 0, ROUND((RPRT_FACN_AMT5 / RPRT_DVSR_AMT5)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B5' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A51' THEN NVL(( SELECT RPRT_FACN_AMT5 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B51'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A52' THEN NVL(( SELECT RPRT_FACN_AMT5 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B52'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A6'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT5,0), 0, 0, ROUND((RPRT_FACN_AMT5 / RPRT_DVSR_AMT5)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B4' ),0)
+		           END                                                                                                                                                                                      AS SUMMARY_M5                                                        
+		         , CASE                                                                                                                                                                          
+		            WHEN STAT_RPRT_ITEM_ID = 'A1'  THEN NVL(( SELECT RPRT_FACN_AMT6 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B11' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A2'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT6,0), 0, 0, ROUND((RPRT_FACN_AMT6 / RPRT_DVSR_AMT6)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B31' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A3'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT6,0), 0, 0, ROUND((RPRT_FACN_AMT6 / RPRT_DVSR_AMT6)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B2' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A4'  THEN NVL(( SELECT ROUND(RPRT_RTO6,2) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B6' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A5'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT6,0), 0, 0, ROUND((RPRT_FACN_AMT6 / RPRT_DVSR_AMT6)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B5' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A51' THEN NVL(( SELECT RPRT_FACN_AMT6 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B51'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A52' THEN NVL(( SELECT RPRT_FACN_AMT6 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B52'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A6'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT6,0), 0, 0, ROUND((RPRT_FACN_AMT6 / RPRT_DVSR_AMT6)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B4' ),0)
+		           END                                                                                                                                                                                      AS SUMMARY_M6                                                        
+		         , CASE                                                                                                                                                                          
+		            WHEN STAT_RPRT_ITEM_ID = 'A1'  THEN NVL(( SELECT RPRT_FACN_AMT7 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B11' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A2'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT7,0), 0, 0, ROUND((RPRT_FACN_AMT7 / RPRT_DVSR_AMT7)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B31' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A3'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT7,0), 0, 0, ROUND((RPRT_FACN_AMT7 / RPRT_DVSR_AMT7)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B2' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A4'  THEN NVL(( SELECT ROUND(RPRT_RTO7,2) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B6' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A5'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT7,0), 0, 0, ROUND((RPRT_FACN_AMT7 / RPRT_DVSR_AMT7)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B5' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A51' THEN NVL(( SELECT RPRT_FACN_AMT7 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B51'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A52' THEN NVL(( SELECT RPRT_FACN_AMT7 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B52'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A6'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT7,0), 0, 0, ROUND((RPRT_FACN_AMT7 / RPRT_DVSR_AMT7)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B4' ),0)
+		           END                                                                                                                                                                                      AS SUMMARY_M7                                                        
+		         , CASE                                                                                                                                                                          
+		            WHEN STAT_RPRT_ITEM_ID = 'A1'  THEN NVL(( SELECT RPRT_FACN_AMT8 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B11' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A2'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT8,0), 0, 0, ROUND((RPRT_FACN_AMT8 / RPRT_DVSR_AMT8)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B31' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A3'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT8,0), 0, 0, ROUND((RPRT_FACN_AMT8 / RPRT_DVSR_AMT8)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B2' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A4'  THEN NVL(( SELECT ROUND(RPRT_RTO8,2) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B6' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A5'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT8,0), 0, 0, ROUND((RPRT_FACN_AMT8 / RPRT_DVSR_AMT8)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B5' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A51' THEN NVL(( SELECT RPRT_FACN_AMT8 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B51'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A52' THEN NVL(( SELECT RPRT_FACN_AMT8 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B52'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A6'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT8,0), 0, 0, ROUND((RPRT_FACN_AMT8 / RPRT_DVSR_AMT8)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B4' ),0)
+		           END                                                                                                                                                                                      AS SUMMARY_M8                                                        
+		         , CASE                                                                                                                                                                          
+		            WHEN STAT_RPRT_ITEM_ID = 'A1'  THEN NVL(( SELECT RPRT_FACN_AMT9 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B11' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A2'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT9,0), 0, 0, ROUND((RPRT_FACN_AMT9 / RPRT_DVSR_AMT9)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B31' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A3'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT9,0), 0, 0, ROUND((RPRT_FACN_AMT9 / RPRT_DVSR_AMT9)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B2' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A4'  THEN NVL(( SELECT ROUND(RPRT_RTO9,2) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B6' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A5'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT9,0), 0, 0, ROUND((RPRT_FACN_AMT9 / RPRT_DVSR_AMT9)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B5' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A51' THEN NVL(( SELECT RPRT_FACN_AMT9 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B51'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A52' THEN NVL(( SELECT RPRT_FACN_AMT9 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                           = 'B52'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A6'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT9,0), 0, 0, ROUND((RPRT_FACN_AMT9 / RPRT_DVSR_AMT9)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID    = 'B4' ),0)
+		           END                                                                                                                                                                                      AS SUMMARY_M9
+		         , CASE
+		            WHEN STAT_RPRT_ITEM_ID = 'A1'  THEN NVL(( SELECT RPRT_FACN_AMT10 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                          = 'B11' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A2'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT10,0), 0, 0, ROUND((RPRT_FACN_AMT10 / RPRT_DVSR_AMT10)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID = 'B31' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A3'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT10,0), 0, 0, ROUND((RPRT_FACN_AMT10 / RPRT_DVSR_AMT10)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID = 'B2' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A4'  THEN NVL(( SELECT ROUND(RPRT_RTO10,2) FROM TEMP WHERE STAT_RPRT_ITEM_ID = 'B6' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A5'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT10,0), 0, 0, ROUND((RPRT_FACN_AMT10 / RPRT_DVSR_AMT10)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID = 'B5' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A51' THEN NVL(( SELECT RPRT_FACN_AMT10 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                          = 'B51'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A52' THEN NVL(( SELECT RPRT_FACN_AMT10 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                          = 'B52'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A6'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT10,0), 0, 0, ROUND((RPRT_FACN_AMT10 / RPRT_DVSR_AMT10)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID = 'B4' ),0)
+		           END                                                                                                                                                                                      AS SUMMARY_M10
+		         , CASE
+		            WHEN STAT_RPRT_ITEM_ID = 'A1'  THEN NVL(( SELECT RPRT_FACN_AMT11 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                          = 'B11' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A2'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT11,0), 0, 0, ROUND((RPRT_FACN_AMT11 / RPRT_DVSR_AMT11)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID = 'B31' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A3'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT11,0), 0, 0, ROUND((RPRT_FACN_AMT11 / RPRT_DVSR_AMT11)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID = 'B2' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A4'  THEN NVL(( SELECT ROUND(RPRT_RTO11,2) FROM TEMP WHERE STAT_RPRT_ITEM_ID = 'B6' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A5'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT11,0), 0, 0, ROUND((RPRT_FACN_AMT11 / RPRT_DVSR_AMT11)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID = 'B5' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A51' THEN NVL(( SELECT RPRT_FACN_AMT11 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                          = 'B51'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A52' THEN NVL(( SELECT RPRT_FACN_AMT11 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                          = 'B52'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A6'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT11,0), 0, 0, ROUND((RPRT_FACN_AMT11 / RPRT_DVSR_AMT11)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID = 'B4' ),0)
+		           END                                                                                                                                                                                      AS SUMMARY_M11
+		         , CASE
+		            WHEN STAT_RPRT_ITEM_ID = 'A1'  THEN NVL(( SELECT RPRT_FACN_AMT12 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                          = 'B11' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A2'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT12,0), 0, 0, ROUND((RPRT_FACN_AMT12 / RPRT_DVSR_AMT12)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID = 'B31' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A3'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT12,0), 0, 0, ROUND((RPRT_FACN_AMT12 / RPRT_DVSR_AMT12)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID = 'B2' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A4'  THEN NVL(( SELECT ROUND(RPRT_RTO12,2) FROM TEMP WHERE STAT_RPRT_ITEM_ID = 'B6' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A5'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT12,0), 0, 0, ROUND((RPRT_FACN_AMT12 / RPRT_DVSR_AMT12)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID = 'B5' ),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A51' THEN NVL(( SELECT RPRT_FACN_AMT12 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                          = 'B51'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A52' THEN NVL(( SELECT RPRT_FACN_AMT12 FROM TEMP WHERE STAT_RPRT_ITEM_ID                                                                          = 'B52'),0)
+		            WHEN STAT_RPRT_ITEM_ID = 'A6'  THEN NVL(( SELECT DECODE( NVL(RPRT_DVSR_AMT12,0), 0, 0, ROUND((RPRT_FACN_AMT12 / RPRT_DVSR_AMT12)*100,2) ) FROM TEMP WHERE STAT_RPRT_ITEM_ID = 'B4' ),0)
+		           END                                                                                                                                                                                      AS SUMMARY_M12
+		      FROM TII_STAT_ANAL_RPRT_INFO 
+		     WHERE STAT_RPRT_ITEM_ID LIKE 'A%'
+		       AND STAT_RPRT_ITEM_ID != 'A'
+		       AND ORG_CLAS_C         = '30'
+		       AND STAT_RPRT_ID       = 'M300'
+		  )
+		  WHERE 1 = 1	
+	
+	</select>
+	
+</mapper>

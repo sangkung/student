@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_5311Mapper">
+
+	<!-- 추정 당기손익 보고서  -->
+	<select id="selectTr_5311List" parameterType="java.util.Map" resultType="java.util.HashMap">
+		WITH DATA_TB AS (
+		    SELECT
+		        A.BASE_DATE
+		        , A.ORG_CLAS_C
+		        , A.BR_C
+		        , A.AC_BUSI_TC
+		        , A.SIMU_NO
+		        , A.PL_ITEM_C
+		        , A.NON_INT_PL_SNRO_SET_METH_C
+		        , A.ORD_YY_AMT
+		        , A.CNCRN_TT_12_MM_AMT
+		        , A.CNCRN_TT_11_MM_AMT
+		        , A.CNCRN_TT_10_MM_AMT
+		        , A.CNCRN_TT_9_MM_AMT
+		        , A.CNCRN_TT_8_MM_AMT
+		        , A.CNCRN_TT_7_MM_AMT
+		        , A.CNCRN_TT_6_MM_AMT
+		        , A.CNCRN_TT_5_MM_AMT
+		        , A.CNCRN_TT_4_MM_AMT
+		        , A.CNCRN_TT_3_MM_AMT
+		        , A.CNCRN_TT_2_MM_AMT
+		        , A.CNCRN_TT_1_MM_AMT
+		        , A.PAST_YY1_AMT
+		        , A.PAST_YY2_AMT
+		        , A.PAST_YY3_AMT
+		    FROM TSI_ASSM_TTRM_PL_RPRT A
+		    WHERE A.BASE_DATE = #{sch_base_date}
+		<if test='sch_br_c == "ALL"'>
+			AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BR_TC = '03') /*전체조합*/
+		</if>
+		<if test="sch_br_c != 'ALL'">
+			<if test="sch_br_c == '001'">
+			AND A.BR_C = '001' /*중앙회*/
+			</if>
+			<if test="sch_br_c != '001' and (sch_blng_hq_br_c == '' or sch_blng_hq_br_c == null)">
+			AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{sch_br_c}) /*도지회별합산*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'Y'.toString()">
+			AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{sch_br_c}) /*단위조합별조회(지소포함)*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'N'.toString()">
+			AND A.BR_C = #{sch_br_c}
+			</if>
+		</if>
+		<choose>
+			<when test="sch_ac_busi_tc == '0000'">
+			AND A.AC_BUSI_TC IN ('1105', '1106', '1107') --회계구분
+			</when>
+			<otherwise>
+			AND A.AC_BUSI_TC = #{sch_ac_busi_tc} --회계구분
+			</otherwise>
+		</choose>
+		    AND A.SIMU_NO = #{sch_simu_no}
+		    AND A.PL_ITEM_C != 'A00'
+		    AND A.NON_INT_PL_SNRO_SET_METH_C IN (#{sch_non_int}, '00')
+		)
+		SELECT
+		    PL_ITEM_NM1
+		    , PL_ITEM_NM2
+		    , PL_ITEM_NM3
+		    , GRP_ID
+		    , ORD_YY_AMT
+		    , CNCRN_TT_12_MM_AMT
+		    , CNCRN_TT_11_MM_AMT
+		    , CNCRN_TT_10_MM_AMT
+		    , CNCRN_TT_9_MM_AMT
+		    , CNCRN_TT_8_MM_AMT
+		    , CNCRN_TT_7_MM_AMT
+		    , CNCRN_TT_6_MM_AMT
+		    , CNCRN_TT_5_MM_AMT
+		    , CNCRN_TT_4_MM_AMT
+		    , CNCRN_TT_3_MM_AMT
+		    , CNCRN_TT_2_MM_AMT
+		    , CNCRN_TT_1_MM_AMT
+		    , PAST_YY1_AMT
+		    , ORD_YY_AMT - PAST_YY1_AMT AS PAST_YY1_DIFF
+		    , CASE WHEN PAST_YY1_AMT0 != 0 THEN ROUND((ORD_YY_AMT0 - PAST_YY1_AMT0)/PAST_YY1_AMT0, 5) ELSE 0 END AS PAST_YY1_IDRT
+		    , CNCRN_TT_12_MM_AMT- PAST_YY1_AMT AS TYY_YY1_DIFF
+		    , CASE WHEN PAST_YY1_AMT0 != 0 THEN ROUND((CNCRN_TT_12_MM_AMT0- PAST_YY1_AMT0)/PAST_YY1_AMT0, 5) ELSE 0 END TYY_YY1_IDRT
+		    , PAST_YY2_AMT
+		    , ORD_YY_AMT - PAST_YY2_AMT AS PAST_YY2_DIFF
+		    , CASE WHEN PAST_YY2_AMT0 != 0 THEN ROUND((ORD_YY_AMT0 - PAST_YY2_AMT0)/PAST_YY2_AMT0, 5) ELSE 0 END AS PAST_YY2_IDRT
+		    , CNCRN_TT_12_MM_AMT- PAST_YY2_AMT AS TYY_YY2_DIFF
+		    , CASE WHEN PAST_YY2_AMT0 != 0 THEN ROUND((CNCRN_TT_12_MM_AMT0- PAST_YY2_AMT0)/PAST_YY2_AMT0, 5) ELSE 0 END TYY_YY2_IDRT
+		    , PAST_YY3_AMT
+		    , ORD_YY_AMT - PAST_YY3_AMT AS PAST_YY3_DIFF
+		    , CASE WHEN PAST_YY3_AMT0 != 0 THEN ROUND((ORD_YY_AMT0 - PAST_YY3_AMT0)/PAST_YY3_AMT0, 5) ELSE 0 END AS PAST_YY3_IDRT
+		    , CNCRN_TT_12_MM_AMT- PAST_YY3_AMT AS TYY_YY3_DIFF
+		    , CASE WHEN PAST_YY3_AMT0 != 0 THEN ROUND((CNCRN_TT_12_MM_AMT0- PAST_YY3_AMT0)/PAST_YY3_AMT0, 5) ELSE 0 END TYY_YY3_IDRT
+		    , PRNT_ORD
+		    
+		    
+		    , ORD_YY_AMT0
+		    , CNCRN_TT_12_MM_AMT0
+		    , CNCRN_TT_11_MM_AMT0
+		    , CNCRN_TT_10_MM_AMT0
+		    , CNCRN_TT_9_MM_AMT0
+		    , CNCRN_TT_8_MM_AMT0
+		    , CNCRN_TT_7_MM_AMT0
+		    , CNCRN_TT_6_MM_AMT0
+		    , CNCRN_TT_5_MM_AMT0
+		    , CNCRN_TT_4_MM_AMT0
+		    , CNCRN_TT_3_MM_AMT0
+		    , CNCRN_TT_2_MM_AMT0
+		    , CNCRN_TT_1_MM_AMT0
+		    , PAST_YY1_AMT0
+		    , ORD_YY_AMT0 - PAST_YY1_AMT0 AS PAST_YY1_DIFF0
+		    , CNCRN_TT_12_MM_AMT0- PAST_YY1_AMT0 AS TYY_YY1_DIFF0
+		    
+		    , PAST_YY2_AMT0
+		    , ORD_YY_AMT0 - PAST_YY2_AMT0 AS PAST_YY2_DIFF0
+		    , CNCRN_TT_12_MM_AMT0- PAST_YY2_AMT0 AS TYY_YY2_DIFF0
+		    
+		    , PAST_YY3_AMT0
+		    , ORD_YY_AMT0 - PAST_YY3_AMT0 AS PAST_YY3_DIFF0
+		    , CNCRN_TT_12_MM_AMT0- PAST_YY3_AMT0 AS TYY_YY3_DIFF0
+		FROM (
+		    SELECT
+		        LVL1 AS PL_ITEM_NM1
+		        , DECODE(GROUPING_ID (LVL2, LVL3), 3, LVL1||CASE WHEN LVL1 = '영업수익' THEN ' 합계(C)' ELSE ' 합계(F)' END, LVL2) AS PL_ITEM_NM2
+		        , DECODE(GROUPING_ID (LVL2, LVL3), 1, LVL2||
+                    CASE
+                        WHEN LVL1 = '영업수익' AND LVL2 = '이자수익' THEN ' 소계(A)'
+                        WHEN LVL1 = '영업수익' AND LVL2 = '비이자수익' THEN ' 소계(B)'
+                        WHEN LVL1 = '영업비용' AND LVL2 = '이자비용' THEN ' 소계(D)'
+                        WHEN LVL1 = '영업비용' AND LVL2 = '비이자비용' THEN ' 소계(E)'
+                    END
+		        , LVL3) AS PL_ITEM_NM3
+		        , GROUPING_ID (LVL2, LVL3) AS GRP_ID
+		        , SUM(ORD_YY_AMT) AS ORD_YY_AMT
+		        , SUM(CNCRN_TT_12_MM_AMT) AS CNCRN_TT_12_MM_AMT
+		        , SUM(CNCRN_TT_11_MM_AMT) AS CNCRN_TT_11_MM_AMT
+		        , SUM(CNCRN_TT_10_MM_AMT) AS CNCRN_TT_10_MM_AMT
+		        , SUM(CNCRN_TT_9_MM_AMT) AS CNCRN_TT_9_MM_AMT
+		        , SUM(CNCRN_TT_8_MM_AMT) AS CNCRN_TT_8_MM_AMT
+		        , SUM(CNCRN_TT_7_MM_AMT) AS CNCRN_TT_7_MM_AMT
+		        , SUM(CNCRN_TT_6_MM_AMT) AS CNCRN_TT_6_MM_AMT
+		        , SUM(CNCRN_TT_5_MM_AMT) AS CNCRN_TT_5_MM_AMT
+		        , SUM(CNCRN_TT_4_MM_AMT) AS CNCRN_TT_4_MM_AMT
+		        , SUM(CNCRN_TT_3_MM_AMT) AS CNCRN_TT_3_MM_AMT
+		        , SUM(CNCRN_TT_2_MM_AMT) AS CNCRN_TT_2_MM_AMT
+		        , SUM(CNCRN_TT_1_MM_AMT) AS CNCRN_TT_1_MM_AMT
+		        , SUM(PAST_YY1_AMT) AS PAST_YY1_AMT
+		        , SUM(PAST_YY2_AMT) AS PAST_YY2_AMT
+		        , SUM(PAST_YY3_AMT) AS PAST_YY3_AMT
+		        
+		        , SUM(ORD_YY_AMT0) AS ORD_YY_AMT0
+		        , SUM(CNCRN_TT_12_MM_AMT0) AS CNCRN_TT_12_MM_AMT0
+		        , SUM(CNCRN_TT_11_MM_AMT0) AS CNCRN_TT_11_MM_AMT0
+	            , SUM(CNCRN_TT_10_MM_AMT0) AS CNCRN_TT_10_MM_AMT0
+	            , SUM(CNCRN_TT_9_MM_AMT0) AS CNCRN_TT_9_MM_AMT0
+	            , SUM(CNCRN_TT_8_MM_AMT0) AS CNCRN_TT_8_MM_AMT0
+	            , SUM(CNCRN_TT_7_MM_AMT0) AS CNCRN_TT_7_MM_AMT0
+	            , SUM(CNCRN_TT_6_MM_AMT0) AS CNCRN_TT_6_MM_AMT0
+	            , SUM(CNCRN_TT_5_MM_AMT0) AS CNCRN_TT_5_MM_AMT0
+	            , SUM(CNCRN_TT_4_MM_AMT0) AS CNCRN_TT_4_MM_AMT0
+	            , SUM(CNCRN_TT_3_MM_AMT0) AS CNCRN_TT_3_MM_AMT0
+	            , SUM(CNCRN_TT_2_MM_AMT0) AS CNCRN_TT_2_MM_AMT0
+	            , SUM(CNCRN_TT_1_MM_AMT0) AS CNCRN_TT_1_MM_AMT0
+		        , SUM(PAST_YY1_AMT0) AS PAST_YY1_AMT0
+		        , SUM(PAST_YY2_AMT0) AS PAST_YY2_AMT0
+		        , SUM(PAST_YY3_AMT0) AS PAST_YY3_AMT0
+		        , MAX(PRNT_ORD) AS PRNT_ORD
+		    FROM (
+		        SELECT
+		            LVL1
+		            , LVL2
+		            , LVL3
+		            , MAX(PRNT_ORD) AS PRNT_ORD
+		            , ROUND(SUM(ORD_YY_AMT)/${sch_amt_unit}, 0) AS ORD_YY_AMT
+		            , ROUND(SUM(CNCRN_TT_12_MM_AMT)/${sch_amt_unit}, 0) AS CNCRN_TT_12_MM_AMT
+		            , ROUND(SUM(CNCRN_TT_11_MM_AMT)/${sch_amt_unit}, 0) AS CNCRN_TT_11_MM_AMT
+		            , ROUND(SUM(CNCRN_TT_10_MM_AMT)/${sch_amt_unit}, 0) AS CNCRN_TT_10_MM_AMT
+		            , ROUND(SUM(CNCRN_TT_9_MM_AMT)/${sch_amt_unit}, 0) AS CNCRN_TT_9_MM_AMT
+		            , ROUND(SUM(CNCRN_TT_8_MM_AMT)/${sch_amt_unit}, 0) AS CNCRN_TT_8_MM_AMT
+		            , ROUND(SUM(CNCRN_TT_7_MM_AMT)/${sch_amt_unit}, 0) AS CNCRN_TT_7_MM_AMT
+		            , ROUND(SUM(CNCRN_TT_6_MM_AMT)/${sch_amt_unit}, 0) AS CNCRN_TT_6_MM_AMT
+		            , ROUND(SUM(CNCRN_TT_5_MM_AMT)/${sch_amt_unit}, 0) AS CNCRN_TT_5_MM_AMT
+		            , ROUND(SUM(CNCRN_TT_4_MM_AMT)/${sch_amt_unit}, 0) AS CNCRN_TT_4_MM_AMT
+		            , ROUND(SUM(CNCRN_TT_3_MM_AMT)/${sch_amt_unit}, 0) AS CNCRN_TT_3_MM_AMT
+		            , ROUND(SUM(CNCRN_TT_2_MM_AMT)/${sch_amt_unit}, 0) AS CNCRN_TT_2_MM_AMT
+		            , ROUND(SUM(CNCRN_TT_1_MM_AMT)/${sch_amt_unit}, 0) AS CNCRN_TT_1_MM_AMT
+		            , ROUND(SUM(PAST_YY1_AMT)/${sch_amt_unit}, 0) AS PAST_YY1_AMT
+		            , ROUND(SUM(PAST_YY2_AMT)/${sch_amt_unit}, 0) AS PAST_YY2_AMT
+		            , ROUND(SUM(PAST_YY3_AMT)/${sch_amt_unit}, 0) AS PAST_YY3_AMT
+		            
+		            , ROUND(SUM(ORD_YY_AMT), 0) AS ORD_YY_AMT0
+		            , ROUND(SUM(CNCRN_TT_12_MM_AMT), 0) AS CNCRN_TT_12_MM_AMT0
+		            , ROUND(SUM(CNCRN_TT_11_MM_AMT), 0) AS CNCRN_TT_11_MM_AMT0
+		            , ROUND(SUM(CNCRN_TT_10_MM_AMT), 0) AS CNCRN_TT_10_MM_AMT0
+		            , ROUND(SUM(CNCRN_TT_9_MM_AMT), 0) AS CNCRN_TT_9_MM_AMT0
+		            , ROUND(SUM(CNCRN_TT_8_MM_AMT), 0) AS CNCRN_TT_8_MM_AMT0
+		            , ROUND(SUM(CNCRN_TT_7_MM_AMT), 0) AS CNCRN_TT_7_MM_AMT0
+		            , ROUND(SUM(CNCRN_TT_6_MM_AMT), 0) AS CNCRN_TT_6_MM_AMT0
+		            , ROUND(SUM(CNCRN_TT_5_MM_AMT), 0) AS CNCRN_TT_5_MM_AMT0
+		            , ROUND(SUM(CNCRN_TT_4_MM_AMT), 0) AS CNCRN_TT_4_MM_AMT0
+		            , ROUND(SUM(CNCRN_TT_3_MM_AMT), 0) AS CNCRN_TT_3_MM_AMT0
+		            , ROUND(SUM(CNCRN_TT_2_MM_AMT), 0) AS CNCRN_TT_2_MM_AMT0
+		            , ROUND(SUM(CNCRN_TT_1_MM_AMT), 0) AS CNCRN_TT_1_MM_AMT0
+		            , ROUND(SUM(PAST_YY1_AMT), 0) AS PAST_YY1_AMT0
+		            , ROUND(SUM(PAST_YY2_AMT), 0) AS PAST_YY2_AMT0
+		            , ROUND(SUM(PAST_YY3_AMT), 0) AS PAST_YY3_AMT0
+		        FROM (
+		            SELECT
+		                B.LVL1
+		                , B.LVL2
+		                , B.LVL3
+		                , B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3 AS PRNT_ORD
+		                , NVL(A.ORD_YY_AMT, 0) AS ORD_YY_AMT
+		                , NVL(A.CNCRN_TT_12_MM_AMT, 0) AS CNCRN_TT_12_MM_AMT
+		                , NVL(A.CNCRN_TT_11_MM_AMT, 0) AS CNCRN_TT_11_MM_AMT
+		                , NVL(A.CNCRN_TT_10_MM_AMT, 0) AS CNCRN_TT_10_MM_AMT
+		                , NVL(A.CNCRN_TT_9_MM_AMT, 0) AS CNCRN_TT_9_MM_AMT
+		                , NVL(A.CNCRN_TT_8_MM_AMT, 0) AS CNCRN_TT_8_MM_AMT
+		                , NVL(A.CNCRN_TT_7_MM_AMT, 0) AS CNCRN_TT_7_MM_AMT
+		                , NVL(A.CNCRN_TT_6_MM_AMT, 0) AS CNCRN_TT_6_MM_AMT
+		                , NVL(A.CNCRN_TT_5_MM_AMT, 0) AS CNCRN_TT_5_MM_AMT
+		                , NVL(A.CNCRN_TT_4_MM_AMT, 0) AS CNCRN_TT_4_MM_AMT
+		                , NVL(A.CNCRN_TT_3_MM_AMT, 0) AS CNCRN_TT_3_MM_AMT
+		                , NVL(A.CNCRN_TT_2_MM_AMT, 0) AS CNCRN_TT_2_MM_AMT
+		                , NVL(A.CNCRN_TT_1_MM_AMT, 0) AS CNCRN_TT_1_MM_AMT
+		                , NVL(A.PAST_YY1_AMT, 0) AS PAST_YY1_AMT
+		                , NVL(A.PAST_YY2_AMT, 0) AS PAST_YY2_AMT
+		                , NVL(A.PAST_YY3_AMT, 0) AS PAST_YY3_AMT
+		            FROM DATA_TB A
+		            JOIN (
+		                SELECT 
+		                    SYS_CONNECT_BY_PATH(TRIM(PL_ITEM_NM), '%'), PL_ITEM_C, PRNT_ORD, ORG_CLAS_C
+		                    , REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PL_ITEM_NM), '%'),'[^%]+' , 1 , 1 ) AS LVL1
+		                    , REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PL_ITEM_NM), '%'),'[^%]+' , 1 , 2 ) AS LVL2
+		                    , REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PL_ITEM_NM), '%'),'[^%]+' , 1 , 3 ) AS LVL3
+		                    , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM000'), '%'),'[^%]+' , 1 , 1 ),'999') AS PRNT_ORD1
+		                    , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM000'), '%'),'[^%]+' , 1 , 2 ),'999') AS PRNT_ORD2
+		                    , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM000'), '%'),'[^%]+' , 1 , 3 ),'999') AS PRNT_ORD3
+		                FROM TSI_ASSM_TTRM_PL_ITEM_MNG
+		                START WITH UP_PL_ITEM_C = '000'
+		                CONNECT BY PRIOR PL_ITEM_C = UP_PL_ITEM_C AND PRIOR ORG_CLAS_C = ORG_CLAS_C
+		                ORDER BY ORG_CLAS_C, PRNT_ORD
+		            ) B ON B.ORG_CLAS_C = A.ORG_CLAS_C AND B.PL_ITEM_C = A.PL_ITEM_C
+		        )
+		        GROUP BY LVL1, LVL2, LVL3
+		    )
+		    GROUP BY LVL1, ROLLUP(LVL2, LVL3)
+		)
+		ORDER BY PRNT_ORD, GRP_ID
+	</select>
+	
+	<select id="selectPrftAstsList" parameterType="java.util.Map" resultType="java.util.HashMap">
+	    SELECT
+	        SUM(ROUND(A.ORD_YY_AMT, 0)) AS ORD_YY_AMT
+		    , SUM(ROUND(A.CNCRN_TT_12_MM_AMT, 0)) AS CNCRN_TT_12_MM_AMT
+		    , SUM(ROUND(A.CNCRN_TT_11_MM_AMT, 0)) AS CNCRN_TT_11_MM_AMT
+		    , SUM(ROUND(A.CNCRN_TT_10_MM_AMT, 0)) AS CNCRN_TT_10_MM_AMT
+		    , SUM(ROUND(A.CNCRN_TT_9_MM_AMT, 0)) AS CNCRN_TT_9_MM_AMT
+		    , SUM(ROUND(A.CNCRN_TT_8_MM_AMT, 0)) AS CNCRN_TT_8_MM_AMT
+		    , SUM(ROUND(A.CNCRN_TT_7_MM_AMT, 0)) AS CNCRN_TT_7_MM_AMT
+		    , SUM(ROUND(A.CNCRN_TT_6_MM_AMT, 0)) AS CNCRN_TT_6_MM_AMT
+		    , SUM(ROUND(A.CNCRN_TT_5_MM_AMT, 0)) AS CNCRN_TT_5_MM_AMT
+		    , SUM(ROUND(A.CNCRN_TT_4_MM_AMT, 0)) AS CNCRN_TT_4_MM_AMT
+		    , SUM(ROUND(A.CNCRN_TT_3_MM_AMT, 0)) AS CNCRN_TT_3_MM_AMT
+		    , SUM(ROUND(A.CNCRN_TT_2_MM_AMT, 0)) AS CNCRN_TT_2_MM_AMT
+		    , SUM(ROUND(A.CNCRN_TT_1_MM_AMT, 0)) AS CNCRN_TT_1_MM_AMT
+		    , SUM(ROUND(A.PAST_YY1_AMT, 0)) AS PAST_YY1_AMT
+		    , SUM(ROUND(A.PAST_YY2_AMT, 0)) AS PAST_YY2_AMT
+		    , SUM(ROUND(A.PAST_YY3_AMT, 0)) AS PAST_YY3_AMT
+	    FROM TSI_ASSM_TTRM_PL_RPRT A
+	    WHERE A.BASE_DATE = #{sch_base_date}
+		<if test='sch_br_c == "ALL"'>
+		AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BR_TC = '03') /*전체조합*/
+		</if>
+		<if test="sch_br_c != 'ALL'">
+			<if test="sch_br_c == '001'">
+		AND A.BR_C = '001' /*중앙회*/
+			</if>
+			<if test="sch_br_c != '001' and (sch_blng_hq_br_c == '' or sch_blng_hq_br_c == null)">
+		AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{sch_br_c}) /*도지회별합산*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'Y'.toString()">
+		AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{sch_br_c}) /*단위조합별조회(지소포함)*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'N'.toString()">
+		AND A.BR_C = #{sch_br_c}
+			</if>
+		</if>
+		<choose>
+			<when test="sch_ac_busi_tc == '0000'">
+		AND A.AC_BUSI_TC IN ('1105', '1106', '1107') --회계구분
+			</when>
+			<otherwise>
+		AND A.AC_BUSI_TC = #{sch_ac_busi_tc} --회계구분
+			</otherwise>
+		</choose>
+		AND A.SIMU_NO = #{sch_simu_no}
+		AND A.PL_ITEM_C = 'A00'
+		AND A.NON_INT_PL_SNRO_SET_METH_C = '00'
+	</select>
+	
+	<select id="selectBaseDateSchCbList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT 
+			TO_CHAR(TO_DATE(MAX(BASE_DATE), 'YYYYMMDD'), 'YYYY-MM-DD') AS BASE_DATE 
+		FROM TSI_ASSM_TTRM_PL_RPRT
+	</select>
+
+</mapper>

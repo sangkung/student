@@ -1,0 +1,562 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_4056Mapper">
+
+	<!-- 고객행동 만기해지 내역 조회  -->
+	<select id="selectCsBhorList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		WITH CS_BHOR AS (
+			SELECT 
+			    A.BASE_DATE
+			    , A.ORG_CLAS_C
+			    , A.BR_C
+			    , A.AC_BUSI_TC
+			    , A.ACCT_C
+			    , A.FIX_VAR_TC
+			    , A.RATE_VAR_CYCL
+			    , A.RATE_VAR_CYCL_UNIT_C
+			    , A.ALM_BASE_RATE_C
+			    , A.PRIN_RMBR_METH_C
+			    , A.PRIN_PAY_RMBR_CYCL
+			    , A.PRIN_PAY_RMBR_CYCL_UNIT_C
+			    , A.INT_PAY_RMBR_CYCL
+			    , A.INT_PAY_RMBR_CYCL_UNIT_C
+			    , A.INT_CINT_SINT_TC
+			    , A.CONT_TRM_SECT_C
+			    , A.ALM_MRTG_TC
+			    , A.LN_DP_GD_C
+			    , A.IRRBB_CS_CLAS_C
+			    , A.CS_BHOR_TC
+			    , DECODE(A.BASE_DATE, #{sch_base_date}, NVL(A.CS_BHOR_DVSR_AMT,0), 0) AS CS_BHOR_DVSR_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -1), 'YYYYMMDD'), NVL(A.CS_BHOR_DVSR_AMT,0), 0) AS M1_CS_BHOR_DVSR_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -2), 'YYYYMMDD'), NVL(A.CS_BHOR_DVSR_AMT,0), 0) AS M2_CS_BHOR_DVSR_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -3), 'YYYYMMDD'), NVL(A.CS_BHOR_DVSR_AMT,0), 0) AS M3_CS_BHOR_DVSR_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -4), 'YYYYMMDD'), NVL(A.CS_BHOR_DVSR_AMT,0), 0) AS M4_CS_BHOR_DVSR_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -5), 'YYYYMMDD'), NVL(A.CS_BHOR_DVSR_AMT,0), 0) AS M5_CS_BHOR_DVSR_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -6), 'YYYYMMDD'), NVL(A.CS_BHOR_DVSR_AMT,0), 0) AS M6_CS_BHOR_DVSR_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -7), 'YYYYMMDD'), NVL(A.CS_BHOR_DVSR_AMT,0), 0) AS M7_CS_BHOR_DVSR_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -8), 'YYYYMMDD'), NVL(A.CS_BHOR_DVSR_AMT,0), 0) AS M8_CS_BHOR_DVSR_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -9), 'YYYYMMDD'), NVL(A.CS_BHOR_DVSR_AMT,0), 0) AS M9_CS_BHOR_DVSR_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -10), 'YYYYMMDD'), NVL(A.CS_BHOR_DVSR_AMT,0), 0) AS M10_CS_BHOR_DVSR_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -11), 'YYYYMMDD'), NVL(A.CS_BHOR_DVSR_AMT,0), 0) AS M11_CS_BHOR_DVSR_AMT
+			    , DECODE(A.BASE_DATE, #{sch_base_date}, NVL(A.CS_BHOR_FACN_AMT,0), 0) AS CS_BHOR_FACN_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -1), 'YYYYMMDD'), NVL(A.CS_BHOR_FACN_AMT,0), 0) AS M1_CS_BHOR_FACN_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -2), 'YYYYMMDD'), NVL(A.CS_BHOR_FACN_AMT,0), 0) AS M2_CS_BHOR_FACN_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -3), 'YYYYMMDD'), NVL(A.CS_BHOR_FACN_AMT,0), 0) AS M3_CS_BHOR_FACN_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -4), 'YYYYMMDD'), NVL(A.CS_BHOR_FACN_AMT,0), 0) AS M4_CS_BHOR_FACN_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -5), 'YYYYMMDD'), NVL(A.CS_BHOR_FACN_AMT,0), 0) AS M5_CS_BHOR_FACN_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -6), 'YYYYMMDD'), NVL(A.CS_BHOR_FACN_AMT,0), 0) AS M6_CS_BHOR_FACN_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -7), 'YYYYMMDD'), NVL(A.CS_BHOR_FACN_AMT,0), 0) AS M7_CS_BHOR_FACN_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -8), 'YYYYMMDD'), NVL(A.CS_BHOR_FACN_AMT,0), 0) AS M8_CS_BHOR_FACN_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -9), 'YYYYMMDD'), NVL(A.CS_BHOR_FACN_AMT,0), 0) AS M9_CS_BHOR_FACN_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -10), 'YYYYMMDD'), NVL(A.CS_BHOR_FACN_AMT,0), 0) AS M10_CS_BHOR_FACN_AMT
+			    , DECODE(A.BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -11), 'YYYYMMDD'), NVL(A.CS_BHOR_FACN_AMT,0), 0) AS M11_CS_BHOR_FACN_AMT
+			    , DECODE(A.BASE_DATE, #{sch_base_date}, NVL(A.CS_BHOR_DVSR_ACC_CNT,0), 0) AS CS_BHOR_DVSR_ACC_CNT
+			    , DECODE(A.BASE_DATE, #{sch_base_date}, NVL(A.CS_BHOR_FACN_ACC_CNT,0), 0) AS CS_BHOR_FACN_ACC_CNT
+		<if test="sch_dims_item_no != '' and sch_dims_item_no != null">
+			    , NVL(B1.DIMS_CDNM, '-') AS DIMS_CDNM1
+			    , B1.DIMS_C_VAL AS DIMS_C1
+		</if>
+		<if test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null">
+			    , NVL(B2.DIMS_CDNM, '-') AS DIMS_CDNM2
+			    , B2.DIMS_C_VAL AS DIMS_C2
+		</if>
+		<if test="sch_dims_item_no == '' or sch_dims_item_no == null">
+			    , '0' AS DIMS_C1
+		</if>
+		<if test="sch_dims_item_no2 == '' or sch_dims_item_no2 == null">
+			    , '0' AS DIMS_C2
+		</if>
+			FROM TST_CS_BHOR_TOT A
+		<if test="sch_dims_item_no != '' and sch_dims_item_no != null">
+                , TSY_DIMS_ITEM_MNG B1
+        </if>
+        <if test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null">
+                , TSY_DIMS_ITEM_MNG B2
+        </if>
+			WHERE A.BASE_DATE &lt;= #{sch_base_date}
+			AND A.BASE_DATE &gt; TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -12), 'YYYYMMDD')
+			AND A.CS_BHOR_TC = #{p_cs_bhor_tc}
+		<if test='sch_br_c == "ALL"'>
+			AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BR_TC = '03') /*전체조합*/
+		</if>
+		<if test="sch_br_c != 'ALL'">
+			<if test="sch_br_c == '001'">
+			AND A.BR_C = '001' /*중앙회*/
+			</if>
+			<if test="sch_br_c != '001' and (sch_blng_hq_br_c == '' or sch_blng_hq_br_c == null)">
+			AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{sch_br_c}) /*도지회별합산*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'Y'.toString()">
+			AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{sch_br_c}) /*단위조합별조회(지소포함)*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'N'.toString()">
+			AND A.BR_C = #{sch_br_c}
+			</if>
+		</if>
+		<if test="sch_dims_item_no == 1">
+			AND B1.DIMS_ITEM_NO(+) = '1'
+			AND B1.DIMS_C_VAL(+) = A.FIX_VAR_TC
+		</if>
+		<if test="sch_dims_item_no == 2">
+			AND B1.DIMS_ITEM_NO(+) = '2'
+			AND B1.DIMS_C_VAL(+) = A.RATE_VAR_CYCL
+		</if>
+		<if test="sch_dims_item_no == 3">
+			AND B1.DIMS_ITEM_NO(+) = '3'
+			AND B1.DIMS_C_VAL(+) = A.ALM_BASE_RATE_C
+		</if>
+		<if test="sch_dims_item_no == 4">
+			AND B1.DIMS_ITEM_NO(+) = '4'
+			AND B1.DIMS_C_VAL(+) = A.PRIN_RMBR_METH_C
+		</if>
+		<if test="sch_dims_item_no == 5">
+			AND B1.DIMS_ITEM_NO(+) = '5'
+			AND B1.DIMS_C_VAL(+) = A.CONT_TRM_SECT_C
+		</if>
+		<if test="sch_dims_item_no == 6">
+			AND B1.DIMS_ITEM_NO(+) = '6'
+			AND B1.DIMS_C_VAL(+) = A.ALM_MRTG_TC
+		</if>
+		<if test="sch_dims_item_no == 7">
+			AND B1.DIMS_ITEM_NO(+) = '7'
+			AND B1.DIMS_C_VAL(+) = A.LN_DP_GD_C
+		</if>
+		<if test="sch_dims_item_no2 == 1">
+			AND B2.DIMS_ITEM_NO(+) = '1'
+			AND B2.DIMS_C_VAL(+) = A.FIX_VAR_TC
+		</if>
+		<if test="sch_dims_item_no2 == 2">
+			AND B2.DIMS_ITEM_NO(+) = '2'
+			AND B2.DIMS_C_VAL(+) = A.RATE_VAR_CYCL
+		</if>
+		<if test="sch_dims_item_no2 == 3">
+			AND B2.DIMS_ITEM_NO(+) = '3'
+			AND B2.DIMS_C_VAL(+) = A.ALM_BASE_RATE_C
+		</if>
+		<if test="sch_dims_item_no2 == 4">
+			AND B2.DIMS_ITEM_NO(+) = '4'
+			AND B2.DIMS_C_VAL(+) = A.PRIN_RMBR_METH_C
+		</if>
+		<if test="sch_dims_item_no2 == 5">
+			AND B2.DIMS_ITEM_NO(+) = '5'
+			AND B2.DIMS_C_VAL(+) = A.CONT_TRM_SECT_C
+		</if>
+		<if test="sch_dims_item_no2 == 6">
+			AND B2.DIMS_ITEM_NO(+) = '6'
+			AND B2.DIMS_C_VAL(+) = A.ALM_MRTG_TC
+		</if>
+		<if test="sch_dims_item_no2 == 7">
+			AND B2.DIMS_ITEM_NO(+) = '7'
+			AND B2.DIMS_C_VAL(+) = A.LN_DP_GD_C
+		</if>
+		)
+		SELECT
+			MAX(BASE_DATE) AS BASE_DATE 
+		    , LVL1 AS ACCT_C_NM1
+		<if test="sch_acc_tc_lvl == 1">
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, GROUPING_ID (DIMS_CDNM1) AS GRP_ID
+			, DECODE(GROUPING_ID (DIMS_CDNM1), 1, LVL1||' 소계', DIMS_CDNM1) AS DIMS_CDNM1
+			, '' AS DIMS_CDNM2	
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, GROUPING_ID (DIMS_CDNM1, DIMS_CDNM2) AS GRP_ID
+			, DECODE(GROUPING_ID (DIMS_CDNM1, DIMS_CDNM2), 3, LVL1||' 소계', DIMS_CDNM1) AS DIMS_CDNM1
+			, DECODE(GROUPING_ID (DIMS_CDNM1, DIMS_CDNM2), 1, DIMS_CDNM1||' 소계', DIMS_CDNM2) AS DIMS_CDNM2	
+				</when>
+				<otherwise>
+			, 0 AS GRP_ID	
+			, '' AS DIMS_CDNM1
+			, '' AS DIMS_CDNM2
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 2">
+			, DECODE(GROUPING_ID (LVL2), 1, LVL1||' 소계', LVL2) AS ACCT_C_NM2 
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, GROUPING_ID (LVL2, DIMS_CDNM1) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, DIMS_CDNM1), 1, LVL2||' 소계', DIMS_CDNM1) AS DIMS_CDNM1	
+			, '' AS DIMS_CDNM2
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, GROUPING_ID (LVL2, DIMS_CDNM1, DIMS_CDNM2) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, DIMS_CDNM1, DIMS_CDNM2), 3, LVL2||' 소계', DIMS_CDNM1) AS DIMS_CDNM1
+			, DECODE(GROUPING_ID (LVL2, DIMS_CDNM1, DIMS_CDNM2), 1, DIMS_CDNM1||' 소계', DIMS_CDNM2) AS DIMS_CDNM2	
+				</when>
+				<otherwise>
+			, GROUPING_ID (LVL2) AS GRP_ID	
+			, '' AS DIMS_CDNM1
+			, '' AS DIMS_CDNM2
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 3">
+			, DECODE(GROUPING_ID (LVL2, LVL3), 3, LVL1||' 소계', LVL2) AS ACCT_C_NM2 
+			, DECODE(GROUPING_ID (LVL2, LVL3), 1, LVL2||' 소계', LVL3) AS ACCT_C_NM3 
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, GROUPING_ID (LVL2, LVL3, DIMS_CDNM1) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, LVL3, DIMS_CDNM1), 1, LVL3||' 소계', DIMS_CDNM1) AS DIMS_CDNM1	
+			, '' AS DIMS_CDNM2
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, GROUPING_ID (LVL2, LVL3, DIMS_CDNM1, DIMS_CDNM2) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, LVL3, DIMS_CDNM1, DIMS_CDNM2), 3, LVL3||' 소계', DIMS_CDNM1) AS DIMS_CDNM1
+			, DECODE(GROUPING_ID (LVL2, LVL3, DIMS_CDNM1, DIMS_CDNM2), 1, DIMS_CDNM1||' 소계', DIMS_CDNM2) AS DIMS_CDNM2	
+				</when>
+				<otherwise>
+			, GROUPING_ID (LVL2, LVL3) AS GRP_ID	
+			, '' AS DIMS_CDNM1
+			, '' AS DIMS_CDNM2
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 4">
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4), 7, LVL1||' 소계', LVL2) AS ACCT_C_NM2 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4), 3, LVL2||' 소계', LVL3) AS ACCT_C_NM3 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4), 1, LVL3||' 소계', LVL4) AS ACCT_C_NM4
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, GROUPING_ID (LVL2, LVL3, LVL4, DIMS_CDNM1) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, DIMS_CDNM1), 1, LVL4||' 소계', DIMS_CDNM1) AS DIMS_CDNM1	
+			, '' AS DIMS_CDNM2
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, GROUPING_ID (LVL2, LVL3, LVL4, DIMS_CDNM1, DIMS_CDNM2) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, DIMS_CDNM1, DIMS_CDNM2), 3, LVL4||' 소계', DIMS_CDNM1) AS DIMS_CDNM1
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, DIMS_CDNM1, DIMS_CDNM2), 1, DIMS_CDNM1||' 소계', DIMS_CDNM2) AS DIMS_CDNM2	
+				</when>
+				<otherwise>
+			, GROUPING_ID (LVL2, LVL3, LVL4) AS GRP_ID	
+			, '' AS DIMS_CDNM1
+			, '' AS DIMS_CDNM2
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 5">
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5), 15, LVL1||' 소계', LVL2) AS ACCT_C_NM2 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5), 7, LVL2||' 소계', LVL3) AS ACCT_C_NM3 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5), 3, LVL3||' 소계', LVL4) AS ACCT_C_NM4 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5), 1, LVL4||' 소계', LVL5) AS ACCT_C_NM5 
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, GROUPING_ID (LVL2, LVL3, LVL4, LVL5, DIMS_CDNM1) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, DIMS_CDNM1), 1, LVL5||' 소계', DIMS_CDNM1) AS DIMS_CDNM1	
+			, '' AS DIMS_CDNM2
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, GROUPING_ID (LVL2, LVL3, LVL4, LVL5, DIMS_CDNM1, DIMS_CDNM2) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, DIMS_CDNM1, DIMS_CDNM2), 3, LVL5||' 소계', DIMS_CDNM1) AS DIMS_CDNM1
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, DIMS_CDNM1, DIMS_CDNM2), 1, DIMS_CDNM1||' 소계', DIMS_CDNM2) AS DIMS_CDNM2	
+				</when>
+				<otherwise>
+			, GROUPING_ID (LVL2, LVL3, LVL4, LVL5) AS GRP_ID	
+			, '' AS DIMS_CDNM1
+			, '' AS DIMS_CDNM2
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 6">
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 31, LVL1||' 소계', LVL2) AS ACCT_C_NM2 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 15, LVL2||' 소계', LVL3) AS ACCT_C_NM3 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 7, LVL3||' 소계', LVL4) AS ACCT_C_NM4 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 3, LVL4||' 소계', LVL5) AS ACCT_C_NM5 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 1, LVL5||' 소계', LVL6) AS ACCT_C_NM6
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, DIMS_CDNM1) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, DIMS_CDNM1), 1, LVL6||' 소계', DIMS_CDNM1) AS DIMS_CDNM1	
+			, '' AS DIMS_CDNM2
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, DIMS_CDNM1, DIMS_CDNM2) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, DIMS_CDNM1, DIMS_CDNM2), 3, LVL6||' 소계', DIMS_CDNM1) AS DIMS_CDNM1
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, DIMS_CDNM1, DIMS_CDNM2), 1, DIMS_CDNM1||' 소계', DIMS_CDNM2) AS DIMS_CDNM2
+				</when>
+				<otherwise>
+			, GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6) AS GRP_ID	
+			, '' AS DIMS_CDNM1
+			, '' AS DIMS_CDNM2
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 7">
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 63, LVL1||' 소계', LVL2) AS ACCT_C_NM2
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 31, LVL2||' 소계', LVL3) AS ACCT_C_NM3 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 15, LVL3||' 소계', LVL4) AS ACCT_C_NM4 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 7, LVL4||' 소계', LVL5) AS ACCT_C_NM5 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 3, LVL5||' 소계', LVL6) AS ACCT_C_NM6 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 1, LVL6||' 소계', LVL7) AS ACCT_C_NM7
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMS_CDNM1) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMS_CDNM1), 1, LVL6||' 소계', DIMS_CDNM1) AS DIMS_CDNM1	
+			, '' AS DIMS_CDNM2
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMS_CDNM1, DIMS_CDNM2) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMS_CDNM1, DIMS_CDNM2), 3, LVL7||' 소계', DIMS_CDNM1) AS DIMS_CDNM1
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6,, LVL7 DIMS_CDNM1, DIMS_CDNM2), 1, DIMS_CDNM1||' 소계', DIMS_CDNM2) AS DIMS_CDNM2
+				</when>
+				<otherwise>
+			, GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7) AS GRP_ID	
+			, '' AS DIMS_CDNM1
+			, '' AS DIMS_CDNM2
+				</otherwise>
+			</choose>
+		</if>
+		    , ROUND(SUM(CS_BHOR_DVSR_AMT)/TO_NUMBER(#{sch_amt_unit}),0) AS CS_BHOR_DVSR_AMT
+		    , SUM(CS_BHOR_DVSR_ACC_CNT) AS CS_BHOR_DVSR_ACC_CNT
+		    , ROUND(SUM(CS_BHOR_FACN_AMT)/TO_NUMBER(#{sch_amt_unit}),0) AS CS_BHOR_FACN_AMT
+		    , SUM(CS_BHOR_FACN_ACC_CNT) AS CS_BHOR_FACN_ACC_CNT
+		    , CASE WHEN SUM(CS_BHOR_DVSR_AMT) = 0 THEN 0 ELSE ROUND(SUM(CS_BHOR_FACN_AMT)/SUM(CS_BHOR_DVSR_AMT),5) END AS CS_BHOR_PROD_RTO
+		    , SUM(CS_BHOR_DVSR_AMT) AS M0_CS_BHOR_DVSR_AMT
+		    , SUM(M1_CS_BHOR_DVSR_AMT) AS M1_CS_BHOR_DVSR_AMT
+		    , SUM(M2_CS_BHOR_DVSR_AMT) AS M2_CS_BHOR_DVSR_AMT
+		    , SUM(M3_CS_BHOR_DVSR_AMT) AS M3_CS_BHOR_DVSR_AMT
+		    , SUM(M4_CS_BHOR_DVSR_AMT) AS M4_CS_BHOR_DVSR_AMT
+		    , SUM(M5_CS_BHOR_DVSR_AMT) AS M5_CS_BHOR_DVSR_AMT
+		    , SUM(M6_CS_BHOR_DVSR_AMT) AS M6_CS_BHOR_DVSR_AMT
+		    , SUM(M7_CS_BHOR_DVSR_AMT) AS M7_CS_BHOR_DVSR_AMT
+		    , SUM(M8_CS_BHOR_DVSR_AMT) AS M8_CS_BHOR_DVSR_AMT
+		    , SUM(M9_CS_BHOR_DVSR_AMT) AS M9_CS_BHOR_DVSR_AMT
+		    , SUM(M10_CS_BHOR_DVSR_AMT) AS M10_CS_BHOR_DVSR_AMT
+		    , SUM(M11_CS_BHOR_DVSR_AMT) AS M11_CS_BHOR_DVSR_AMT
+		    , SUM(CS_BHOR_FACN_AMT) AS M0_CS_BHOR_FACN_AMT
+		    , SUM(M1_CS_BHOR_FACN_AMT) AS M1_CS_BHOR_FACN_AMT
+		    , SUM(M2_CS_BHOR_FACN_AMT) AS M2_CS_BHOR_FACN_AMT
+		    , SUM(M3_CS_BHOR_FACN_AMT) AS M3_CS_BHOR_FACN_AMT
+		    , SUM(M4_CS_BHOR_FACN_AMT) AS M4_CS_BHOR_FACN_AMT
+		    , SUM(M5_CS_BHOR_FACN_AMT) AS M5_CS_BHOR_FACN_AMT
+		    , SUM(M6_CS_BHOR_FACN_AMT) AS M6_CS_BHOR_FACN_AMT
+		    , SUM(M7_CS_BHOR_FACN_AMT) AS M7_CS_BHOR_FACN_AMT
+		    , SUM(M8_CS_BHOR_FACN_AMT) AS M8_CS_BHOR_FACN_AMT
+		    , SUM(M9_CS_BHOR_FACN_AMT) AS M9_CS_BHOR_FACN_AMT
+		    , SUM(M10_CS_BHOR_FACN_AMT) AS M10_CS_BHOR_FACN_AMT
+		    , SUM(M11_CS_BHOR_FACN_AMT) AS M11_CS_BHOR_FACN_AMT
+		    , CASE WHEN SUM(M1_CS_BHOR_DVSR_AMT) = 0 THEN 0 ELSE ROUND(SUM(M1_CS_BHOR_FACN_AMT)/SUM(M1_CS_BHOR_DVSR_AMT),5) END AS M1_CS_BHOR_PROD_RTO
+		    , CASE WHEN SUM(M2_CS_BHOR_DVSR_AMT) = 0 THEN 0 ELSE ROUND(SUM(M2_CS_BHOR_FACN_AMT)/SUM(M2_CS_BHOR_DVSR_AMT),5) END AS M2_CS_BHOR_PROD_RTO
+		    , CASE WHEN SUM(M3_CS_BHOR_DVSR_AMT) = 0 THEN 0 ELSE ROUND(SUM(M3_CS_BHOR_FACN_AMT)/SUM(M3_CS_BHOR_DVSR_AMT),5) END AS M3_CS_BHOR_PROD_RTO
+		    , CASE WHEN SUM(M4_CS_BHOR_DVSR_AMT) = 0 THEN 0 ELSE ROUND(SUM(M4_CS_BHOR_FACN_AMT)/SUM(M4_CS_BHOR_DVSR_AMT),5) END AS M4_CS_BHOR_PROD_RTO
+		    , CASE WHEN SUM(M5_CS_BHOR_DVSR_AMT) = 0 THEN 0 ELSE ROUND(SUM(M5_CS_BHOR_FACN_AMT)/SUM(M5_CS_BHOR_DVSR_AMT),5) END AS M5_CS_BHOR_PROD_RTO
+		    , CASE WHEN SUM(M6_CS_BHOR_DVSR_AMT) = 0 THEN 0 ELSE ROUND(SUM(M6_CS_BHOR_FACN_AMT)/SUM(M6_CS_BHOR_DVSR_AMT),5) END AS M6_CS_BHOR_PROD_RTO
+		    , CASE WHEN SUM(M7_CS_BHOR_DVSR_AMT) = 0 THEN 0 ELSE ROUND(SUM(M7_CS_BHOR_FACN_AMT)/SUM(M7_CS_BHOR_DVSR_AMT),5) END AS M7_CS_BHOR_PROD_RTO
+		    , CASE WHEN SUM(M8_CS_BHOR_DVSR_AMT) = 0 THEN 0 ELSE ROUND(SUM(M8_CS_BHOR_FACN_AMT)/SUM(M8_CS_BHOR_DVSR_AMT),5) END AS M8_CS_BHOR_PROD_RTO
+		    , CASE WHEN SUM(M9_CS_BHOR_DVSR_AMT) = 0 THEN 0 ELSE ROUND(SUM(M9_CS_BHOR_FACN_AMT)/SUM(M9_CS_BHOR_DVSR_AMT),5) END AS M9_CS_BHOR_PROD_RTO
+		    , CASE WHEN SUM(M10_CS_BHOR_DVSR_AMT) = 0 THEN 0 ELSE ROUND(SUM(M10_CS_BHOR_FACN_AMT)/SUM(M10_CS_BHOR_DVSR_AMT),5) END AS M10_CS_BHOR_PROD_RTO
+		    , CASE WHEN SUM(M11_CS_BHOR_DVSR_AMT) = 0 THEN 0 ELSE ROUND(SUM(M11_CS_BHOR_FACN_AMT)/SUM(M11_CS_BHOR_DVSR_AMT),5) END AS M11_CS_BHOR_PROD_RTO
+		    , MAX(PRNT_ORD) AS PRNT_ORD_PATH
+		FROM (
+		    SELECT 
+		    	A.BASE_DATE
+		        , B.LVL1
+		        , B.LVL2
+		        , B.LVL3
+		        , B.LVL4
+		        , B.LVL5
+		        , B.LVL6
+		        , B.ACCT_C_NM
+		        , A.CS_BHOR_DVSR_AMT
+		        , A.CS_BHOR_DVSR_ACC_CNT
+		        , A.CS_BHOR_FACN_AMT
+		        , A.CS_BHOR_FACN_ACC_CNT
+		        , B.PRNT_ORD2
+		        , B.PRNT_ORD3
+		        , B.PRNT_ORD4
+		        , B.PRNT_ORD5
+		        , B.PRNT_ORD6
+		        , M1_CS_BHOR_DVSR_AMT
+		        , M2_CS_BHOR_DVSR_AMT
+		        , M3_CS_BHOR_DVSR_AMT
+		        , M4_CS_BHOR_DVSR_AMT
+		        , M5_CS_BHOR_DVSR_AMT
+		        , M6_CS_BHOR_DVSR_AMT
+		        , M7_CS_BHOR_DVSR_AMT
+		        , M8_CS_BHOR_DVSR_AMT
+		        , M9_CS_BHOR_DVSR_AMT
+		        , M10_CS_BHOR_DVSR_AMT
+		        , M11_CS_BHOR_DVSR_AMT
+		        , M1_CS_BHOR_FACN_AMT
+		        , M2_CS_BHOR_FACN_AMT
+		        , M3_CS_BHOR_FACN_AMT
+		        , M4_CS_BHOR_FACN_AMT
+		        , M5_CS_BHOR_FACN_AMT
+		        , M6_CS_BHOR_FACN_AMT
+		        , M7_CS_BHOR_FACN_AMT
+		        , M8_CS_BHOR_FACN_AMT
+		        , M9_CS_BHOR_FACN_AMT
+		        , M10_CS_BHOR_FACN_AMT
+		        , M11_CS_BHOR_FACN_AMT
+		<if test="sch_dims_item_no != '' and sch_dims_item_no != null">
+            	, DIMS_CDNM1
+        </if>
+        <if test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null">
+            	, DIMS_CDNM2
+        </if>
+
+        <if test="sch_acc_tc_lvl == 1">
+        		, B.PRNT_ORD1||LPAD(NVL(DIMS_C1, '0'), 7, '0')||LPAD(NVL(DIMS_C2, '0'), 7, '0') AS PRNT_ORD
+		</if>
+        <if test="sch_acc_tc_lvl == 2">
+        		, B.PRNT_ORD1||B.PRNT_ORD2||LPAD(NVL(DIMS_C1, '0'), 7, '0')||LPAD(NVL(DIMS_C2, '0'), 7, '0') AS PRNT_ORD
+		</if>
+        <if test="sch_acc_tc_lvl == 3">
+        		, B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||LPAD(NVL(DIMS_C1, '0'), 7, '0')||LPAD(NVL(DIMS_C2, '0'), 7, '0') AS PRNT_ORD
+		</if>
+        <if test="sch_acc_tc_lvl == 4">
+        		, B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||B.PRNT_ORD4||LPAD(NVL(DIMS_C1, '0'), 7, '0')||LPAD(NVL(DIMS_C2, '0'), 7, '0') AS PRNT_ORD
+		</if>
+        <if test="sch_acc_tc_lvl == 5">
+        		, B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||B.PRNT_ORD4||B.PRNT_ORD5||LPAD(NVL(DIMS_C1, '0'), 7, '0')||LPAD(NVL(DIMS_C2, '0'), 7, '0') AS PRNT_ORD
+		</if>
+        <if test="sch_acc_tc_lvl == 6">
+        		, B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||B.PRNT_ORD4||B.PRNT_ORD5||B.PRNT_ORD6||LPAD(NVL(DIMS_C1, '0'), 7, '0')||LPAD(NVL(DIMS_C2, '0'), 7, '0') AS PRNT_ORD
+		</if>
+        <if test="sch_acc_tc_lvl == 7">
+        		, B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||B.PRNT_ORD4||B.PRNT_ORD5||B.PRNT_ORD6||B.PRNT_ORD7||LPAD(NVL(DIMS_C1, '0'), 7, '0')||LPAD(NVL(DIMS_C2, '0'), 7, '0') AS PRNT_ORD
+		</if>
+		    FROM CS_BHOR A
+		    JOIN (
+		        SELECT 
+		            LEVEL, BASE_DATE, SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%') AS ACCT_PATH,
+		            REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 1 ) AS LVL1,
+		            REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 2 ) AS LVL2,
+		            REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 3 ) AS LVL3,
+		            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 4 ),TRIM(ACCT_C_NM)) AS LVL4,
+		            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 5 ),TRIM(ACCT_C_NM)) AS LVL5,
+		            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 6 ),TRIM(ACCT_C_NM)) AS LVL6,
+		            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 7 ),TRIM(ACCT_C_NM)) AS LVL7,
+		            TRIM(ACCT_C_NM) AS ACCT_C_NM,
+		            BS_PL_TC,
+		            ORG_CLAS_C,
+		            AC_BUSI_TC,
+		            ACCT_C,
+		            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 1 ),'9999') AS PRNT_ORD1,
+		            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 2 ),'9999') AS PRNT_ORD2,
+		            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 3 ),'9999') AS PRNT_ORD3,
+		            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 4 ),'9999') AS PRNT_ORD4,
+		            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 5 ),'9999') AS PRNT_ORD5,
+		            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 6 ),'9999') AS PRNT_ORD6,
+		            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 7 ),'9999') AS PRNT_ORD7
+		        FROM TSY_ACCT_MSTR_MNG
+		        WHERE BASE_DATE = (SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE &lt;= #{sch_base_date})
+		<choose>
+			<when test="sch_ac_busi_tc == '0000'">
+				AND AC_BUSI_TC = '1105' /*회계구분*/
+				START WITH UP_ACCT_C = '0000000'
+		        CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+		    ) B ON B.ACCT_C = A.ACCT_C AND B.ORG_CLAS_C = A.ORG_CLAS_C
+		    </when>
+		    <otherwise>
+		    	AND AC_BUSI_TC = #{sch_ac_busi_tc} /*회계구분*/
+		    	START WITH UP_ACCT_C = '0000000'
+		        CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+		    ) B ON B.ACCT_C = A.ACCT_C AND B.ORG_CLAS_C = A.ORG_CLAS_C AND B.AC_BUSI_TC = A.AC_BUSI_TC
+		    </otherwise>
+		</choose>
+		) 
+		GROUP BY 
+			LVL1
+		<if test="sch_acc_tc_lvl == 1">
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, ROLLUP(DIMS_CDNM1)
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, ROLLUP(DIMS_CDNM1, DIMS_CDNM2)
+				</when>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 2">
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, ROLLUP(LVL2, DIMS_CDNM1)
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, ROLLUP(LVL2, DIMS_CDNM1, DIMS_CDNM2)
+				</when>
+				<otherwise>
+			, ROLLUP(LVL2)
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 3">
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, ROLLUP(LVL2, LVL3, DIMS_CDNM1)
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, ROLLUP(LVL2, LVL3, DIMS_CDNM1, DIMS_CDNM2)
+				</when>
+				<otherwise>
+			, ROLLUP(LVL2, LVL3)
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 4">
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, ROLLUP(LVL2, LVL3, LVL4, DIMS_CDNM1)
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, ROLLUP(LVL2, LVL3, LVL4, DIMS_CDNM1, DIMS_CDNM2)
+				</when>
+				<otherwise>
+			, ROLLUP(LVL2, LVL3, LVL4)
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 5">
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, ROLLUP(LVL2, LVL3, LVL4, LVL5, DIMS_CDNM1)
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, ROLLUP(LVL2, LVL3, LVL4, LVL5, DIMS_CDNM1, DIMS_CDNM2)
+				</when>
+				<otherwise>
+			, ROLLUP(LVL2, LVL3, LVL4, LVL5)
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 6">
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, ROLLUP(LVL2, LVL3, LVL4, LVL5, LVL6, DIMS_CDNM1)
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, ROLLUP(LVL2, LVL3, LVL4, LVL5, LVL6, DIMS_CDNM1, DIMS_CDNM2)
+				</when>
+				<otherwise>
+			, ROLLUP(LVL2, LVL3, LVL4, LVL5, LVL6)
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 7">
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, ROLLUP(LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMS_CDNM1)
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, ROLLUP(LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMS_CDNM1, DIMS_CDNM2)
+				</when>
+				<otherwise>
+			, ROLLUP(LVL2, LVL3, LVL4, LVL5, LVL6, LVL7)
+				</otherwise>
+			</choose>
+		</if>
+			ORDER BY PRNT_ORD_PATH, GRP_ID
+	</select>
+	
+	<select id="selectBaseDateSchCbList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT 
+			TO_CHAR(TO_DATE(MAX(BASE_DATE), 'YYYYMMDD'), 'YYYY-MM') AS BASE_DATE 
+		FROM TST_CS_BHOR_TOT
+		<if test="p_cs_bhor_tc != '' and p_cs_bhor_tc != null">
+		WHERE CS_BHOR_TC = #{p_cs_bhor_tc}
+		</if>
+	</select>
+
+</mapper>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko"
+	xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:th="http://www.thymeleaf.org"
+    xmlns:sec="http://www.thymeleaf.org"
+    xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{common/layouts/defaultLayout}"
+    layout:fragment="Content"
+>
+  <head>
+    <meta charset="utf-8" />
+    <title>14. Tree</title>
+  </head>
+
+  <body class="jui">
+<!--   	<form th:action="@{/treeGrid}" method="get" th:object="${gridForm}"> -->
+  	<form th:object="${gridForm}" id="frm">
+  	
+	    <div>
+	    	<label for="level">레벨: </label>
+	    	<select th:field="*{level}" id="level">
+	    		<option value="">선택</option>
+	    		<option value="1">1</option>
+	    		<option value="2">2</option>
+	    		<option value="3">3</option>
+	    		<option value="4">4</option>
+	    		<option value="5">5</option>
+	    	</select>
+	    </div>
+	   	
+	   	<input type="button" id="searchBtn" value="조회" onclick="search();"/>
+	   	   
+    </form>
+    
+    <button type="button" onclick="sendGrdData();">체크된 데이터 갯</button>
+    
+    <button type="button" onclick="grdRowColorStt();">그리드 색상 투입</button>
+    
+    <div class="contents">
+      <div class="code-html">
+        <div id="grid"></div>
+      </div>
+    </div>
+    
+    <table id="table_1" class="table classic">
+	    <thead>
+	    <tr>
+	        <th>레벨1</th>
+	        <th>레벨2</th>
+	        <th>레벨3</th>
+	        <th>레벨4</th>
+	        <th>그룹id</th>
+	        <th>연봉</th>
+	    </tr>
+	    </thead>
+	    <tbody></tbody>
+	</table>
+	
+	<script data-jui="#table_1" data-tpl="row" type="text/template">
+    	<tr>
+        	<td><!= EMP_NAME1 !></td>
+        	<td><!= EMP_NAME2 !></td>
+        	<td><!= EMP_NAME3 !></td>      
+        	<td><!= EMP_NAME4 !></td>
+        	<td><!= GRP_ID !></td>
+        	<td><!= SALARY !></td>
+    	</tr>
+	</script>
+    
+  </body>
+  <!-- jui 스크립트 -->
+  <script type="text/javascript">
+  
+    // 로드 시 id가 table_1 인 테이블태그 설정
+  	jui.ready(["grid.table"], function(table){
+  		table_1 = table("#table_1", {
+  	        scroll: true,
+  	        scrollHeight: 500,
+  	        data: [{ EMP_NAME1: "1", EMP_NAME2: "2", EMP_NAME3: "3", EMP_NAME4: "4", GRP_ID: "5", SALARY: "6" }]
+  		});
+  		
+  	})
+  
+  	function search(){
+  		
+  		$.ajax({
+  			method: "POST",
+  			url: "/employeeList",
+  			success: function( data ){
+  				console.log("null 처리 전 => ", data);
+  				console.log("null 처리 후 => ", nullToNoSzieStr(data));
+  				table_1.update( nullToNoSzieStr(data) );
+  				return;
+  			},
+  			error: function(){
+  				console.log("웹서버 연결 시 에러발생");
+  			}
+  		})
+  	}  
+  	
+    
+    //************************************
+    // null 데이터 처리 함수
+    //************************************
+    function nullToNoSzieStr(data) {
+        // null 값을 빈 문자열로 대체
+        return data.map(item => {
+            let processedItem = {};
+            Object.keys(item).forEach(key => {
+                processedItem[key] = (item[key] === null) ? '' : item[key];
+            });
+            return processedItem;
+        });
+    }
+    
+    
+  </script>
+  
+</html>

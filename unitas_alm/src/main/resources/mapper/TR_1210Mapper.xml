@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_1210Mapper">
+
+
+
+
+    <!-- 여수신 최고/최저금리  현황 조회  -->
+	<select id = "selectTR_1210" parameterType="java.util.Map" resultType="java.util.HashMap">
+	
+	WITH BASE AS(
+		SELECT 
+		       BASE_DATE
+		     , ALM_WORK_TC
+		     , ORG_CLAS_C
+		     , BR_C
+		     , MNBR_TOT_YN
+		     , CUR_C
+		     , AC_BUSI_TC
+		     , STAT_RPRT_ID
+		     , STAT_RPRT_ITEM_ID
+		     , ACNO
+		     , CNO
+		     , APLY_RATE
+		     , BKPR_AMT
+		     , NEW_DATE
+		     , MTRT_DATE
+		     , LN_DP_GD_C
+		 FROM  TSR_LNDP_MAX_MIN_RATE_STAT 
+		WHERE  BASE_DATE    = #{BASE_DATE} 
+		<if test="TAB_TC == 1">
+		  AND  STAT_RPRT_ID = 'P840'
+		</if>
+		<if test="TAB_TC == 2">
+		  AND  STAT_RPRT_ID = 'P930'
+		</if>
+		<if test="TAB_TC == 3">
+		  AND  STAT_RPRT_ID = 'P940'
+		</if>
+		  AND  ALM_WORK_TC  = 'M'
+		  AND  CUR_C        = 'KRW'
+		  AND  ORG_CLAS_C   = #{ORG_CLAS_C}
+		  <if test="JISO_INCLUDE == 'yes'">
+		  AND MNBR_TOT_YN  = 'Y' 
+		  </if>
+		  <if test="JISO_INCLUDE == 'no'">
+		  AND MNBR_TOT_YN  = 'N' 
+		  </if> 
+		  
+		 -- ( 회계구분  )
+		 -- 중앙회를 제외한 나머지는 신용회계(2102) 로 고정!
+		 ----------------------------------------
+		 /* 중앙회 조회 시 에만 발생  */
+	 	<if test="AC_BUSI_TC == '0000'">
+	 		AND AC_BUSI_TC IN('1105','1106','1107')
+	 	</if>
+	 	<if test="AC_BUSI_TC != '0000'">
+	 		AND AC_BUSI_TC = #{AC_BUSI_TC}
+	 	</if>
+		 ----------------------------------------
+	 	
+		 -- ( 점소코드  )
+		 ----------------------------------------
+		 -- 전체조합 조회 시 
+		 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'">
+		 	-- 모든 점소코드 나오기
+		 </if>
+		 
+		 -- 단위조합별 조회 시 (지소포함여부  yes/no)
+		 <if test="JISO_INCLUDE == 'yes' and BLNG_HQ_BR_C != ''">   
+		 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{BR_C} ) 
+		 </if>
+		 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+		 	AND BR_C     = #{BR_C}
+		 </if>
+		 
+		 -- 도지회별 조회 시 
+		 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+		 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} )
+		 </if>
+		 
+		 -- 중앙회 조회 시  
+		 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == '001'">
+			AND BR_C     = #{BR_C}
+		 </if>
+		 ----------------------------------------
+
+	)      
+		
+	    SELECT 
+	          A.ACNO                  
+	        , A.CNO                   
+	        , A.APLY_RATE   
+	        , ROUND( A.BKPR_AMT / TO_NUMBER(#{AMT_UNIT}))   AS BKPR_AMT            
+	        , A.NEW_DATE              
+	        , A.MTRT_DATE             
+	        , B.DTL_CLAS_NM          AS  LN_DP_GD_NM  
+	        , A.STAT_RPRT_ITEM_ID    AS  PRNT_ORD
+	     FROM BASE A , TSY_CO_MNG B
+	    WHERE A.LN_DP_GD_C = B.DTL_CLAS_VAL
+	      AND B.CO_C       LIKE '%LN_DP_GD_C%' 
+	    ORDER BY 
+	          PRNT_ORD
+	
+	</select>
+
+
+  
+
+
+</mapper>

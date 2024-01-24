@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_3105Mapper">
+
+	<!-- 규체유동성비율추이 조회  -->
+	<select id="selectRgltLqdtRtoProc" parameterType="java.util.Map" resultType="java.util.HashMap">
+		WITH DATA_TB AS (
+		    SELECT 
+		        MO_BR_C
+		        , BLNG_HQ_BR_C
+		        , ZONE_TC
+		        , CASE WHEN M0_DEBT != 0 THEN 100*M0_ASTS/ M0_DEBT ELSE 0 END AS M0_LQDT_RTO
+		        , CASE WHEN M1_DEBT != 0 THEN 100*M1_ASTS/ M1_DEBT ELSE 0 END AS M1_LQDT_RTO
+		        , CASE WHEN M2_DEBT != 0 THEN 100*M2_ASTS/ M2_DEBT ELSE 0 END AS M2_LQDT_RTO
+		        , CASE WHEN M3_DEBT != 0 THEN 100*M3_ASTS/ M3_DEBT ELSE 0 END AS M3_LQDT_RTO
+		        , CASE WHEN M4_DEBT != 0 THEN 100*M4_ASTS/ M4_DEBT ELSE 0 END AS M4_LQDT_RTO
+		        , CASE WHEN M5_DEBT != 0 THEN 100*M5_ASTS/ M5_DEBT ELSE 0 END AS M5_LQDT_RTO
+		        , CASE WHEN M6_DEBT != 0 THEN 100*M6_ASTS/ M6_DEBT ELSE 0 END AS M6_LQDT_RTO
+		        , CASE WHEN M7_DEBT != 0 THEN 100*M7_ASTS/ M7_DEBT ELSE 0 END AS M7_LQDT_RTO
+		        , CASE WHEN M8_DEBT != 0 THEN 100*M8_ASTS/ M8_DEBT ELSE 0 END AS M8_LQDT_RTO
+		        , CASE WHEN M9_DEBT != 0 THEN 100*M9_ASTS/ M9_DEBT ELSE 0 END AS M9_LQDT_RTO
+		        , CASE WHEN M10_DEBT != 0 THEN 100*M10_ASTS/ M10_DEBT ELSE 0 END AS M10_LQDT_RTO
+		        , CASE WHEN M11_DEBT != 0 THEN 100*M11_ASTS/ M11_DEBT ELSE 0 END AS M11_LQDT_RTO
+		        , MNBR_TOT_YN
+		    FROM (
+		        SELECT 
+		            C.MO_BR_C
+		            , C.BLNG_HQ_BR_C
+		            , C.ZONE_TC
+		            , SUM(CASE WHEN A.BASE_DATE = #{sch_base_date} AND RGLT_LQDT_ITEM_C LIKE 'A%' AND RGLT_LQDT_ITEM_C != 'A5' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M0_ASTS
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -1),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'A%' AND RGLT_LQDT_ITEM_C != 'A5' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M1_ASTS
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -2),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'A%' AND RGLT_LQDT_ITEM_C != 'A5' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M2_ASTS
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -3),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'A%' AND RGLT_LQDT_ITEM_C != 'A5' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M3_ASTS
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -4),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'A%' AND RGLT_LQDT_ITEM_C != 'A5' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M4_ASTS
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -5),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'A%' AND RGLT_LQDT_ITEM_C != 'A5' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M5_ASTS
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -6),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'A%' AND RGLT_LQDT_ITEM_C != 'A5' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M6_ASTS
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -7),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'A%' AND RGLT_LQDT_ITEM_C != 'A5' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M7_ASTS
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -8),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'A%' AND RGLT_LQDT_ITEM_C != 'A5' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M8_ASTS
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -9),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'A%' AND RGLT_LQDT_ITEM_C != 'A5' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M9_ASTS
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -10),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'A%' AND RGLT_LQDT_ITEM_C != 'A5' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M10_ASTS
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -11),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'A%' AND RGLT_LQDT_ITEM_C != 'A5' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M11_ASTS
+
+		            , SUM(CASE WHEN A.BASE_DATE = #{sch_base_date} AND RGLT_LQDT_ITEM_C LIKE 'B%' AND RGLT_LQDT_ITEM_C != 'B3' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M0_DEBT
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -1),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'B%' AND RGLT_LQDT_ITEM_C != 'B3' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M1_DEBT
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -2),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'B%' AND RGLT_LQDT_ITEM_C != 'B3' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M2_DEBT
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -3),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'B%' AND RGLT_LQDT_ITEM_C != 'B3' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M3_DEBT
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -4),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'B%' AND RGLT_LQDT_ITEM_C != 'B3' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M4_DEBT
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -5),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'B%' AND RGLT_LQDT_ITEM_C != 'B3' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M5_DEBT
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -6),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'B%' AND RGLT_LQDT_ITEM_C != 'B3' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M6_DEBT
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -7),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'B%' AND RGLT_LQDT_ITEM_C != 'B3' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M7_DEBT
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -8),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'B%' AND RGLT_LQDT_ITEM_C != 'B3' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M8_DEBT
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -9),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'B%' AND RGLT_LQDT_ITEM_C != 'B3' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M9_DEBT
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -10),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'B%' AND RGLT_LQDT_ITEM_C != 'B3' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M10_DEBT
+		            , SUM(CASE WHEN A.BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -11),'YYYYMMDD') AND RGLT_LQDT_ITEM_C LIKE 'B%' AND RGLT_LQDT_ITEM_C != 'B3' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) AS M11_DEBT
+		            , MNBR_TOT_YN
+		        FROM TRT_RGLT_LQDT_TOT A
+		        JOIN TTL_BR_C_INFO C
+		            ON C.MO_BR_C = A.BR_C
+		        WHERE A.BASE_DATE BETWEEN TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -12),'YYYYMMDD') AND #{sch_base_date}
+		        AND A.ALM_WORK_TC = 'M' --월/일구분
+		        --AND A.MTRT_SECT_SEQ BETWEEN '1' AND '3' --만기구간 일련번호 1,2,3
+		<choose>
+			<when test="sch_ac_busi_tc == '0000'">
+				AND A.AC_BUSI_TC IN ('1105', '1106', '1107') --회계구분
+			</when>
+			<otherwise>
+				AND A.AC_BUSI_TC = #{sch_ac_busi_tc} --회계구분
+			</otherwise>
+		</choose>
+				AND FUTU_POT_SECT_CNT = '0' -- 분석시점구분 0:현시점
+				AND NEW_CAP_QTY_TC = '0' --신규자금량 0:미포함
+				AND CAP_QTY_SNRO_NO = '1' --자금량시나리오번호
+				AND MTRT_SECT_SEQ IN (1, 2, 3)
+                AND ASTS_SDTP_CLAS_C IN ('00', '10', '20')
+                AND MNBR_TOT_YN = 'Y'
+		        GROUP BY 
+		            C.MO_BR_C
+		            , C.BLNG_HQ_BR_C
+		            , C.ZONE_TC
+		            , MNBR_TOT_YN
+		    )
+		)
+		SELECT
+		    '유동성비율' AS ITEM1_TYPE
+		    , '해당 조합/중앙회' AS ITEM2_TYPE  
+		    , NVL(ROUND(AVG(M0_LQDT_RTO), 2), 0) AS M0_LQDT_RTO
+		    , NVL(ROUND(AVG(M1_LQDT_RTO), 2), 0) AS M1_LQDT_RTO
+		    , NVL(ROUND(AVG(M2_LQDT_RTO), 2), 0) AS M2_LQDT_RTO
+		    , NVL(ROUND(AVG(M3_LQDT_RTO), 2), 0) AS M3_LQDT_RTO
+		    , NVL(ROUND(AVG(M4_LQDT_RTO), 2), 0) AS M4_LQDT_RTO
+		    , NVL(ROUND(AVG(M5_LQDT_RTO), 2), 0) AS M5_LQDT_RTO
+		    , NVL(ROUND(AVG(M6_LQDT_RTO), 2), 0) AS M6_LQDT_RTO
+		    , NVL(ROUND(AVG(M7_LQDT_RTO), 2), 0) AS M7_LQDT_RTO
+		    , NVL(ROUND(AVG(M8_LQDT_RTO), 2), 0) AS M8_LQDT_RTO
+		    , NVL(ROUND(AVG(M9_LQDT_RTO), 2), 0) AS M9_LQDT_RTO
+		    , NVL(ROUND(AVG(M10_LQDT_RTO), 2), 0) AS M10_LQDT_RTO
+		    , NVL(ROUND(AVG(M11_LQDT_RTO), 2), 0) AS M11_LQDT_RTO
+		FROM DATA_TB
+		WHERE
+			1=1
+		<if test='sch_br_c == "ALL"'>
+			AND MO_BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BR_TC = '03') /*전체조합*/
+		</if>
+		<if test="sch_br_c != 'ALL'">
+			<if test="sch_br_c == '001'">
+			AND MO_BR_C = '001' /*중앙회*/
+			</if>
+			<if test="sch_br_c != '001' and (sch_blng_hq_br_c == '' or sch_blng_hq_br_c == null)">
+			AND MO_BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{sch_br_c}) /*도지회별합산*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'Y'.toString()">
+			AND MO_BR_C = #{sch_br_c} /*단위조합별조회(지소포함)*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'N'.toString()">
+			AND MO_BR_C = #{sch_br_c}
+			</if>
+		</if>
+		<if test="sch_br_c != '001'">
+		UNION ALL
+		SELECT
+		    '평균' AS ITEM1_TYPE
+		    , '지역본부 평균' AS ITEM2_TYPE  
+		    , NVL(ROUND(AVG(M0_LQDT_RTO), 2), 0) AS M0_LQDT_RTO
+		    , NVL(ROUND(AVG(M1_LQDT_RTO), 2), 0) AS M1_LQDT_RTO
+		    , NVL(ROUND(AVG(M2_LQDT_RTO), 2), 0) AS M2_LQDT_RTO
+		    , NVL(ROUND(AVG(M3_LQDT_RTO), 2), 0) AS M3_LQDT_RTO
+		    , NVL(ROUND(AVG(M4_LQDT_RTO), 2), 0) AS M4_LQDT_RTO
+		    , NVL(ROUND(AVG(M5_LQDT_RTO), 2), 0) AS M5_LQDT_RTO
+		    , NVL(ROUND(AVG(M6_LQDT_RTO), 2), 0) AS M6_LQDT_RTO
+		    , NVL(ROUND(AVG(M7_LQDT_RTO), 2), 0) AS M7_LQDT_RTO
+		    , NVL(ROUND(AVG(M8_LQDT_RTO), 2), 0) AS M8_LQDT_RTO
+		    , NVL(ROUND(AVG(M9_LQDT_RTO), 2), 0) AS M9_LQDT_RTO
+		    , NVL(ROUND(AVG(M10_LQDT_RTO), 2), 0) AS M10_LQDT_RTO
+		    , NVL(ROUND(AVG(M11_LQDT_RTO), 2), 0) AS M11_LQDT_RTO
+		FROM DATA_TB
+		WHERE BLNG_HQ_BR_C = (SELECT DISTINCT BLNG_HQ_BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{sch_br_c})
+		UNION ALL
+		SELECT
+		    '평균' AS ITEM1_TYPE
+		    , '동일권역 평균' AS ITEM2_TYPE 
+		    , NVL(ROUND(AVG(M0_LQDT_RTO), 2), 0) AS M0_LQDT_RTO
+		    , NVL(ROUND(AVG(M1_LQDT_RTO), 2), 0) AS M1_LQDT_RTO
+		    , NVL(ROUND(AVG(M2_LQDT_RTO), 2), 0) AS M2_LQDT_RTO
+		    , NVL(ROUND(AVG(M3_LQDT_RTO), 2), 0) AS M3_LQDT_RTO
+		    , NVL(ROUND(AVG(M4_LQDT_RTO), 2), 0) AS M4_LQDT_RTO
+		    , NVL(ROUND(AVG(M5_LQDT_RTO), 2), 0) AS M5_LQDT_RTO
+		    , NVL(ROUND(AVG(M6_LQDT_RTO), 2), 0) AS M6_LQDT_RTO
+		    , NVL(ROUND(AVG(M7_LQDT_RTO), 2), 0) AS M7_LQDT_RTO
+		    , NVL(ROUND(AVG(M8_LQDT_RTO), 2), 0) AS M8_LQDT_RTO
+		    , NVL(ROUND(AVG(M9_LQDT_RTO), 2), 0) AS M9_LQDT_RTO
+		    , NVL(ROUND(AVG(M10_LQDT_RTO), 2), 0) AS M10_LQDT_RTO
+		    , NVL(ROUND(AVG(M11_LQDT_RTO), 2), 0) AS M11_LQDT_RTO
+		FROM DATA_TB
+		WHERE ZONE_TC IN ( --동일권역                            
+            SELECT DTL_CLAS_VAL
+            FROM TSY_CO_MNG -- 시스템_공통관리
+            WHERE CO_C = 'ZONE_TC'
+            AND CO_C_1_VAL IN (
+                SELECT CO_C_1_VAL 
+                FROM TTL_BR_C_INFO 
+                    , TSY_CO_MNG
+                WHERE CO_C = 'ZONE_TC'
+                AND MO_BR_C = #{sch_br_c} 
+                AND DTL_CLAS_VAL = ZONE_TC
+            )
+        ) 
+		UNION ALL
+		SELECT
+		    '평균' AS ITEM1_TYPE
+		    , '전국 평균' AS ITEM2_TYPE 
+		    , NVL(ROUND(AVG(M0_LQDT_RTO), 2), 0) AS M0_LQDT_RTO
+		    , NVL(ROUND(AVG(M1_LQDT_RTO), 2), 0) AS M1_LQDT_RTO
+		    , NVL(ROUND(AVG(M2_LQDT_RTO), 2), 0) AS M2_LQDT_RTO
+		    , NVL(ROUND(AVG(M3_LQDT_RTO), 2), 0) AS M3_LQDT_RTO
+		    , NVL(ROUND(AVG(M4_LQDT_RTO), 2), 0) AS M4_LQDT_RTO
+		    , NVL(ROUND(AVG(M5_LQDT_RTO), 2), 0) AS M5_LQDT_RTO
+		    , NVL(ROUND(AVG(M6_LQDT_RTO), 2), 0) AS M6_LQDT_RTO
+		    , NVL(ROUND(AVG(M7_LQDT_RTO), 2), 0) AS M7_LQDT_RTO
+		    , NVL(ROUND(AVG(M8_LQDT_RTO), 2), 0) AS M8_LQDT_RTO
+		    , NVL(ROUND(AVG(M9_LQDT_RTO), 2), 0) AS M9_LQDT_RTO
+		    , NVL(ROUND(AVG(M10_LQDT_RTO), 2), 0) AS M10_LQDT_RTO
+		    , NVL(ROUND(AVG(M11_LQDT_RTO), 2), 0) AS M11_LQDT_RTO
+		FROM DATA_TB
+		WHERE MO_BR_C != '001'
+		</if>
+	</select>
+	
+	<select id="selectBaseDateSchCbList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT 
+			TO_CHAR(TO_DATE(MAX(DECODE(ALM_WORK_TC, 'M', BASE_DATE, NULL)), 'YYYYMMDD'), 'YYYY-MM') AS BASE_DATE 
+			, MAX(DECODE(ALM_WORK_TC, 'D', BASE_DATE, NULL)) AS BASE_DATE_NM
+		FROM TRT_RGLT_LQDT_TOT
+	</select>
+	
+	<select id="selectAmtQtySnroList" parameterType="java.util.Map" resultType="java.util.HashMap">
+        SELECT 
+			ORG_CLAS_C, SNRO_NO, SNRO_NM 
+		FROM TSY_SNRO_SET_MNG
+		WHERE SNRO_KIND_C = '02'
+		  AND USE_YN = 'Y'
+		ORDER BY ORG_CLAS_C, SNRO_NO
+	</select>
+	
+	<select id="selectTodayLastDayYn" parameterType="java.util.Map" resultType="java.lang.String">
+		SELECT 
+		    CASE
+		        WHEN #{sch_base_date} = TO_CHAR(SYSDATE, 'YYYYMMDD') AND #{sch_base_date} = TO_CHAR(LAST_DAY(SYSDATE)) THEN 'Y' 
+		        ELSE 'N' 
+		    END AS LAST_DAY_YN 
+		FROM DUAL
+	</select>
+
+</mapper>

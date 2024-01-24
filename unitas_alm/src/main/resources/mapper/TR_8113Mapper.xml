@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_8113Mapper">
+
+	<select id="selectTestData"		resultType="java.util.HashMap">
+		SELECT ACCT_CODE AS TABLE_NAME
+		     , ACCT_NO   AS TABLE_TYPE
+		FROM OFSA45.ALB_M_BASE_F
+		WHERE ROWNUM  <![CDATA[ <  ]]> to_number( #{param} )
+	</select>
+
+	<select id="selectTR_8113" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT A.BR_C,
+		    BR_NM,
+		    A.ACCT_C,
+            C.ACCT_C_NM,
+		    '',
+		    BS_BAL          / #{AMT_UNIT} as BS_BAL,
+		    LDGR_BAL        / #{AMT_UNIT} as LDGR_BAL,
+		    CSFL_BAL        / #{AMT_UNIT} as CSFL_BAL,
+		    (BS_BAL-LDGR_BAL) / #{AMT_UNIT} as BSLD,
+		    (BS_BAL-CSFL_BAL) / #{AMT_UNIT} as BSCSFL,
+		    (BS_MMW_AVG_BAL)  / #{AMT_UNIT} as BS_MMW_AVG_BAL,
+		    (LDGR_MMW_AVG_BAL) / #{AMT_UNIT} as LDGR_MMW_AVG_BAL,
+		    (BS_MMW_AVG_BAL-LDGR_MMW_AVG_BAL) / #{AMT_UNIT} AS M_BSLD,
+		    a.EXTR_UNIT_C
+		 FROM TIG_BAL_CNST_VRFC a, TTL_BR_C_INFO B, 
+             (SELECT * FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE = (SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE &lt;= #{BASE_DATE})) C
+		WHERE A.BR_C = B.BR_C
+        AND A.ACCT_C = C.ACCT_C
+        AND A.AC_BUSI_TC = C.AC_BUSI_TC
+		AND A.BASE_DATE = #{BASE_DATE}
+  		<choose>
+              <when test="BR_C == '001' and AC_BUSI_TC == '0000'">
+                  AND A.ORG_CLAS_C = '10'
+              </when>
+              <when test="BR_C == '001' and AC_BUSI_TC != '0000'">
+                  AND A.AC_BUSI_TC = #{AC_BUSI_TC}
+                  AND A.ORG_CLAS_C = '10'
+              </when>
+              <otherwise>
+                  AND A.AC_BUSI_TC = #{AC_BUSI_TC}
+                  AND (A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{BR_C})) /*단위조합별 조회*/
+              </otherwise>
+        </choose>
+		AND A.ALM_WORK_TC  =  #{ALM_WORK_TC} 
+		
+		ORDER BY ACCT_C
+	</select>
+
+<!-- 	<select id="selectId" parameterType="String" -->
+<!-- 		resultType="java.lang.Integer"> -->
+<!-- 		SELECT NEXT_ID FROM IDS WHERE TABLE_NAME='SAMPLE' -->
+<!-- 	</select> -->
+<!-- 	<update id="updateId" parameterType="java.util.Map"> -->
+<!-- 		UPDATE IDS SET NEXT_ID=#{ID} WHERE TABLE_NAME='SAMPLE' -->
+<!-- 	</update> -->
+
+	<insert id="insertSampleList" parameterType="java.util.Map">
+		INSERT INTO OFSA45.DHMIN_SAMPLE
+		( ID
+		, NAME
+		, DESCRIPTION
+		, USE_YN
+		, REG_USER )
+		VALUES ( #{ID}
+		, #{NAME}
+		, #{DESCRIPTION}
+		, #{USE_YN}
+		, #{REG_USER} )
+	</insert>
+
+	<update id="updateSampleList" parameterType="java.util.Map">
+		UPDATE OFSA45.DHMIN_SAMPLE
+		SET ID=#{ID}
+		, NAME=#{NAME}
+		, DESCRIPTION=#{DESCRIPTION}
+		, USE_YN=#{USE_YN}
+		WHERE ID=#{ID}
+	</update>
+
+	<delete id="deleteSampleList" parameterType="java.util.Map">
+		DELETE FROM OFSA45.DHMIN_SAMPLE
+		WHERE ID=#{ID}
+	</delete>
+	
+	<!-- 샘플4 사용자 조회(팝업) -->
+	<select id="selectUserInfo" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT BR_C         AS GROUP_CD 
+		     , USID         AS USER_ID 
+		     , USER_PSWD    AS PASSWORD 
+		     , USER_NM      AS NAME
+		     , AUTH_TC      AS MENU_AUTH
+		  FROM TSY_USER_MNG
+		<if test="argSearch != null and argSearch != ''">
+		 WHERE USID like '%' || #{argSearch} || '%' OR USER_NM LIKE '%' || #{argSearch} || '%'
+		</if>
+		 ORDER BY BR_C
+		        , USID
+	</select>
+	
+	<!-- 샘플4팝업 사용자 조회 -->
+	<select id="selectSample4List" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT ALM_MENU_C
+		     , USID
+		     , TR_TC
+		     , TR_CNTN
+		     , REG_DT
+		     , CNCT_DT 
+		  FROM TSY_SCRN_LOG
+         WHERE REG_DT >= TRUNC(SYSDATE)
+		<if test="userId != null and userId != ''">
+		   AND #{userId} = #{userId}
+		</if>
+		<if test="dayMonth != null and dayMonth != ''">
+		   AND #{dayMonth} = #{dayMonth}
+		</if>
+		<if test="startDate != null and startDate != ''">
+		   AND #{startDate} = #{startDate}
+		</if>
+		<if test="endDate != null and endDate != ''">
+		   AND #{endDate} = #{endDate}
+		</if>
+		<if test="searchCombo != null and searchCombo != ''">
+		   AND #{searchCombo} = #{searchCombo}
+		</if>
+		ORDER BY REG_DT
+	</select>
+	
+	
+	<!-- 트리구조 그리드 조회 -->
+	<select id="selectTreeGrid" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		 SELECT * FROM TSY_SCRN_LOG 
+		 WHERE REG_DT >= TRUNC(SYSDATE)
+		 ORDER BY REG_DT DESC
+	</select>
+	
+	<!-- 배치실행 -->
+	<select id="execProcedures" statementType="CALLABLE" resultType="java.util.HashMap">
+		CALL ALMADM.PRC_BATCH_LOG_WEB_TEST (
+			#{i_BASE_DATE, mode=IN, jdbcType=VARCHAR}
+			,#{i_PROC_NM, mode=IN, jdbcType=VARCHAR}
+			,#{i_EXEC_STAG_NO, mode=IN, jdbcType=VARCHAR}
+			,#{i_EXEC_STAT_C, mode=IN, jdbcType=VARCHAR}
+			,#{i_ALM_BTCH_LOG_CNTN, mode=IN, jdbcType=VARCHAR}
+			,#{o_RESULT_CODE, mode=OUT, jdbcType=VARCHAR}
+			,#{o_RESULT_MSG, mode=OUT, jdbcType=VARCHAR}
+		)
+	</select>
+
+</mapper>

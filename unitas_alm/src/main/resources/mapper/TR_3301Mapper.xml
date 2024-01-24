@@ -1,0 +1,1053 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_3301Mapper">
+
+	
+	<select id="selectTR_3301List" parameterType='java.util.Map' resultType="java.util.HashMap">
+
+		/* 유동성_위기상황분석_보고서_조회 */		
+		WITH TEMP AS(
+		
+		
+			   SELECT 
+				      BASE_DATE
+				    , ALM_WORK_TC
+				    , ORG_CLAS_C
+				    , BR_C
+				    , STRS_TC
+				    , ACCT_C
+				    , CASE WHEN LQDT_STRS_ITEM_C IN ( 'A4100','A4200' ) THEN LQDT_STRS_ITEM_C ELSE '' END  AS LQDT_STRS_ITEM_C
+				    , LQDT_MTRT_ADJ_C
+				    , CUR_C
+				 	<if test="AC_BUSI_TC == '0000'">
+				 	, '1105'	AS AC_BUSI_TC
+				 	</if>
+				 	<if test="AC_BUSI_TC != '0000'">
+				 	, AC_BUSI_TC
+				 	</if>
+				    , ALM_MTRT_SECT_C
+				    , MTRT_SECT_SEQ
+				    , ASTS_SDTP_CLAS_C
+				    , UN_USE_LIM_AMT
+				    , STRS_BASE_AMT
+				    , NORM_STRS_APLY_AMT
+				    , NATV_STRS_APLY_AMT
+				    , MRKT_STRS_APLY_AMT
+				    , CBN_STRS_APLY_AMT
+				    , NORM_STRS_ADJ_AMT
+				    , NATV_STRS_ADJ_AMT
+				    , MRKT_STRS_ADJ_AMT
+				    , CBN_STRS_ADJ_AMT
+				 FROM TLS_LQDT_ANAL_RSLT    
+				WHERE MTRT_SECT_SEQ  <![CDATA[<]]>= 3
+				  AND ALM_WORK_TC    = 'M'
+				  AND CUR_C          = 'KRW'
+				  AND BASE_DATE      = #{BASE_DATE}
+				  AND ORG_CLAS_C     = #{ORG_CLAS_C}
+				  AND STRS_TC        = #{STRS_TC}
+				  
+				 /* 중앙회 조회 시 에만 발생  */
+			 	<if test="AC_BUSI_TC == '0000'">
+			 		AND AC_BUSI_TC   IN('1105','1106','1107')
+			 	</if>
+			 	<if test="AC_BUSI_TC != '0000'">
+			 		AND AC_BUSI_TC   = #{AC_BUSI_TC}
+			 	</if>
+			 	
+				 -- 전체조합 조회 시 
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'">
+				 	AND BR_C 		 IN ( SELECT DISTINCT MO_BR_C FROM TTL_BR_C_INFO )
+				 </if>
+				 
+				 -- 단위조합별 조회 시 
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+				 	AND BR_C       	 = #{BR_C}
+				 </if>
+				 
+				 -- 도지회별 조회 시 
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+				 	AND BR_C       	 IN ( SELECT DISTINCT MO_BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} )
+				 </if>
+				 
+				 -- 중앙회 조회 시  
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == '001'">
+					AND BR_C       	 = #{BR_C}
+				 </if>
+				 
+				 
+		)
+		, TEMP2 AS ( 
+		
+		
+			   SELECT 
+				      BASE_DATE
+				    , ALM_WORK_TC
+				    , ORG_CLAS_C
+				    , BR_C
+				    , ACCT_C
+				    , CUR_C
+				 	<if test="AC_BUSI_TC == '0000'">
+				 	, '1105'	AS AC_BUSI_TC
+				 	</if>
+				 	<if test="AC_BUSI_TC != '0000'">
+				 	, AC_BUSI_TC
+				 	</if>
+				    , KRW_PRIN_AMT
+				    , MTRT_SECT_SEQ
+					, CASE WHEN RGLT_LQDT_ITEM_C IN ('A41', 'A42') THEN RGLT_LQDT_ITEM_C ELSE '' END  AS RGLT_LQDT_ITEM_C
+				 FROM TRT_RGLT_LQDT_TOT   
+				WHERE MTRT_SECT_SEQ     <![CDATA[<]]>= 3
+				  AND ALM_WORK_TC       = 'M'
+				  AND CUR_C             = 'KRW'
+				  AND BASE_DATE         = #{BASE_DATE}
+				  AND ORG_CLAS_C        = #{ORG_CLAS_C}
+			 	  AND ALM_MTRT_SECT_C   = '10' 
+			 	  AND CAP_QTY_SNRO_NO   = '1' 
+			 	  AND FUTU_POT_SECT_CNT = '0' 
+			 	  AND NEW_CAP_QTY_TC    = '0'  
+			 	  AND MNBR_TOT_YN       = 'Y' 
+				  AND ASTS_SDTP_CLAS_C  IN ('10', '20') /* 자산건전성 [ 10-정상 , 20-요주의 ] */
+			 	<if test="AC_BUSI_TC == '0000'">
+			 		AND AC_BUSI_TC 		IN('1105','1106','1107')
+			 	</if>
+			 	<if test="AC_BUSI_TC != '0000'">
+			 		AND AC_BUSI_TC 		= #{AC_BUSI_TC}
+			 	</if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'">
+				 	AND BR_C 			IN ( SELECT DISTINCT MO_BR_C FROM TTL_BR_C_INFO )
+				 </if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+				 	AND BR_C     		= #{BR_C}
+				 </if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+				 	AND BR_C 			IN ( SELECT DISTINCT MO_BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} )
+				 </if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == '001'">
+					AND BR_C     		= #{BR_C}
+				 </if>
+		) 
+		, ACCT AS
+		(
+					
+				SELECT 
+				       LEVEL AS LVL
+				     , SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' )                                                          AS ACCT_PATH
+				     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 1 ),TRIM(ACCT_C_NM) )  AS LVL1
+				     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 2 ),TRIM(ACCT_C_NM) )  AS LVL2
+				     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 3 ),TRIM(ACCT_C_NM) )  AS LVL3
+				     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 4 ),TRIM(ACCT_C_NM) )  AS LVL4
+				     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 5 ),TRIM(ACCT_C_NM) )  AS LVL5
+				     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 6 ),TRIM(ACCT_C_NM) )  AS LVL6
+				     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 7 ),TRIM(ACCT_C_NM) )  AS LVL7
+				     , TRIM(ACCT_C_NM)                                                                                       AS MY_ACCT_NM
+				     , ORG_CLAS_C                                                                     
+				     , AC_BUSI_TC                                                                     
+				     , ACCT_C                                                                         
+				     , UP_ACCT_C                                                                      
+				     , TO_NUMBER( NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 1 ) ,TRIM(PRNT_ORD) ) )  AS PRNT_ORD1
+				     , TO_NUMBER( NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 2 ) ,TRIM(PRNT_ORD) ) )  AS PRNT_ORD2
+				     , TO_NUMBER( NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 3 ) ,TRIM(PRNT_ORD) ) )  AS PRNT_ORD3
+				     , TO_NUMBER( NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 4 ) ,TRIM(PRNT_ORD) ) )  AS PRNT_ORD4
+				     , TO_NUMBER( NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 5 ) ,TRIM(PRNT_ORD) ) )  AS PRNT_ORD5
+				     , TO_NUMBER( NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 6 ) ,TRIM(PRNT_ORD) ) )  AS PRNT_ORD6
+				     , TO_NUMBER( NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 7 ) ,TRIM(PRNT_ORD) ) )  AS PRNT_ORD7
+				  FROM TSY_ACCT_MSTR_MNG
+				 WHERE BASE_DATE = ( SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE &lt;= #{BASE_DATE} )  
+				 /*회계구분*/
+			 	<if test="AC_BUSI_TC == '0000'">
+			 		AND AC_BUSI_TC IN('1105','1106','1107')
+			 	</if>
+			 	<if test="AC_BUSI_TC != '0000'">
+			 		AND AC_BUSI_TC = #{AC_BUSI_TC}
+			 	</if>
+			 	    AND ORG_CLAS_C = #{ORG_CLAS_C}
+				START WITH UP_ACCT_C = '0000000'
+				CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+		)
+		
+
+		SELECT * 
+		FROM 
+		(
+		SELECT 
+			<if test="LVL == 1">
+			Y1.LVL1 ||
+		       CASE 
+		       		WHEN Y1.LVL1 = '자산' THEN '(A)'
+		       		WHEN Y1.LVL1 = '부채' THEN '(B)'
+		       		WHEN Y1.LVL1 = '현금유출' THEN '(C)'
+		       END  																																															   AS ACCT_NM1
+			</if>             
+			<if test="LVL == 2">
+		       Y1.LVL1  																																															   AS ACCT_NM1
+		     , DECODE(GROUPING_ID( Y1.LVL2 ), 1 , '[' || Y1.LVL1 || ' 합계]' || CASE WHEN Y1.LVL1 = '자산' THEN '(A)' WHEN Y1.LVL1 = '부채' THEN '(B)' ELSE '(C)' END , Y1.LVL2 )       								       AS ACCT_NM2
+		     , GROUPING_ID (Y1.LVL2)                                                                                                                                               									   AS GRP_ID
+			</if>       
+			<if test="LVL == 3">
+		       Y1.LVL1  																																															            AS ACCT_NM1
+		     , DECODE(GROUPING_ID( Y1.LVL2, Y1.LVL3 ), 3 , '[' || Y1.LVL1 || '합계]' || CASE WHEN Y1.LVL1 = '자산' THEN '(A)' WHEN Y1.LVL1 = '부채' THEN '(B)' ELSE '(C)' END , Y1.LVL2 )       						                AS ACCT_NM2
+		     , DECODE(GROUPING_ID( Y1.LVL2, Y1.LVL3 ), 1  , Y1.LVL2 || ' 소계' , Y1.LVL3 )                                                                                                                                        AS ACCT_NM3
+		     , GROUPING_ID (Y1.LVL2, Y1.LVL3)                                                                                                                                            							            AS GRP_ID
+			</if>                       
+			<if test="LVL == 4">            
+		       Y1.LVL1  																																															            AS ACCT_NM1
+		     , DECODE(GROUPING_ID( Y1.LVL2, Y1.LVL3, Y1.LVL4 ), 7  , '[' || Y1.LVL1 || '합계]' || CASE WHEN Y1.LVL1 = '자산' THEN '(A)' WHEN Y1.LVL1 = '부채' THEN '(B)' ELSE '(C)' END , Y1.LVL2 )     					            AS ACCT_NM2
+		     , DECODE(GROUPING_ID( Y1.LVL2, Y1.LVL3, Y1.LVL4 ), 3  , Y1.LVL2 || ' 소계' , Y1.LVL3 )                                                                                                                               AS ACCT_NM3
+		     , DECODE(GROUPING_ID( Y1.LVL2, Y1.LVL3, Y1.LVL4 ), 1  , Y1.LVL3 || ' 소계' , Y1.LVL4 )                                                                                                                               AS ACCT_NM4
+		     , GROUPING_ID (Y1.LVL2, Y1.LVL3, Y1.LVL4)                                                                                                                                            					            AS GRP_ID
+			</if>                       
+			<if test="LVL == 5">            
+		       Y1.LVL1  																																															            AS ACCT_NM1
+		     , DECODE(GROUPING_ID( Y1.LVL2, Y1.LVL3, Y1.LVL4, Y1.LVL5 ), 15 , '[' || Y1.LVL1 || '합계]' || CASE WHEN Y1.LVL1 = '자산' THEN '(A)' WHEN Y1.LVL1 = '부채' THEN '(B)' ELSE '(C)' END , Y1.LVL2 )    			            AS ACCT_NM2
+		     , DECODE(GROUPING_ID( Y1.LVL2, Y1.LVL3, Y1.LVL4, Y1.LVL5 ), 7  , Y1.LVL2 || ' 소계' , Y1.LVL3 )                                                                                                                      AS ACCT_NM3
+		     , DECODE(GROUPING_ID( Y1.LVL2, Y1.LVL3, Y1.LVL4, Y1.LVL5 ), 3  , Y1.LVL3 || ' 소계' , Y1.LVL4 )                                                                                                                      AS ACCT_NM4
+		     , DECODE(GROUPING_ID( Y1.LVL2, Y1.LVL3, Y1.LVL4, Y1.LVL5 ), 1  , Y1.LVL4 || ' 소계' , Y1.LVL5 )                                                                                                                      AS ACCT_NM5
+		     , GROUPING_ID (Y1.LVL2, Y1.LVL3, Y1.LVL4, Y1.LVL5)                                                                                                                                             	                AS GRP_ID
+			</if>                       
+			<if test="LVL == 6">            
+		       Y1.LVL1  																																															            AS ACCT_NM1
+		     , DECODE(GROUPING_ID( Y1.LVL2, Y1.LVL3, Y1.LVL4, Y1.LVL5, Y1.LVL6 ), 31 , '[' || Y1.LVL1 || '합계]' || CASE WHEN Y1.LVL1 = '자산' THEN '(A)' WHEN Y1.LVL1 = '부채' THEN '(B)' ELSE '(C)' END , Y1.LVL2 )                 AS ACCT_NM2
+		     , DECODE(GROUPING_ID( Y1.LVL2, Y1.LVL3, Y1.LVL4, Y1.LVL5, Y1.LVL6 ), 15 , Y1.LVL2 || ' 소계' , Y1.LVL3 )                                                                                                             AS ACCT_NM3
+		     , DECODE(GROUPING_ID( Y1.LVL2, Y1.LVL3, Y1.LVL4, Y1.LVL5, Y1.LVL6 ), 7  , Y1.LVL3 || ' 소계' , Y1.LVL4 )                                                                                                             AS ACCT_NM4
+		     , DECODE(GROUPING_ID( Y1.LVL2, Y1.LVL3, Y1.LVL4, Y1.LVL5, Y1.LVL6 ), 3  , Y1.LVL4 || ' 소계' , Y1.LVL5 )                                                                                                             AS ACCT_NM5
+		     , DECODE(GROUPING_ID( Y1.LVL2, Y1.LVL3, Y1.LVL4, Y1.LVL5, Y1.LVL6 ), 1  , Y1.LVL5 || ' 소계' , Y1.LVL6 )                                                                                                             AS ACCT_NM6
+		     , GROUPING_ID (Y1.LVL2, Y1.LVL3, Y1.LVL4, Y1.LVL5, Y1.LVL6)                                                                                                                                                        AS GRP_ID
+			</if>       
+			<if test="LVL == 7">
+		       Y1.LVL1  																																															            AS ACCT_NM1
+		     , DECODE(GROUPING_ID( Y1.LVL2, Y1.LVL3, Y1.LVL4, Y1.LVL5, Y1.LVL6, Y1.LVL7 ), 63 , '[' || Y1.LVL1 || '합계]' || CASE WHEN Y1.LVL1 = '자산' THEN '(A)' WHEN Y1.LVL1 = '부채' THEN '(B)' ELSE '(C)' END , Y1.LVL2 )       AS ACCT_NM2
+		     , DECODE(GROUPING_ID( Y1.LVL2, Y1.LVL3, Y1.LVL4, Y1.LVL5, Y1.LVL6, Y1.LVL7 ), 31 , Y1.LVL2 || ' 소계' , Y1.LVL3 )                                                                                                    AS ACCT_NM3
+		     , DECODE(GROUPING_ID( Y1.LVL2, Y1.LVL3, Y1.LVL4, Y1.LVL5, Y1.LVL6, Y1.LVL7 ), 15 , Y1.LVL3 || ' 소계' , Y1.LVL4 )                                                                                                    AS ACCT_NM4
+		     , DECODE(GROUPING_ID( Y1.LVL2, Y1.LVL3, Y1.LVL4, Y1.LVL5, Y1.LVL6, Y1.LVL7 ), 7  , Y1.LVL4 || ' 소계' , Y1.LVL5 )                                                                                                    AS ACCT_NM5
+		     , DECODE(GROUPING_ID( Y1.LVL2, Y1.LVL3, Y1.LVL4, Y1.LVL5, Y1.LVL6, Y1.LVL7 ), 3  , Y1.LVL5 || ' 소계' , Y1.LVL6 )                                                                                                    AS ACCT_NM6
+		     , DECODE(GROUPING_ID( Y1.LVL2, Y1.LVL3, Y1.LVL4, Y1.LVL5, Y1.LVL6, Y1.LVL7 ), 1  , Y1.LVL6 || ' 소계' , Y1.LVL7 )                                                                                                    AS ACCT_NM7
+		     , GROUPING_ID (Y1.LVL2, Y1.LVL3, Y1.LVL4, Y1.LVL5, Y1.LVL6, Y1.LVL7)                                                                                                                                               AS GRP_ID
+			</if>
+			/* 화면용 */                                                                                 
+		     , ROUND( SUM(NVL(Y1.KRW_1   ,0) ) / TO_NUMBER(#{AMT_UNIT}) )            AS KRW_1
+		     , ROUND( SUM(NVL(Y1.KRW_2   ,0) ) / TO_NUMBER(#{AMT_UNIT}) )            AS KRW_2
+		     , ROUND( SUM(NVL(Y1.KRW_3   ,0) ) / TO_NUMBER(#{AMT_UNIT}) )            AS KRW_3
+		     , ROUND( SUM(NVL(Y1.KRW_TOT ,0) ) / TO_NUMBER(#{AMT_UNIT}) )            AS KRW_TOT
+		     , ROUND( SUM(NVL(Y2.NORM_1  ,0) ) / TO_NUMBER(#{AMT_UNIT}) )            AS VIEW_NORM_1   
+		     , ROUND( SUM(NVL(Y2.NORM_2  ,0) ) / TO_NUMBER(#{AMT_UNIT}) )            AS VIEW_NORM_2          
+		     , ROUND( SUM(NVL(Y2.NORM_3  ,0) ) / TO_NUMBER(#{AMT_UNIT}) )            AS VIEW_NORM_3          
+		     , ROUND( SUM(NVL(Y2.NORM_TOT,0) ) / TO_NUMBER(#{AMT_UNIT}) )            AS VIEW_NORM_TOT        
+		     , ROUND( SUM(NVL(Y2.NATV_1  ,0) ) / TO_NUMBER(#{AMT_UNIT}) )            AS VIEW_NATV_1          
+		     , ROUND( SUM(NVL(Y2.NATV_2  ,0) ) / TO_NUMBER(#{AMT_UNIT}) )            AS VIEW_NATV_2          
+		     , ROUND( SUM(NVL(Y2.NATV_3  ,0) ) / TO_NUMBER(#{AMT_UNIT}) )            AS VIEW_NATV_3          
+		     , ROUND( SUM(NVL(Y2.NATV_TOT,0) ) / TO_NUMBER(#{AMT_UNIT}) )            AS VIEW_NATV_TOT        
+		     , ROUND( SUM(NVL(Y2.MRKT_1  ,0) ) / TO_NUMBER(#{AMT_UNIT}) )            AS VIEW_MRKT_1          
+		     , ROUND( SUM(NVL(Y2.MRKT_2  ,0) ) / TO_NUMBER(#{AMT_UNIT}) )            AS VIEW_MRKT_2          
+		     , ROUND( SUM(NVL(Y2.MRKT_3  ,0) ) / TO_NUMBER(#{AMT_UNIT}) )            AS VIEW_MRKT_3           
+		     , ROUND( SUM(NVL(Y2.MRKT_TOT,0) ) / TO_NUMBER(#{AMT_UNIT}) )            AS VIEW_MRKT_TOT        
+		     , ROUND( SUM(NVL(Y2.CBN_1   ,0) ) / TO_NUMBER(#{AMT_UNIT}) )            AS VIEW_CBN_1           
+		     , ROUND( SUM(NVL(Y2.CBN_2   ,0) ) / TO_NUMBER(#{AMT_UNIT}) )            AS VIEW_CBN_2           
+		     , ROUND( SUM(NVL(Y2.CBN_3   ,0) ) / TO_NUMBER(#{AMT_UNIT}) )            AS VIEW_CBN_3           
+		     , ROUND( SUM(NVL(Y2.CBN_TOT ,0) ) / TO_NUMBER(#{AMT_UNIT}) )    		 AS VIEW_CBN_TOT     
+			/* 썸머리 계산용 */                                                                        
+		     , SUM(NVL(Y2.NORM_1  ,0) )                                              AS NORM_1          
+		     , SUM(NVL(Y2.NORM_2  ,0) )                                              AS NORM_2          
+		     , SUM(NVL(Y2.NORM_3  ,0) )                                              AS NORM_3          
+		     , SUM(NVL(Y2.NORM_TOT,0) )                                              AS NORM_TOT        
+		     , SUM(NVL(Y2.NATV_1  ,0) )                                              AS NATV_1          
+		     , SUM(NVL(Y2.NATV_2  ,0) )                                              AS NATV_2          
+		     , SUM(NVL(Y2.NATV_3  ,0) )                                              AS NATV_3          
+		     , SUM(NVL(Y2.NATV_TOT,0) )                                              AS NATV_TOT        
+		     , SUM(NVL(Y2.MRKT_1  ,0) )                                              AS MRKT_1          
+		     , SUM(NVL(Y2.MRKT_2  ,0) )                                              AS MRKT_2          
+		     , SUM(NVL(Y2.MRKT_3  ,0) )                                              AS MRKT_3          
+		     , SUM(NVL(Y2.MRKT_TOT,0) )                                              AS MRKT_TOT        
+		     , SUM(NVL(Y2.CBN_1   ,0) )                                              AS CBN_1           
+		     , SUM(NVL(Y2.CBN_2   ,0) )                                              AS CBN_2           
+		     , SUM(NVL(Y2.CBN_3   ,0) )                                              AS CBN_3           
+		     , SUM(NVL(Y2.CBN_TOT ,0) )     										 AS CBN_TOT 
+		  FROM 
+		(
+		    SELECT 
+		    	<if test="LVL == 1">
+		           LVL1
+		    	</if>
+		    	<if test="LVL == 2">
+		           LVL1
+		         , LVL2
+		    	</if>
+		    	<if test="LVL == 3">
+		           LVL1
+		         , LVL2
+		         , LVL3 
+		    	</if>
+		    	<if test="LVL == 4">
+		           LVL1
+		         , LVL2
+		         , LVL3 
+		         , LVL4
+		    	</if>
+		    	<if test="LVL == 5">
+		           LVL1
+		         , LVL2
+		         , LVL3 
+		         , LVL4
+		         , LVL5
+		    	</if>
+		    	<if test="LVL == 6">
+		           LVL1
+		         , LVL2
+		         , LVL3 
+		         , LVL4
+		         , LVL5
+		         , LVL6
+		    	</if>
+		    	<if test="LVL == 7">
+		           LVL1
+		         , LVL2
+		         , LVL3 
+		         , LVL4
+		         , LVL5
+		         , LVL6
+		         , LVL7
+		    	</if>
+		         ---------------------------------------------------------------------------------------------------
+		         , SUM( CASE WHEN MTRT_SECT_SEQ = '1' THEN NORM_STRS_APLY_AMT ELSE 0 END )                                     AS NORM_1
+		         , SUM( CASE WHEN MTRT_SECT_SEQ = '2' THEN NORM_STRS_APLY_AMT ELSE 0 END )                                     AS NORM_2
+		         , SUM( CASE WHEN MTRT_SECT_SEQ = '3' THEN NORM_STRS_APLY_AMT ELSE 0 END )                                     AS NORM_3
+		         , SUM( CASE WHEN MTRT_SECT_SEQ IN('1','2','3') THEN NORM_STRS_APLY_AMT ELSE 0 END )                           AS NORM_TOT
+		         ---------------------------------------------------------------------------------------------------
+		         , SUM( CASE WHEN MTRT_SECT_SEQ = '1' THEN NATV_STRS_APLY_AMT ELSE 0 END )                                     AS NATV_1
+		         , SUM( CASE WHEN MTRT_SECT_SEQ = '2' THEN NATV_STRS_APLY_AMT ELSE 0 END )                                     AS NATV_2
+		         , SUM( CASE WHEN MTRT_SECT_SEQ = '3' THEN NATV_STRS_APLY_AMT ELSE 0 END )                                     AS NATV_3
+		         , SUM( CASE WHEN MTRT_SECT_SEQ IN('1','2','3') THEN NATV_STRS_APLY_AMT ELSE 0 END )                           AS NATV_TOT
+		         ---------------------------------------------------------------------------------------------------
+		         , SUM( CASE WHEN MTRT_SECT_SEQ = '1' THEN MRKT_STRS_APLY_AMT ELSE 0 END )                                     AS MRKT_1
+		         , SUM( CASE WHEN MTRT_SECT_SEQ = '2' THEN MRKT_STRS_APLY_AMT ELSE 0 END )                                     AS MRKT_2
+		         , SUM( CASE WHEN MTRT_SECT_SEQ = '3' THEN MRKT_STRS_APLY_AMT ELSE 0 END )                                     AS MRKT_3
+		         , SUM( CASE WHEN MTRT_SECT_SEQ IN('1','2','3') THEN MRKT_STRS_APLY_AMT ELSE 0 END )                           AS MRKT_TOT
+		         ---------------------------------------------------------------------------------------------------
+		         , SUM( CASE WHEN MTRT_SECT_SEQ = '1' THEN CBN_STRS_APLY_AMT ELSE 0 END )                                      AS CBN_1
+		         , SUM( CASE WHEN MTRT_SECT_SEQ = '2' THEN CBN_STRS_APLY_AMT ELSE 0 END )                                      AS CBN_2
+		         , SUM( CASE WHEN MTRT_SECT_SEQ = '3' THEN CBN_STRS_APLY_AMT ELSE 0 END )                                      AS CBN_3
+		         , SUM( CASE WHEN MTRT_SECT_SEQ IN('1','2','3') THEN CBN_STRS_APLY_AMT ELSE 0 END )                            AS CBN_TOT
+		         ---------------------------------------------------------------------------------------------------
+		         , MAX(PRNT_ORD1)           																		           AS PRNT_ORD1
+		         , MAX(PRNT_ORD2)          																			           AS PRNT_ORD2
+		         , MAX(PRNT_ORD3)        																		               AS PRNT_ORD3
+		         , MAX(PRNT_ORD4)           																		           AS PRNT_ORD4
+		         , MAX(PRNT_ORD5)       																		               AS PRNT_ORD5
+		         , MAX(PRNT_ORD6)           																		           AS PRNT_ORD6
+		         , MAX(PRNT_ORD7)           																		           AS PRNT_ORD7
+		         , MAX(LQDT_STRS_ITEM_C)                                                              				           AS LQDT_STRS_ITEM_C
+		         , MAX(REP_LVL4)                                                                      				           AS REP_LVL4
+		         ---------------------------------------------------------------------------------------------------
+		      FROM
+		    (
+		        SELECT 
+		               A.LVL1
+			         <if test="ORG_CLAS_C == '10'">
+			         , CASE 
+                        WHEN T.LQDT_STRS_ITEM_C = 'A4100' THEN '정상 대출채권'
+                        WHEN T.LQDT_STRS_ITEM_C = 'A4200' THEN '요주의 대출채권'
+                        ELSE A.LVL2
+			           END          AS LVL2
+			         , A.LVL3
+			         </if>
+			         <if test="ORG_CLAS_C == '30'">
+		             , A.LVL2
+			         , CASE 
+                        WHEN T.LQDT_STRS_ITEM_C = 'A4100' THEN '정상 대출채권'
+                        WHEN T.LQDT_STRS_ITEM_C = 'A4200' THEN '요주의 대출채권'
+                        ELSE A.LVL3
+			           END          AS LVL3
+			         </if>
+		             , A.LVL4
+		             , A.LVL5
+		             , A.LVL6
+		             , A.LVL7
+		             , T.BASE_DATE
+		             , T.ALM_WORK_TC
+		             , T.ORG_CLAS_C
+		             , T.BR_C
+		             , T.STRS_TC
+		             , T.ACCT_C
+		             , T.LQDT_STRS_ITEM_C
+		             , T.LQDT_MTRT_ADJ_C
+		             , T.CUR_C
+		             , T.AC_BUSI_TC
+		             , T.ALM_MTRT_SECT_C
+		             , T.MTRT_SECT_SEQ
+		             , T.ASTS_SDTP_CLAS_C
+		             , T.UN_USE_LIM_AMT
+		             , T.STRS_BASE_AMT
+		             , T.NORM_STRS_APLY_AMT
+		             , T.NATV_STRS_APLY_AMT
+		             , T.MRKT_STRS_APLY_AMT
+		             , T.CBN_STRS_APLY_AMT
+		             , T.NORM_STRS_ADJ_AMT
+		             , T.NATV_STRS_ADJ_AMT
+		             , T.MRKT_STRS_ADJ_AMT
+		             , T.CBN_STRS_ADJ_AMT
+		             , A.PRNT_ORD1
+		             , A.PRNT_ORD2
+		             , A.PRNT_ORD3
+		             , A.PRNT_ORD4
+		             , A.PRNT_ORD5
+		             , A.PRNT_ORD6
+		             , A.PRNT_ORD7
+		             , A.LVL4            AS REP_LVL4
+		          FROM TEMP T , ACCT A 
+		         WHERE 1=1
+		           AND T.ACCT_C     = A.ACCT_C    
+		           AND T.ORG_CLAS_C = A.ORG_CLAS_C
+		           AND T.AC_BUSI_TC = A.AC_BUSI_TC
+		    )
+		    GROUP BY
+		    	<if test="LVL == 1">
+		           LVL1
+		    	</if>
+		    	<if test="LVL == 2">
+		           LVL1
+		         , LVL2
+		    	</if>
+		    	<if test="LVL == 3">
+		           LVL1
+		         , LVL2
+		         , LVL3 
+		    	</if>
+		    	<if test="LVL == 4">
+		           LVL1
+		         , LVL2
+		         , LVL3 
+		         , LVL4
+		    	</if>
+		    	<if test="LVL == 5">
+		           LVL1
+		         , LVL2
+		         , LVL3 
+		         , LVL4
+		         , LVL5
+		    	</if>
+		    	<if test="LVL == 6">
+		           LVL1
+		         , LVL2
+		         , LVL3 
+		         , LVL4
+		         , LVL5
+		         , LVL6
+		    	</if>
+		    	<if test="LVL == 7">
+		           LVL1
+		         , LVL2
+		         , LVL3 
+		         , LVL4
+		         , LVL5
+		         , LVL6
+		         , LVL7
+		    	</if>
+		)Y2
+		,
+		(
+		SELECT 
+		    	<if test="LVL == 1">
+		           LVL1
+		    	</if>
+		    	<if test="LVL == 2">
+		           LVL1
+		         , LVL2
+		    	</if>
+		    	<if test="LVL == 3">
+		           LVL1
+		         , LVL2
+		         , LVL3 
+		    	</if>
+		    	<if test="LVL == 4">
+		           LVL1
+		         , LVL2
+		         , LVL3 
+		         , LVL4
+		    	</if>
+		    	<if test="LVL == 5">
+		           LVL1
+		         , LVL2
+		         , LVL3 
+		         , LVL4
+		         , LVL5
+		    	</if>
+		    	<if test="LVL == 6">
+		           LVL1
+		         , LVL2
+		         , LVL3 
+		         , LVL4
+		         , LVL5
+		         , LVL6
+		    	</if>
+		    	<if test="LVL == 7">
+		           LVL1
+		         , LVL2
+		         , LVL3 
+		         , LVL4
+		         , LVL5
+		         , LVL6
+		         , LVL7
+		    	</if>
+		     , SUM( CASE WHEN MTRT_SECT_SEQ = '1' THEN KRW_PRIN_AMT ELSE 0 END )                                     AS KRW_1
+		     , SUM( CASE WHEN MTRT_SECT_SEQ = '2' THEN KRW_PRIN_AMT ELSE 0 END )                                     AS KRW_2
+		     , SUM( CASE WHEN MTRT_SECT_SEQ = '3' THEN KRW_PRIN_AMT ELSE 0 END )                                     AS KRW_3
+		     , SUM( CASE WHEN MTRT_SECT_SEQ IN('1','2','3') THEN KRW_PRIN_AMT ELSE 0 END )                           AS KRW_TOT
+		     , MAX(PRNT_ORD1)                                                                 			             AS PRNT_ORD1
+		     , MAX(PRNT_ORD2)                                                                 			             AS PRNT_ORD2
+		     , MAX(PRNT_ORD3)                                                              				             AS PRNT_ORD3
+		     , MAX(PRNT_ORD4)                                                              				             AS PRNT_ORD4
+		     , MAX(PRNT_ORD5)                                                              				             AS PRNT_ORD5
+		     , MAX(PRNT_ORD6)                                                              				             AS PRNT_ORD6
+		     , MAX(PRNT_ORD7)                                                              				             AS PRNT_ORD7
+		     , MAX(RGLT_LQDT_ITEM_C)                                                       				             AS RGLT_LQDT_ITEM_C
+		     , MAX(REP_LVL4)                                                               				             AS REP_LVL4
+		  FROM
+		(
+		    SELECT 
+		           A.LVL1
+		         <if test="ORG_CLAS_C == '10'">
+		         , CASE 
+                       WHEN T.RGLT_LQDT_ITEM_C = 'A41' THEN '정상 대출채권'
+                       WHEN T.RGLT_LQDT_ITEM_C = 'A42' THEN '요주의 대출채권'
+                       ELSE A.LVL2
+		           END          AS LVL2
+		         , A.LVL3
+		         </if>
+		         <if test="ORG_CLAS_C == '30'">
+	             , A.LVL2
+		         , CASE 
+                       WHEN T.RGLT_LQDT_ITEM_C = 'A41' THEN '정상 대출채권'
+                       WHEN T.RGLT_LQDT_ITEM_C = 'A42' THEN '요주의 대출채권'
+                       ELSE A.LVL3
+		           END          AS LVL3
+		         </if>
+		         , A.LVL4
+		         , A.LVL5
+		         , A.LVL6
+		         , A.LVL7
+		         , T.BASE_DATE
+		         , T.ALM_WORK_TC
+		         , T.ORG_CLAS_C
+		         , T.BR_C
+		         , T.ACCT_C
+		         , T.CUR_C
+		         , T.AC_BUSI_TC
+		         , T.KRW_PRIN_AMT
+		         , T.MTRT_SECT_SEQ
+		         , T.RGLT_LQDT_ITEM_C
+		         , A.PRNT_ORD1
+		         , A.PRNT_ORD2
+		         , A.PRNT_ORD3
+		         , A.PRNT_ORD4
+		         , A.PRNT_ORD5
+		         , A.PRNT_ORD6
+		         , A.PRNT_ORD7
+		         , A.LVL4           AS   REP_LVL4
+		      FROM TEMP2 T , ACCT A 
+		     WHERE 1=1
+		       AND T.ACCT_C     = A.ACCT_C    
+		       AND T.ORG_CLAS_C = A.ORG_CLAS_C
+		       AND T.AC_BUSI_TC = A.AC_BUSI_TC
+		)
+		GROUP BY
+		    	<if test="LVL == 1">
+		           LVL1
+		    	</if>
+		    	<if test="LVL == 2">
+		           LVL1
+		         , LVL2
+		    	</if>
+		    	<if test="LVL == 3">
+		           LVL1
+		         , LVL2
+		         , LVL3 
+		    	</if>
+		    	<if test="LVL == 4">
+		           LVL1
+		         , LVL2
+		         , LVL3 
+		         , LVL4
+		    	</if>
+		    	<if test="LVL == 5">
+		           LVL1
+		         , LVL2
+		         , LVL3 
+		         , LVL4
+		         , LVL5
+		    	</if>
+		    	<if test="LVL == 6">
+		           LVL1
+		         , LVL2
+		         , LVL3 
+		         , LVL4
+		         , LVL5
+		         , LVL6
+		    	</if>
+		    	<if test="LVL == 7">
+		           LVL1
+		         , LVL2
+		         , LVL3 
+		         , LVL4
+		         , LVL5
+		         , LVL6
+		         , LVL7
+		    	</if>
+		)Y1
+		WHERE 1=1
+    	<if test="LVL == 1">
+		  AND Y1.LVL1 = Y2.LVL1(+)
+		GROUP BY 
+		    Y1.LVL1
+	   ORDER BY 
+	   	    MAX(Y1.PRNT_ORD1)
+    	</if>
+    	<if test="LVL == 2">
+		  AND Y1.LVL1 = Y2.LVL1(+)
+		  AND Y1.LVL2 = Y2.LVL2(+)
+		GROUP BY 
+		    Y1.LVL1 , ROLLUP( Y1.LVL2 )
+	    ORDER BY 
+	        MAX(Y1.PRNT_ORD1)
+	      <if test="ORG_CLAS_C == '10'">
+	      , MAX(Y1.PRNT_ORD2)
+	      , MAX(Y1.RGLT_LQDT_ITEM_C)
+	      </if>
+	      <if test="ORG_CLAS_C == '30'">
+	      , MAX(Y1.PRNT_ORD2)
+	      </if>
+	      , GRP_ID
+    	</if>
+    	<if test="LVL == 3">
+		  AND Y1.LVL1 = Y2.LVL1(+)
+		  AND Y1.LVL2 = Y2.LVL2(+)
+		  AND Y1.LVL3 = Y2.LVL3(+)
+		GROUP BY 
+		    Y1.LVL1 , ROLLUP( Y1.LVL2, Y1.LVL3 )
+	    ORDER BY 
+	        MAX(Y1.PRNT_ORD1)
+	      <if test="ORG_CLAS_C == '10'">
+	      , MAX(Y1.PRNT_ORD2)
+	      , MAX(Y1.RGLT_LQDT_ITEM_C)
+	      , MAX(Y1.PRNT_ORD3)
+	      </if>
+	      <if test="ORG_CLAS_C == '30'">
+	      , MAX(Y1.PRNT_ORD2)
+	      , MAX(Y1.PRNT_ORD3)
+	      , MAX(Y1.RGLT_LQDT_ITEM_C)
+	      </if>
+	      , GRP_ID
+    	</if>
+    	<if test="LVL == 4">
+		  AND Y1.LVL1 = Y2.LVL1(+)
+		  AND Y1.LVL2 = Y2.LVL2(+)
+		  AND Y1.LVL3 = Y2.LVL3(+)
+		  AND Y1.LVL4 = Y2.LVL4(+)
+		GROUP BY 
+		    Y1.LVL1 , ROLLUP( Y1.LVL2, Y1.LVL3, Y1.LVL4 )
+	    ORDER BY 
+	        MAX(Y1.PRNT_ORD1)
+	      <if test="ORG_CLAS_C == '10'">
+	      , MAX(Y1.PRNT_ORD2)
+	      , MAX(Y1.RGLT_LQDT_ITEM_C)
+	      , MAX(Y1.PRNT_ORD3)
+	      </if>
+	      <if test="ORG_CLAS_C == '30'">
+	      , MAX(Y1.PRNT_ORD2)
+	      , MAX(Y1.PRNT_ORD3)
+	      , MAX(Y1.RGLT_LQDT_ITEM_C)
+	      </if>
+	      , MAX(Y1.PRNT_ORD4)
+	      , GRP_ID
+    	</if>
+    	<if test="LVL == 5">
+		  AND Y1.LVL1 = Y2.LVL1(+)
+		  AND Y1.LVL2 = Y2.LVL2(+)
+		  AND Y1.LVL3 = Y2.LVL3(+)
+		  AND Y1.LVL4 = Y2.LVL4(+)
+		  AND Y1.LVL5 = Y2.LVL5(+)
+		GROUP BY 
+		    Y1.LVL1 , ROLLUP( Y1.LVL2, Y1.LVL3, Y1.LVL4, Y1.LVL5 )
+	    ORDER BY 
+	        MAX(Y1.PRNT_ORD1)
+	      <if test="ORG_CLAS_C == '10'">
+	      , MAX(Y1.PRNT_ORD2)
+	      , MAX(Y1.RGLT_LQDT_ITEM_C)
+	      , MAX(Y1.PRNT_ORD3)
+	      </if>
+	      <if test="ORG_CLAS_C == '30'">
+	      , MAX(Y1.PRNT_ORD2)
+	      , MAX(Y1.PRNT_ORD3)
+	      , MAX(Y1.RGLT_LQDT_ITEM_C)
+	      </if>
+	      , MAX(Y1.PRNT_ORD4)
+	      , MAX(Y1.PRNT_ORD5)
+	      , GRP_ID
+    	</if>
+    	<if test="LVL == 6">
+		  AND Y1.LVL1 = Y2.LVL1(+)
+		  AND Y1.LVL2 = Y2.LVL2(+)
+		  AND Y1.LVL3 = Y2.LVL3(+)
+		  AND Y1.LVL4 = Y2.LVL4(+)
+		  AND Y1.LVL5 = Y2.LVL5(+)
+		  AND Y1.LVL6 = Y2.LVL6(+)
+		GROUP BY 
+		    Y1.LVL1 , ROLLUP( Y1.LVL2, Y1.LVL3, Y1.LVL4, Y1.LVL5, Y1.LVL6 )
+	    ORDER BY 
+	        MAX(Y1.PRNT_ORD1)
+	      <if test="ORG_CLAS_C == '10'">
+	      , MAX(Y1.PRNT_ORD2)
+	      , MAX(Y1.RGLT_LQDT_ITEM_C)
+	      , MAX(Y1.PRNT_ORD3)
+	      </if>
+	      <if test="ORG_CLAS_C == '30'">
+	      , MAX(Y1.PRNT_ORD2)
+	      , MAX(Y1.PRNT_ORD3)
+	      , MAX(Y1.RGLT_LQDT_ITEM_C)
+	      </if>
+	      , MAX(Y1.PRNT_ORD4)
+	      , MAX(Y1.PRNT_ORD5)
+	      , MAX(Y1.PRNT_ORD6)
+	      , GRP_ID
+    	</if>
+    	<if test="LVL == 7">
+		  AND Y1.LVL1 = Y2.LVL1(+)
+		  AND Y1.LVL2 = Y2.LVL2(+)
+		  AND Y1.LVL3 = Y2.LVL3(+)
+		  AND Y1.LVL4 = Y2.LVL4(+)
+		  AND Y1.LVL5 = Y2.LVL5(+)
+		  AND Y1.LVL6 = Y2.LVL6(+)
+		  AND Y1.LVL7 = Y2.LVL7(+)
+		GROUP BY 
+		    Y1.LVL1 , ROLLUP( Y1.LVL2, Y1.LVL3, Y1.LVL4, Y1.LVL5, Y1.LVL6, Y1.LVL7 )
+	    ORDER BY 
+	        MAX(Y1.PRNT_ORD1)
+	      <if test="ORG_CLAS_C == '10'">
+	      , MAX(Y1.PRNT_ORD2)
+	      , MAX(Y1.RGLT_LQDT_ITEM_C)
+	      , MAX(Y1.PRNT_ORD3)
+	      </if>
+	      <if test="ORG_CLAS_C == '30'">
+	      , MAX(Y1.PRNT_ORD2)
+	      , MAX(Y1.PRNT_ORD3)
+	      , MAX(Y1.RGLT_LQDT_ITEM_C)
+	      </if>
+	      , MAX(Y1.PRNT_ORD4)
+	      , MAX(Y1.PRNT_ORD5)
+	      , MAX(Y1.PRNT_ORD6)
+	      , MAX(Y1.PRNT_ORD7)
+	      , GRP_ID
+    	</if>
+		)
+		UNION ALL
+		(
+		 SELECT 
+		    	<if test="LVL == 1">
+		            '현금유출'
+		    	</if>
+		    	<if test="LVL == 2">
+		            '현금유출'
+		          , CASE WHEN ACCT_C = '0000000' THEN '미사용한도 소진 금액' END  
+		          , 0
+		    	</if>
+		    	<if test="LVL == 3">
+		            '현금유출'
+		          , CASE WHEN ACCT_C = '0000000' THEN '미사용한도 소진 금액' END  
+		          , '-' 
+		          , 0
+		    	</if>
+		    	<if test="LVL == 4">
+		            '현금유출'
+		          , CASE WHEN ACCT_C = '0000000' THEN '미사용한도 소진 금액' END  
+		          , '-' 
+		          , '-' 
+		          , 0
+		    	</if>
+		    	<if test="LVL == 5">
+		            '현금유출'
+		          , CASE WHEN ACCT_C = '0000000' THEN '미사용한도 소진 금액' END  
+		          , '-' 
+		          , '-' 
+		          , '-' 
+		          , 0
+		    	</if>
+		    	<if test="LVL == 6">
+		            '현금유출'
+		          , CASE WHEN ACCT_C = '0000000' THEN '미사용한도 소진 금액' END  
+		          , '-' 
+		          , '-' 
+		          , '-' 
+		          , '-'
+		          , 0
+		    	</if>
+		    	<if test="LVL == 7">
+		            '현금유출'
+		          , CASE WHEN ACCT_C = '0000000' THEN '미사용한도 소진 금액' END  
+		          , '-' 
+		          , '-' 
+		          , '-' 
+		          , '-'
+		          , '-'
+		          , 0
+		    	</if>
+		          , NULL
+		          , NULL
+		          , NULL
+		          , NULL
+			      , VIEW_NORM_1
+			      , VIEW_NORM_2
+			      , VIEW_NORM_3
+			      , VIEW_NORM_4
+		          , VIEW_NATV_1
+		          , VIEW_NATV_2
+		          , VIEW_NATV_3
+		          , VIEW_NATV_4
+		          , VIEW_MRKT_1
+		          , VIEW_MRKT_2
+		          , VIEW_MRKT_3
+		          , VIEW_MRKT_4
+		          , VIEW_CBN_1
+		          , VIEW_CBN_2
+		          , VIEW_CBN_3
+		          , VIEW_CBN_4
+		          /* 자릿수 채우기  */
+		          , SAME_NORM_1
+		          , SAME_NORM_2
+		          , SAME_NORM_3
+		          , SAME_NORM_4
+		          , SAME_NATV_1
+		          , SAME_NATV_2
+		          , SAME_NATV_3
+		          , SAME_NATV_4
+		          , SAME_MRKT_1
+		          , SAME_MRKT_2
+		          , SAME_MRKT_3
+		          , SAME_MRKT_4
+		          , SAME_CBN_1
+		          , SAME_CBN_2
+		          , SAME_CBN_3
+		          , SAME_CBN_4
+		      FROM
+		    (
+		        SELECT 
+		              ACCT_C
+		            , ROUND(SUM(NORM_STRS_APLY_AMT) / #{AMT_UNIT} ,0)  AS VIEW_NORM_1
+		            , NULL             		                           AS VIEW_NORM_2
+		            , NULL             		                           AS VIEW_NORM_3
+		            , ROUND(SUM(NORM_STRS_APLY_AMT) / #{AMT_UNIT} ,0)  AS VIEW_NORM_4
+		            , ROUND(SUM(NATV_STRS_APLY_AMT) / #{AMT_UNIT} ,0)  AS VIEW_NATV_1
+		            , NULL             		                           AS VIEW_NATV_2
+		            , NULL             		                           AS VIEW_NATV_3
+		            , ROUND(SUM(NATV_STRS_APLY_AMT) / #{AMT_UNIT} ,0)  AS VIEW_NATV_4
+		            , ROUND(SUM(MRKT_STRS_APLY_AMT) / #{AMT_UNIT} ,0)  AS VIEW_MRKT_1
+		            , NULL               	                           AS VIEW_MRKT_2
+		            , NULL                	                           AS VIEW_MRKT_3
+		            , ROUND(SUM(MRKT_STRS_APLY_AMT) / #{AMT_UNIT} ,0)  AS VIEW_MRKT_4
+		            , ROUND(SUM(CBN_STRS_APLY_AMT ) / #{AMT_UNIT} ,0)  AS VIEW_CBN_1
+		            , NULL                	                           AS VIEW_CBN_2
+		            , NULL                	                           AS VIEW_CBN_3
+		            , ROUND(SUM(CBN_STRS_APLY_AMT ) / #{AMT_UNIT} ,0)  AS VIEW_CBN_4
+		            -------------------------------------------------------------------
+		            , SUM(NORM_STRS_APLY_AMT)                          AS SAME_NORM_1
+		            , NULL            		                           AS SAME_NORM_2
+		            , NULL            		                           AS SAME_NORM_3
+		            , SUM(NORM_STRS_APLY_AMT)                          AS SAME_NORM_4
+		            , SUM(NATV_STRS_APLY_AMT)                          AS SAME_NATV_1
+		            , NULL            		                           AS SAME_NATV_2
+		            , NULL            		                           AS SAME_NATV_3
+		            , SUM(NATV_STRS_APLY_AMT)                          AS SAME_NATV_4
+		            , SUM(MRKT_STRS_APLY_AMT)                          AS SAME_MRKT_1
+		            , NULL              	                           AS SAME_MRKT_2
+		            , NULL               	                           AS SAME_MRKT_3
+		            , SUM(MRKT_STRS_APLY_AMT)                          AS SAME_MRKT_4
+		            , SUM(CBN_STRS_APLY_AMT )                          AS SAME_CBN_1
+		            , NULL               	                           AS SAME_CBN_2
+		            , NULL               	                           AS SAME_CBN_3
+		            , SUM(CBN_STRS_APLY_AMT )                          AS SAME_CBN_4
+		        FROM TLS_LQDT_ANAL_RSLT   
+		        WHERE ALM_WORK_TC       = 'M'
+		          AND CUR_C             = 'KRW'
+		          AND BASE_DATE         = #{BASE_DATE}
+		          AND ORG_CLAS_C        = #{ORG_CLAS_C}
+		          AND STRS_TC           = #{STRS_TC}
+		          AND LQDT_STRS_ITEM_C  = 'C1000'
+			 	<if test="AC_BUSI_TC == '0000'">
+			 		AND AC_BUSI_TC 		IN('1105','1106','1107')
+			 	</if>
+			 	<if test="AC_BUSI_TC != '0000'">
+			 		AND AC_BUSI_TC 		= #{AC_BUSI_TC}
+			 	</if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'">
+				 	AND BR_C 			IN ( SELECT DISTINCT MO_BR_C FROM TTL_BR_C_INFO )
+				 </if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+				 	AND BR_C     		= #{BR_C}
+				 </if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+				 	AND BR_C 			IN ( SELECT DISTINCT MO_BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} )
+				 </if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == '001'">
+					AND BR_C     		= #{BR_C}
+				 </if>
+		        GROUP BY ACCT_C
+		    )
+		   
+		)
+		<if test=" LVL != 1 ">
+		UNION ALL
+		SELECT 
+	    	<if test="LVL == 1">
+	            '현금유출'
+	    	</if>
+	    	<if test="LVL == 2">
+	            '현금유출'
+	      	  , '[현금유출 합계](C)'  
+	          , 1
+	    	</if>
+	    	<if test="LVL == 3">
+	            '현금유출'
+	      	  , '[현금유출 합계](C)'
+	      	  , NULL
+	          , 3
+	    	</if>
+	    	<if test="LVL == 4">
+	            '현금유출'
+	      	  , '[현금유출 합계](C)'
+	      	  , NULL
+	     	  , NULL
+	          , 7
+	    	</if>
+	    	<if test="LVL == 5">
+	            '현금유출'
+	      	  , '[현금유출 합계](C)'
+	      	  , NULL
+	     	  , NULL
+	      	  , NULL 
+	          , 15
+	    	</if>
+	    	<if test="LVL == 6">
+	            '현금유출'
+	      	  , '[현금유출 합계](C)'
+	      	  , NULL
+	     	  , NULL
+	      	  , NULL 
+	      	  , NULL
+	          , 31
+	    	</if>
+	    	<if test="LVL == 7">
+	            '현금유출'
+	      	  , '[현금유출 합계](C)'
+	      	  , NULL
+	     	  , NULL
+	      	  , NULL 
+	      	  , NULL
+	      	  , NULL
+	          , 63
+	    	</if>
+		      , NULL
+		      , NULL
+		      , NULL
+		      , NULL
+		      , VIEW_NORM_1
+		      , VIEW_NORM_2
+		      , VIEW_NORM_3
+		      , VIEW_NORM_4
+	          , VIEW_NATV_1
+	          , VIEW_NATV_2
+	          , VIEW_NATV_3
+	          , VIEW_NATV_4
+	          , VIEW_MRKT_1
+	          , VIEW_MRKT_2
+	          , VIEW_MRKT_3
+	          , VIEW_MRKT_4
+	          , VIEW_CBN_1
+	          , VIEW_CBN_2
+	          , VIEW_CBN_3
+	          , VIEW_CBN_4
+	          /* 자릿수 채우기  */
+	          , SAME_NORM_1
+	          , SAME_NORM_2
+	          , SAME_NORM_3
+	          , SAME_NORM_4
+	          , SAME_NATV_1
+	          , SAME_NATV_2
+	          , SAME_NATV_3
+	          , SAME_NATV_4
+	          , SAME_MRKT_1
+	          , SAME_MRKT_2
+	          , SAME_MRKT_3
+	          , SAME_MRKT_4
+	          , SAME_CBN_1
+	          , SAME_CBN_2
+	          , SAME_CBN_3
+	          , SAME_CBN_4
+		FROM 
+		    (
+		        SELECT 
+		              ACCT_C
+		            , ROUND(SUM(NORM_STRS_APLY_AMT) / #{AMT_UNIT} ,0)  AS VIEW_NORM_1
+		            , NULL             		                           AS VIEW_NORM_2
+		            , NULL             		                           AS VIEW_NORM_3
+		            , ROUND(SUM(NORM_STRS_APLY_AMT) / #{AMT_UNIT} ,0)  AS VIEW_NORM_4
+		            , ROUND(SUM(NATV_STRS_APLY_AMT) / #{AMT_UNIT} ,0)  AS VIEW_NATV_1
+		            , NULL             		                           AS VIEW_NATV_2
+		            , NULL             		                           AS VIEW_NATV_3
+		            , ROUND(SUM(NATV_STRS_APLY_AMT) / #{AMT_UNIT} ,0)  AS VIEW_NATV_4
+		            , ROUND(SUM(MRKT_STRS_APLY_AMT) / #{AMT_UNIT} ,0)  AS VIEW_MRKT_1
+		            , NULL               	                           AS VIEW_MRKT_2
+		            , NULL                	                           AS VIEW_MRKT_3
+		            , ROUND(SUM(MRKT_STRS_APLY_AMT) / #{AMT_UNIT} ,0)  AS VIEW_MRKT_4
+		            , ROUND(SUM(CBN_STRS_APLY_AMT ) / #{AMT_UNIT} ,0)  AS VIEW_CBN_1
+		            , NULL                	                           AS VIEW_CBN_2
+		            , NULL                	                           AS VIEW_CBN_3
+		            , ROUND(SUM(CBN_STRS_APLY_AMT ) / #{AMT_UNIT} ,0)  AS VIEW_CBN_4
+		            -------------------------------------------------------------------
+		            , SUM(NORM_STRS_APLY_AMT)                          AS SAME_NORM_1
+		            , NULL            		                           AS SAME_NORM_2
+		            , NULL            		                           AS SAME_NORM_3
+		            , SUM(NORM_STRS_APLY_AMT)                          AS SAME_NORM_4
+		            , SUM(NATV_STRS_APLY_AMT)                          AS SAME_NATV_1
+		            , NULL            		                           AS SAME_NATV_2
+		            , NULL            		                           AS SAME_NATV_3
+		            , SUM(NATV_STRS_APLY_AMT)                          AS SAME_NATV_4
+		            , SUM(MRKT_STRS_APLY_AMT)                          AS SAME_MRKT_1
+		            , NULL              	                           AS SAME_MRKT_2
+		            , NULL               	                           AS SAME_MRKT_3
+		            , SUM(MRKT_STRS_APLY_AMT)                          AS SAME_MRKT_4
+		            , SUM(CBN_STRS_APLY_AMT )                          AS SAME_CBN_1
+		            , NULL               	                           AS SAME_CBN_2
+		            , NULL               	                           AS SAME_CBN_3
+		            , SUM(CBN_STRS_APLY_AMT )                          AS SAME_CBN_4
+		        FROM TLS_LQDT_ANAL_RSLT   
+		        WHERE ALM_WORK_TC       = 'M'
+		          AND CUR_C             = 'KRW'
+		          AND BASE_DATE         = #{BASE_DATE}
+		          AND ORG_CLAS_C        = #{ORG_CLAS_C}
+		          AND STRS_TC           = #{STRS_TC}
+		          AND LQDT_STRS_ITEM_C  = 'C1000'
+			 	<if test="AC_BUSI_TC == '0000'">
+			 		AND AC_BUSI_TC 		IN('1105','1106','1107')
+			 	</if>
+			 	<if test="AC_BUSI_TC != '0000'">
+			 		AND AC_BUSI_TC 		= #{AC_BUSI_TC}
+			 	</if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'">
+				 	AND BR_C 			IN ( SELECT DISTINCT MO_BR_C FROM TTL_BR_C_INFO )
+				 </if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+				 	AND BR_C     		= #{BR_C}
+				 </if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+				 	AND BR_C 			IN ( SELECT DISTINCT MO_BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} )
+				 </if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == '001'">
+					AND BR_C     		= #{BR_C}
+				 </if>
+		        GROUP BY ACCT_C
+		    )
+		</if>
+
+
+	
+	
+	</select>
+
+</mapper>

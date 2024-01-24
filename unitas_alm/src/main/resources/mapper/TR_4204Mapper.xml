@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_4204Mapper">
+
+	<!-- 금리분석 조회  -->
+	<select id="selectTr4204List" parameterType="java.util.Map" resultType="java.util.HashMap">	
+		SELECT 
+		    A.BASE_DATE, SUBSTR(A.BASE_DATE, 1,6) AS BASE_YM, SUBSTR(BASE_DATE, 1,4)||'년'||SUBSTR(BASE_DATE,5,2)||'월' AS BASE_YM_NM
+		    , A.ALM_BASE_RATE_C, A.ALM_BASE_RATE_TRM_CNT
+		    , A.ALM_BASE_RATE_C || '_' || A.ALM_BASE_RATE_TRM_CNT AS ALM_BASE_RATE_C_TRM_CNT
+		    , B.ALM_BASE_RATE_NM, B.ALM_REP_RATE_YN
+		    , A.ANAL_OBJ_CNT
+		    , A.YYS_VLTL_AVG_VAL
+		    , A.YYS_VLTL_VRAC_VAL
+		    , A.YYS_VLTL_STND_DVAT_VAL
+		    , A.YYS_VLTL_MAX_VAL
+		    , A.YYS_VLTL_MIN_VAL
+		    , A.YYS_VLTL_MDDL_ORD_VAL
+		    , A.CNFC_SECT_99_VAL
+		    , A.CNFC_SECT_999_VAL
+		    , A.CNFC_SECT_95_VAL
+		    , A.CNFC_SECT_90_VAL
+		    , A.CNFC_SECT_10_VAL
+		    , A.CNFC_SECT_5_VAL
+		    , A.CNFC_SECT_1_VAL
+		FROM TST_RATE_VLTL A
+		JOIN TSY_ALM_BASE_RATE_MNG B ON B.ALM_BASE_RATE_C = A.ALM_BASE_RATE_C AND B.ALM_BASE_RATE_TRM_CNT = A.ALM_BASE_RATE_TRM_CNT AND B.USE_YN = 'Y'
+		WHERE A.BASE_DATE = #{sch_base_date} 
+		AND A.BR_C = '000'
+		ORDER BY A.BR_C, A.ALM_BASE_RATE_C, A.ALM_BASE_RATE_TRM_CNT
+	</select>
+	
+	<select id="selectBaseDateSchCbList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT 
+			TO_CHAR(TO_DATE(MAX(BASE_DATE), 'YYYYMMDD'), 'YYYY-MM') AS BASE_DATE
+		FROM TST_RATE_VLTL
+	</select>
+
+</mapper>
+
+
+
+
+
+

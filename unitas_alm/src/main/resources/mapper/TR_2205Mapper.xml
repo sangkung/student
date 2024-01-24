@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_2205Mapper">
+	<!-- IRRBB 핵심예금 조회  -->
+	<select id="selectIrrbbCoreDepList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT
+		    A.BASE_DATE
+		    , TO_CHAR(TO_DATE(A.BASE_DATE, 'YYYYMMDD'), 'YYYY-MM') AS BASE_YYMM
+		    , A.TRM_WVAL
+		    , (MM_DMDP_ABAL_RTSL_TR + MM_DMDP_ABAL_RTSL_NON_TR + MM_DMDP_ABAL_NON_RTSL) AS MM_DMDP_ABAL_TOT
+		    , MM_DMDP_ABAL_RTSL_TR
+		    , MM_DMDP_ABAL_RTSL_NON_TR
+		    , MM_DMDP_ABAL_NON_RTSL
+		FROM (
+		    SELECT 
+		    TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -(LEVEL-1)),'YYYYMMDD') AS BASE_DATE, (13-LEVEL)||'/78' AS TRM_WVAL
+		    FROM DUAL
+		    CONNECT BY LEVEL &lt;= 12
+		) A
+		LEFT JOIN (
+		    SELECT 
+		        BASE_DATE
+		        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'Y' THEN ROUND(BASE_MM_AVG_BAL, 0) ELSE 0 END) AS MM_DMDP_ABAL_RTSL_TR
+		        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'N' THEN ROUND(BASE_MM_AVG_BAL, 0) ELSE 0 END) AS MM_DMDP_ABAL_RTSL_NON_TR
+		        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '2' THEN ROUND(BASE_MM_AVG_BAL, 0) ELSE 0 END) AS MM_DMDP_ABAL_NON_RTSL
+		    FROM TBI_CORE_DEP_RSLT
+		    WHERE BR_C = #{sch_br_c}
+		    GROUP BY BASE_DATE, BR_C
+		) B ON B.BASE_DATE = A.BASE_DATE
+		ORDER BY A.BASE_DATE DESC
+	</select>
+	
+	<!-- IRRBB 핵심예금 계  -->
+	<select id="selectIrrbbCoreDepSumm" parameterType="java.util.Map" resultType="java.util.HashMap">
+	    SELECT A.ITEM_TYPE, A.ITEM_NO, B.TOT, B.RTSL_TR, B.RTSL_NON_TR, B.NON_RTSL
+	    FROM (
+            SELECT 
+                '기간가중평균' AS ITEM_TYPE, 1 ITEM_NO
+            FROM DUAL
+            UNION ALL
+            SELECT 
+                '기간가중표준편차' AS ITEM_TYPE, 2 ITEM_NO
+            FROM DUAL
+            UNION ALL
+            SELECT
+                '당월핵심예금비율' AS ITEM_TYPE, 3 ITEM_NO
+            FROM DUAL
+            UNION ALL
+            SELECT 
+                 '누적핵심예금비율' AS ITEM_TYPE, 4 ITEM_NO
+            FROM DUAL
+            UNION ALL
+            SELECT
+                '핵심예금비율상한' AS ITEM_TYPE, 5 ITEM_NO
+            FROM DUAL
+            UNION ALL
+            SELECT 
+                 '적용핵심예금비율' AS ITEM_TYPE, 6 ITEM_NO
+            FROM DUAL
+        ) A 
+	    LEFT JOIN (
+	        --기간가중평균
+            SELECT 
+                1 AS ITEM_NO
+                , SUM(ROUND(TRM_WT_AVG_AMT, 0)) AS TOT
+                , SUM(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'Y' THEN ROUND(TRM_WT_AVG_AMT, 0) ELSE 0 END) AS RTSL_TR
+                , SUM(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'N' THEN ROUND(TRM_WT_AVG_AMT, 0) ELSE 0 END) AS RTSL_NON_TR
+                , SUM(CASE WHEN IRRBB_CS_CLAS_C = '2' THEN ROUND(TRM_WT_AVG_AMT, 0) ELSE 0 END) AS NON_RTSL
+            FROM TBI_CORE_DEP_RSLT A
+            WHERE BASE_DATE = #{sch_base_date} AND BR_C = #{sch_br_c}
+            GROUP BY A.BASE_DATE, A.BR_C
+            UNION ALL
+            --기간가중표준편차
+            SELECT 
+                2 AS ITEM_NO
+                , SUM(ROUND(TRM_WT_STND_DVAT_AMT, 0)) AS TRM_WT_STND_DVAT_AMT_TOT
+                , SUM(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'Y' THEN ROUND(TRM_WT_STND_DVAT_AMT, 0) ELSE 0 END) AS RTSL_TR
+                , SUM(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'N' THEN ROUND(TRM_WT_STND_DVAT_AMT, 0) ELSE 0 END) AS RTSL_NON_TR
+                , SUM(CASE WHEN IRRBB_CS_CLAS_C = '2' THEN ROUND(TRM_WT_STND_DVAT_AMT, 0) ELSE 0 END) AS NON_RTSL
+            FROM TBI_CORE_DEP_RSLT A
+            WHERE BASE_DATE = #{sch_base_date} AND BR_C = #{sch_br_c}
+            GROUP BY A.BASE_DATE, A.BR_C
+            UNION ALL
+            --당월핵심예금비율
+            SELECT
+                3 AS ITEM_NO
+                , TO_NUMBER(NULL)
+                , MAX(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'Y' THEN TMM_CORE_DEP_RTO ELSE 0 END) AS RTSL_TR
+                , MAX(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'N' THEN TMM_CORE_DEP_RTO ELSE 0 END) AS RTSL_NON_TR
+                , MAX(CASE WHEN IRRBB_CS_CLAS_C = '2' THEN TMM_CORE_DEP_RTO ELSE 0 END) AS NON_RTSL
+            FROM TBI_CORE_DEP_RSLT A
+            WHERE BASE_DATE = #{sch_base_date} AND BR_C = #{sch_br_c}
+            GROUP BY A.BASE_DATE, A.BR_C
+            UNION ALL
+            --누적핵심예금비율
+            SELECT 
+                4 AS ITEM_NO
+                , TO_NUMBER(NULL)
+                , MAX(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'Y' THEN ACML_CORE_DEP_RTO ELSE 0 END) AS RTSL_TR
+                , MAX(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'N' THEN ACML_CORE_DEP_RTO ELSE 0 END) AS RTSL_NON_TR
+                , MAX(CASE WHEN IRRBB_CS_CLAS_C = '2' THEN ACML_CORE_DEP_RTO ELSE 0 END) AS NON_RTSL
+            FROM TBI_CORE_DEP_RSLT A
+            WHERE BASE_DATE = #{sch_base_date} AND BR_C = #{sch_br_c}
+            GROUP BY A.BASE_DATE, A.BR_C
+            UNION ALL
+            --핵심예금비율상한
+            SELECT
+                5 AS ITEM_NO
+                , TO_NUMBER(NULL)
+                , 90 AS RTSL_TR
+                , 70 AS RTSL_NON_TR
+                , 50 AS NON_RTSL
+            FROM DUAL
+            UNION ALL
+            --적용핵심예금비율
+            SELECT 
+                6 AS ITEM_NO
+                , TO_NUMBER(NULL)
+                , MAX(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'Y' THEN APLY_CORE_DEP_RTO ELSE 0 END) AS RTSL_TR
+                , MAX(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'N' THEN APLY_CORE_DEP_RTO ELSE 0 END) AS RTSL_NON_TR
+                , MAX(CASE WHEN IRRBB_CS_CLAS_C = '2' THEN APLY_CORE_DEP_RTO ELSE 0 END) AS NON_RTSL
+            FROM TBI_CORE_DEP_RSLT A
+            WHERE BASE_DATE = #{sch_base_date} AND BR_C = #{sch_br_c}
+            GROUP BY A.BASE_DATE, A.BR_C
+	    ) B ON B.ITEM_NO = A.ITEM_NO
+	    ORDER BY A.ITEM_NO	
+	</select>
+	
+	<!-- IRRBB 핵심예금 계  -->
+	<select id="selectIrrbbCoreDepSummBAK2" parameterType="java.util.Map" resultType="java.util.HashMap">
+	    WITH CORE_DEP_RSLT AS (
+	        SELECT #{sch_base_date} AS BASE_DATE, #{sch_br_c} AS BR_C FROM DUAL
+	    )
+	        --기간가중평균
+	    SELECT 
+	        '기간가중평균' AS ITEM_TYPE
+	        , SUM(ROUND(TRM_WT_AVG_AMT, 0)) AS TOT
+	        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'Y' THEN ROUND(TRM_WT_AVG_AMT, 0) ELSE 0 END) AS RTSL_TR
+	        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'N' THEN ROUND(TRM_WT_AVG_AMT, 0) ELSE 0 END) AS RTSL_NON_TR
+	        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '2' THEN ROUND(TRM_WT_AVG_AMT, 0) ELSE 0 END) AS NON_RTSL
+	    FROM TBI_CORE_DEP_RSLT A
+	    JOIN CORE_DEP_RSLT B ON B.BASE_DATE = A.BASE_DATE AND B.BR_C = A.BR_C
+	    GROUP BY A.BASE_DATE, A.BR_C
+	    UNION ALL
+	        --기간가중표준편차
+	    SELECT 
+	        '기간가중표준편차'
+	        , SUM(ROUND(TRM_WT_STND_DVAT_AMT, 0)) AS TRM_WT_STND_DVAT_AMT_TOT
+	        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'Y' THEN ROUND(TRM_WT_STND_DVAT_AMT, 0) ELSE 0 END) AS RTSL_TR
+	        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'N' THEN ROUND(TRM_WT_STND_DVAT_AMT, 0) ELSE 0 END) AS RTSL_NON_TR
+	        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '2' THEN ROUND(TRM_WT_STND_DVAT_AMT, 0) ELSE 0 END) AS NON_RTSL
+	    FROM TBI_CORE_DEP_RSLT A
+	    JOIN CORE_DEP_RSLT B ON B.BASE_DATE = A.BASE_DATE AND B.BR_C = A.BR_C
+	    GROUP BY A.BASE_DATE, A.BR_C
+	    UNION ALL
+	        --당월핵심예금비율
+	    SELECT
+	        '당월핵심예금비율'
+	        , TO_NUMBER(NULL)
+	        , MAX(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'Y' THEN TMM_CORE_DEP_RTO ELSE 0 END) AS RTSL_TR
+	        , MAX(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'N' THEN TMM_CORE_DEP_RTO ELSE 0 END) AS RTSL_NON_TR
+	        , MAX(CASE WHEN IRRBB_CS_CLAS_C = '2' THEN TMM_CORE_DEP_RTO ELSE 0 END) AS NON_RTSL
+	    FROM TBI_CORE_DEP_RSLT A
+	    JOIN CORE_DEP_RSLT B ON B.BASE_DATE = A.BASE_DATE AND B.BR_C = A.BR_C
+	    GROUP BY A.BASE_DATE, A.BR_C
+	    UNION ALL
+	        --누적핵심예금비율
+	    SELECT 
+	         '누적핵심예금비율'
+	        , TO_NUMBER(NULL)
+	        , MAX(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'Y' THEN ACML_CORE_DEP_RTO ELSE 0 END) AS RTSL_TR
+	        , MAX(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'N' THEN ACML_CORE_DEP_RTO ELSE 0 END) AS RTSL_NON_TR
+	        , MAX(CASE WHEN IRRBB_CS_CLAS_C = '2' THEN ACML_CORE_DEP_RTO ELSE 0 END) AS NON_RTSL
+	    FROM TBI_CORE_DEP_RSLT A
+	    JOIN CORE_DEP_RSLT B ON B.BASE_DATE = A.BASE_DATE AND B.BR_C = A.BR_C
+	    GROUP BY A.BASE_DATE, A.BR_C
+	    UNION ALL
+	        --핵심예금비율상한
+	    SELECT
+	        '핵심예금비율상한'
+	        , TO_NUMBER(NULL)
+	        , 90 AS RTSL_TR
+	        , 70 AS RTSL_NON_TR
+	        , 50 AS NON_RTSL
+	        --적용핵심예금비율
+	    FROM DUAL
+	    UNION ALL
+	    SELECT 
+	         '적용핵심예금비율'
+	        , TO_NUMBER(NULL)
+	        , MAX(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'Y' THEN APLY_CORE_DEP_RTO ELSE 0 END) AS RTSL_TR
+	        , MAX(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'N' THEN APLY_CORE_DEP_RTO ELSE 0 END) AS RTSL_NON_TR
+	        , MAX(CASE WHEN IRRBB_CS_CLAS_C = '2' THEN APLY_CORE_DEP_RTO ELSE 0 END) AS NON_RTSL
+	    FROM TBI_CORE_DEP_RSLT A
+	    JOIN CORE_DEP_RSLT B ON B.BASE_DATE = A.BASE_DATE AND B.BR_C = A.BR_C
+	    GROUP BY A.BASE_DATE, A.BR_C
+	</select>
+	
+	<!-- IRRBB 핵심예금 계  -->
+	<select id="selectIrrbbCoreDepSummBak" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT 
+		    BASE_DATE
+		    , (TRM_WT_AVG_AMT_RTSL_TR+TRM_WT_AVG_AMT_RTSL_NON_TR+TRM_WT_AVG_AMT_NON_RTSL) AS TRM_WT_AVG_AMT_TOT
+		    , TRM_WT_AVG_AMT_RTSL_TR
+		    , TRM_WT_AVG_AMT_RTSL_NON_TR
+		    , TRM_WT_AVG_AMT_NON_RTSL
+		    , (TRM_WT_STND_DVAT_AMT_RTSL_TR+TRM_WT_STND_DVAT_AMT_RTSL_NON_TR+TRM_WT_STND_DVAT_AMT_NON_RTSL) AS TRM_WT_STND_DVAT_AMT_TOT
+		    , TRM_WT_STND_DVAT_AMT_RTSL_TR
+		    , TRM_WT_STND_DVAT_AMT_RTSL_NON_TR
+		    , TRM_WT_STND_DVAT_AMT_NON_RTSL
+		    , TMM_CORE_DEP_RTO_RTSL_TR
+		    , TMM_CORE_DEP_RTO_RTSL_NON_TR
+		    , TMM_CORE_DEP_RTO_NON_RTSL
+		    , ACML_CORE_DEP_RTO_RTSL_TR
+		    , ACML_CORE_DEP_RTO_RTSL_NON_TR
+		    , ACML_CORE_DEP_RTO_NON_RTSL
+		    , APLY_CORE_DEP_RTO_RTSL_TR
+		    , APLY_CORE_DEP_RTO_RTSL_NON_TR
+		    , APLY_CORE_DEP_RTO_NON_RTSL
+		FROM (
+		    SELECT 
+		        BASE_DATE
+		        --기간가중평균
+		        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'Y' THEN ROUND(TRM_WT_AVG_AMT, 0) ELSE 0 END) AS TRM_WT_AVG_AMT_RTSL_TR
+		        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'N' THEN ROUND(TRM_WT_AVG_AMT, 0) ELSE 0 END) AS TRM_WT_AVG_AMT_RTSL_NON_TR
+		        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '2' THEN ROUND(TRM_WT_AVG_AMT, 0) ELSE 0 END) AS TRM_WT_AVG_AMT_NON_RTSL
+		        --기간가중표준편차
+		        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'Y' THEN ROUND(TRM_WT_STND_DVAT_AMT, 0) ELSE 0 END) AS TRM_WT_STND_DVAT_AMT_RTSL_TR
+		        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'N' THEN ROUND(TRM_WT_STND_DVAT_AMT, 0) ELSE 0 END) AS TRM_WT_STND_DVAT_AMT_RTSL_NON_TR
+		        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '2' THEN ROUND(TRM_WT_STND_DVAT_AMT, 0) ELSE 0 END) AS TRM_WT_STND_DVAT_AMT_NON_RTSL
+		        --당월핵심예금비율
+		        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'Y' THEN ROUND(TMM_CORE_DEP_RTO, 0) ELSE 0 END) AS TMM_CORE_DEP_RTO_RTSL_TR
+		        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'N' THEN ROUND(TMM_CORE_DEP_RTO, 0) ELSE 0 END) AS TMM_CORE_DEP_RTO_RTSL_NON_TR
+		        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '2' THEN ROUND(TMM_CORE_DEP_RTO, 0) ELSE 0 END) AS TMM_CORE_DEP_RTO_NON_RTSL
+		        --누적핵심예금비율
+		        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'Y' THEN ROUND(ACML_CORE_DEP_RTO, 0) ELSE 0 END) AS ACML_CORE_DEP_RTO_RTSL_TR
+		        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'N' THEN ROUND(ACML_CORE_DEP_RTO, 0) ELSE 0 END) AS ACML_CORE_DEP_RTO_RTSL_NON_TR
+		        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '2' THEN ROUND(ACML_CORE_DEP_RTO, 0) ELSE 0 END) AS ACML_CORE_DEP_RTO_NON_RTSL
+		        --적용핵심예금비율
+		        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'Y' THEN ROUND(APLY_CORE_DEP_RTO, 0) ELSE 0 END) AS APLY_CORE_DEP_RTO_RTSL_TR
+		        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '1' AND TR_ACC_YN = 'N' THEN ROUND(APLY_CORE_DEP_RTO, 0) ELSE 0 END) AS APLY_CORE_DEP_RTO_RTSL_NON_TR
+		        , SUM(CASE WHEN IRRBB_CS_CLAS_C = '2' THEN ROUND(APLY_CORE_DEP_RTO, 0) ELSE 0 END) AS APLY_CORE_DEP_RTO_NON_RTSL
+		    FROM TBI_CORE_DEP_RSLT
+		    WHERE BASE_DATE = #{sch_base_date}
+		    AND BR_C = #{sch_br_c}
+		    GROUP BY BASE_DATE, BR_C
+		)
+	</select>
+	
+	<select id="selectBaseDateSchCbList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT 
+			TO_CHAR(TO_DATE(MAX(BASE_DATE), 'YYYYMMDD'), 'YYYY-MM') AS BASE_DATE 
+		FROM TBI_CORE_DEP_RSLT
+	</select>
+
+</mapper>

@@ -1,0 +1,1206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.unitas.alm.mapper.TestMapper">
+
+	<select id="selectTestData"		resultType="java.util.HashMap">
+		SELECT ACCT_CODE AS TABLE_NAME
+		     , ACCT_NO   AS TABLE_TYPE
+		FROM OFSA45.ALB_M_BASE_F
+		WHERE ROWNUM  <![CDATA[ <  ]]> to_number( #{param} )
+	</select>
+
+	<select id="selectSampleList" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT
+		ID, NAME, DESCRIPTION, USE_YN, REG_USER
+		FROM OFSA45.DHMIN_SAMPLE
+		WHERE 1=1
+		<if test="keyword != null and keyword != ''">
+			<choose>
+				<when test="searchType == 'ID'">
+					AND ID LIKE '%' || #{keyword} || '%'
+				</when>
+				<when test="searchType == 'NAME'">
+					AND NAME LIKE '%' || #{keyword} || '%'
+				</when>
+			</choose>
+		</if>
+		ORDER BY ID ASC
+	</select>
+
+<!-- 	<select id="selectId" parameterType="String" -->
+<!-- 		resultType="java.lang.Integer"> -->
+<!-- 		SELECT NEXT_ID FROM IDS WHERE TABLE_NAME='SAMPLE' -->
+<!-- 	</select> -->
+<!-- 	<update id="updateId" parameterType="java.util.Map"> -->
+<!-- 		UPDATE IDS SET NEXT_ID=#{ID} WHERE TABLE_NAME='SAMPLE' -->
+<!-- 	</update> -->
+
+	<insert id="insertSampleList" parameterType="java.util.Map">
+		INSERT INTO OFSA45.DHMIN_SAMPLE
+		( ID
+		, NAME
+		, DESCRIPTION
+		, USE_YN
+		, REG_USER )
+		VALUES ( #{ID}
+		, #{NAME}
+		, #{DESCRIPTION}
+		, #{USE_YN}
+		, #{REG_USER} )
+	</insert>
+
+	<update id="updateSampleList" parameterType="java.util.Map">
+		UPDATE OFSA45.DHMIN_SAMPLE
+		SET ID=#{ID}
+		, NAME=#{NAME}
+		, DESCRIPTION=#{DESCRIPTION}
+		, USE_YN=#{USE_YN}
+		WHERE ID=#{ID}
+	</update>
+
+	<delete id="deleteSampleList" parameterType="java.util.Map">
+		DELETE FROM OFSA45.DHMIN_SAMPLE
+		WHERE ID=#{ID}
+	</delete>
+	
+	<!-- 샘플4 사용자 조회(팝업) -->
+	<select id="selectUserInfo" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT BR_C         AS GROUP_CD 
+		     , USID         AS USER_ID 
+		     , USER_PSWD    AS PASSWORD 
+		     , USER_NM      AS NAME
+		     , AUTH_TC      AS MENU_AUTH
+		  FROM TSY_USER_MNG
+		<if test="argSearch != null and argSearch != ''">
+		 WHERE USID like '%' || #{argSearch} || '%' OR USER_NM LIKE '%' || #{argSearch} || '%'
+		</if>
+		 ORDER BY BR_C
+		        , USID
+	</select>
+	
+	<!-- 샘플4팝업 사용자 조회 -->
+	<select id="selectSample4List" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT ALM_MENU_C
+		     , USID
+		     , TR_TC
+		     , TR_CNTN
+		     , REG_DT
+		     , CNCT_DT 
+		  FROM TSY_SCRN_LOG
+         WHERE REG_DT >= TRUNC(SYSDATE)
+		<if test="userId != null and userId != ''">
+		   AND #{userId} = #{userId}
+		</if>
+		<if test="dayMonth != null and dayMonth != ''">
+		   AND #{dayMonth} = #{dayMonth}
+		</if>
+		<if test="startDate != null and startDate != ''">
+		   AND #{startDate} = #{startDate}
+		</if>
+		<if test="endDate != null and endDate != ''">
+		   AND #{endDate} = #{endDate}
+		</if>
+		<if test="searchCombo != null and searchCombo != ''">
+		   AND #{searchCombo} = #{searchCombo}
+		</if>
+		ORDER BY REG_DT
+	</select>
+	
+	
+	<!-- 트리구조 그리드 조회 -->
+	<select id="selectTreeGrid" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		 SELECT ALM_MENU_C
+		      , USID
+		      , TR_TC
+		      , TR_CNTN
+		      , REG_DT
+		      , CNCT_DT 
+		   FROM TSY_SCRN_LOG 
+		  WHERE REG_DT >= TRUNC(SYSDATE)
+		  ORDER BY REG_DT DESC
+	</select>
+	
+	<!-- 배치실행 -->
+	<select id="execProcedures" statementType="CALLABLE" resultType="java.util.HashMap">
+		CALL ALMADM.PRC_BATCH_LOG_WEB_TEST (
+			#{i_BASE_DATE, mode=IN, jdbcType=VARCHAR}
+			,#{i_PROC_NM, mode=IN, jdbcType=VARCHAR}
+			,#{i_EXEC_STAG_NO, mode=IN, jdbcType=VARCHAR}
+			,#{i_EXEC_STAT_C, mode=IN, jdbcType=VARCHAR}
+			,#{i_ALM_BTCH_LOG_CNTN, mode=IN, jdbcType=VARCHAR}
+			,#{o_RESULT_CODE, mode=OUT, jdbcType=VARCHAR}
+			,#{o_RESULT_MSG, mode=OUT, jdbcType=VARCHAR}
+		)
+	</select>
+	
+	
+	<select id="selectPerformanceTest1" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		WITH DATA_TB AS (
+			SELECT 
+			    BASE_DATE
+			    , ORG_CLAS_C
+			    , AC_BUSI_TC
+			    , ACCT_C
+			    , CASE WHEN MTRT_SECT_SEQ = 1 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S0_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 2 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S1_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 3 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S2_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 4 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S3_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 5 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S4_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 6 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S5_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 7 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S6_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 8 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S7_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 9 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S8_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 10 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S9_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 11 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S10_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 12 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S11_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ >= 13 AND MTRT_SECT_SEQ <![CDATA[ <=  ]]> 18 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S12_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ >= 19 AND MTRT_SECT_SEQ <![CDATA[ <=  ]]>24 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S13_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ >= 25 AND MTRT_SECT_SEQ <![CDATA[ <=  ]]>26 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S14_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 27 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S15_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 28 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S16_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ >= 29 AND MTRT_SECT_SEQ <![CDATA[ <=  ]]>33 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S17_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ >= 34 AND MTRT_SECT_SEQ <![CDATA[ <=  ]]>38 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S18_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ >= 39 AND MTRT_SECT_SEQ <![CDATA[ <=  ]]>43 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S19_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ >= 44 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S20_SECT_AMT
+			    , CASE WHEN ASTS_SDTP_CLAS_C != '10' THEN KRW_PRIN_AMT ELSE 0 END AS ASTS20_BLW_AMT    
+			    , CASE WHEN MTRT_SECT_SEQ = 1 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S0_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 2 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S1_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 3 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S2_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 4 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S3_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 5 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S4_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 6 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S5_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 7 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S6_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 8 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S7_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 9 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S8_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 10 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S9_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 11 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S10_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 12 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S11_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ >= 13 AND MTRT_SECT_SEQ <![CDATA[ <=  ]]>18 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S12_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ >= 19 AND MTRT_SECT_SEQ <![CDATA[ <=  ]]>24 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S13_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ >= 25 AND MTRT_SECT_SEQ <![CDATA[ <=  ]]>26 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S14_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 27 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S15_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 28 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S16_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ >= 29 AND MTRT_SECT_SEQ <![CDATA[ <=  ]]>33 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S17_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ >= 34 AND MTRT_SECT_SEQ <![CDATA[ <=  ]]>38 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S18_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ >= 39 AND MTRT_SECT_SEQ <![CDATA[ <=  ]]>43 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S19_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ >= 44 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S20_WT_PRIN
+			    , CASE WHEN ASTS_SDTP_CLAS_C != '10' THEN RATE_WT_PRIN ELSE 0 END AS ASTS20_BLW_PRIN
+
+				, '' AS DIMS_CDNM1
+				, '0' AS DIMS_C1
+
+				, '' AS DIMS_CDNM2
+				, '0' AS DIMS_C2
+
+						FROM TRT_LQDT_GAP_TOT
+
+			WHERE BASE_DATE = '20230930'
+			AND ALM_WORK_TC = 'M' --월/일
+
+			AND BR_C = '120'
+
+			AND AC_BUSI_TC = '2102' --회계구분
+
+			AND FUTU_POT_SECT_CNT = '0' -- 분석시점구분 0:현시점
+			AND NEW_CAP_QTY_TC = '0' --신규자금량 0:미포함, 1:포함
+
+			AND CAP_QTY_SNRO_NO = '1' --자금량시나리오번호
+
+			AND CS_BHOR_REFL_YN = 'N' --고객행동반영여부	
+			AND RATE_SNRO_NO = '1'
+		)
+		SELECT
+			MAX(BASE_DATE) AS BASE_DATE 
+		    , LVL1 AS ACCT_C_NM1
+
+			, DECODE(GROUPING_ID (LVL2, LVL3), 3, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), LVL2) AS ACCT_C_NM2 
+			, DECODE(GROUPING_ID (LVL2, LVL3), 1, LVL2||' 소계', LVL3) AS ACCT_C_NM3 
+
+			, GROUPING_ID (LVL2, LVL3) AS GRP_ID	
+			, '' AS DIMS_CDNM1
+			, '' AS DIMS_CDNM2
+
+			, SUM(TOT_SECT_AMT) AS TOT_SECT_AMT
+			, SUM(S0_SECT_AMT) AS S0_SECT_AMT
+            , SUM(S1_SECT_AMT) AS S1_SECT_AMT
+            , SUM(S2_SECT_AMT) AS S2_SECT_AMT
+            , SUM(S3_SECT_AMT) AS S3_SECT_AMT
+            , SUM(S4_SECT_AMT) AS S4_SECT_AMT
+            , SUM(S5_SECT_AMT) AS S5_SECT_AMT
+            , SUM(S6_SECT_AMT) AS S6_SECT_AMT
+            , SUM(S7_SECT_AMT) AS S7_SECT_AMT
+            , SUM(S8_SECT_AMT) AS S8_SECT_AMT
+            , SUM(S9_SECT_AMT) AS  S9_SECT_AMT
+            , SUM(S10_SECT_AMT) AS  S10_SECT_AMT
+            , SUM(S11_SECT_AMT) AS  S11_SECT_AMT
+            , SUM(S12_SECT_AMT) AS  S12_SECT_AMT
+            , SUM(S13_SECT_AMT) AS  S13_SECT_AMT
+            , SUM(S14_SECT_AMT) AS  S14_SECT_AMT
+            , SUM(S15_SECT_AMT) AS  S15_SECT_AMT
+            , SUM(S16_SECT_AMT) AS  S16_SECT_AMT
+            , SUM(S17_SECT_AMT) AS  S17_SECT_AMT
+            , SUM(S18_SECT_AMT) AS  S18_SECT_AMT
+            , SUM(S19_SECT_AMT) AS  S19_SECT_AMT
+            , SUM(S20_SECT_AMT) AS  S20_SECT_AMT
+            , SUM(ASTS20_BLW_AMT) AS ASTS20_BLW_AMT
+            , SUM(TOT_WT_PRIN) AS TOT_WT_PRIN
+            , SUM(S0_WT_PRIN) AS S0_WT_PRIN
+            , SUM(S1_WT_PRIN) AS S1_WT_PRIN
+            , SUM(S2_WT_PRIN) AS S2_WT_PRIN
+            , SUM(S3_WT_PRIN) AS S3_WT_PRIN
+            , SUM(S4_WT_PRIN) AS S4_WT_PRIN
+            , SUM(S5_WT_PRIN) AS S5_WT_PRIN
+            , SUM(S6_WT_PRIN) AS S6_WT_PRIN
+            , SUM(S7_WT_PRIN) AS S7_WT_PRIN
+            , SUM(S8_WT_PRIN) AS S8_WT_PRIN
+            , SUM(S9_WT_PRIN) AS  S9_WT_PRIN
+            , SUM(S10_WT_PRIN) AS  S10_WT_PRIN
+            , SUM(S11_WT_PRIN) AS  S11_WT_PRIN
+            , SUM(S12_WT_PRIN) AS  S12_WT_PRIN
+            , SUM(S13_WT_PRIN) AS  S13_WT_PRIN
+            , SUM(S14_WT_PRIN) AS  S14_WT_PRIN
+            , SUM(S15_WT_PRIN) AS  S15_WT_PRIN
+            , SUM(S16_WT_PRIN) AS  S16_WT_PRIN
+            , SUM(S17_WT_PRIN) AS  S17_WT_PRIN
+            , SUM(S18_WT_PRIN) AS  S18_WT_PRIN
+            , SUM(S19_WT_PRIN) AS  S19_WT_PRIN
+            , SUM(S20_WT_PRIN) AS  S20_WT_PRIN
+            , SUM(ASTS20_BLW_PRIN) AS ASTS20_BLW_PRIN
+            , CASE WHEN SUM(TOT_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(TOT_WT_PRIN)/SUM(TOT_SECT_AMT),5) END AS TOT_MTRT_SECT_RATE
+            , CASE WHEN SUM(S0_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S0_WT_PRIN)/SUM(S0_SECT_AMT),5) END AS S0_MTRT_SECT_RATE
+            , CASE WHEN SUM(S1_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S1_WT_PRIN)/SUM(S1_SECT_AMT),5) END AS S1_MTRT_SECT_RATE
+            , CASE WHEN SUM(S2_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S2_WT_PRIN)/SUM(S2_SECT_AMT),5) END AS S2_MTRT_SECT_RATE
+            , CASE WHEN SUM(S3_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S3_WT_PRIN)/SUM(S3_SECT_AMT),5) END AS S3_MTRT_SECT_RATE
+            , CASE WHEN SUM(S4_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S4_WT_PRIN)/SUM(S4_SECT_AMT),5) END AS S4_MTRT_SECT_RATE
+            , CASE WHEN SUM(S5_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S5_WT_PRIN)/SUM(S5_SECT_AMT),5) END AS S5_MTRT_SECT_RATE
+            , CASE WHEN SUM(S6_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S6_WT_PRIN)/SUM(S6_SECT_AMT),5) END AS S6_MTRT_SECT_RATE
+            , CASE WHEN SUM(S7_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S7_WT_PRIN)/SUM(S7_SECT_AMT),5) END AS S7_MTRT_SECT_RATE
+            , CASE WHEN SUM(S8_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S8_WT_PRIN)/SUM(S8_SECT_AMT),5) END AS S8_MTRT_SECT_RATE
+            , CASE WHEN SUM(S9_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S9_WT_PRIN)/SUM(S9_SECT_AMT),5) END AS S9_MTRT_SECT_RATE
+            , CASE WHEN SUM(S10_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S10_WT_PRIN)/SUM(S10_SECT_AMT),5) END AS S10_MTRT_SECT_RATE
+            , CASE WHEN SUM(S11_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S11_WT_PRIN)/SUM(S11_SECT_AMT),5) END AS S11_MTRT_SECT_RATE
+            , CASE WHEN SUM(S12_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S12_WT_PRIN)/SUM(S12_SECT_AMT),5) END AS S12_MTRT_SECT_RATE
+            , CASE WHEN SUM(S13_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S13_WT_PRIN)/SUM(S13_SECT_AMT),5) END AS S13_MTRT_SECT_RATE
+            , CASE WHEN SUM(S14_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S14_WT_PRIN)/SUM(S14_SECT_AMT),5) END AS S14_MTRT_SECT_RATE
+            , CASE WHEN SUM(S15_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S15_WT_PRIN)/SUM(S15_SECT_AMT),5) END AS S15_MTRT_SECT_RATE
+            , CASE WHEN SUM(S16_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S16_WT_PRIN)/SUM(S16_SECT_AMT),5) END AS S16_MTRT_SECT_RATE
+            , CASE WHEN SUM(S17_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S17_WT_PRIN)/SUM(S17_SECT_AMT),5) END AS S17_MTRT_SECT_RATE
+            , CASE WHEN SUM(S18_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S18_WT_PRIN)/SUM(S18_SECT_AMT),5) END AS S18_MTRT_SECT_RATE
+            , CASE WHEN SUM(S19_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S19_WT_PRIN)/SUM(S19_SECT_AMT),5) END AS S19_MTRT_SECT_RATE
+            , CASE WHEN SUM(S20_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S20_WT_PRIN)/SUM(S20_SECT_AMT),5) END AS S20_MTRT_SECT_RATE
+            , CASE WHEN SUM(ASTS20_BLW_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(ASTS20_BLW_PRIN)/SUM(ASTS20_BLW_AMT),5) END AS ASTS20_BLW_RATE
+		    , MAX(PRNT_ORD) AS PRNT_ORD_PATH
+        FROM (
+            SELECT 
+                MAX(BASE_DATE) AS BASE_DATE
+                , LVL1, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMS_CDNM1, DIMS_CDNM2
+                , (ROUND(SUM(S0_SECT_AMT), 0) + ROUND(SUM(S1_SECT_AMT), 0) + ROUND(SUM(S2_SECT_AMT), 0) + ROUND(SUM(S3_SECT_AMT), 0) + ROUND(SUM(S4_SECT_AMT), 0)
+                    + ROUND(SUM(S5_SECT_AMT), 0) + ROUND(SUM(S6_SECT_AMT), 0)+ ROUND(SUM(S7_SECT_AMT), 0)+ ROUND(SUM(S8_SECT_AMT), 0) + ROUND(SUM(S9_SECT_AMT), 0)
+                    + ROUND(SUM(S10_SECT_AMT), 0) + ROUND(SUM(S11_SECT_AMT), 0)+ ROUND(SUM(S12_SECT_AMT), 0)+ ROUND(SUM(S13_SECT_AMT), 0) + ROUND(SUM(S14_SECT_AMT), 0)
+                    + ROUND(SUM(S15_SECT_AMT), 0) + ROUND(SUM(S16_SECT_AMT), 0)+ ROUND(SUM(S17_SECT_AMT), 0)+ ROUND(SUM(S18_SECT_AMT), 0) + ROUND(SUM(S19_SECT_AMT), 0)
+                    + ROUND(SUM(S20_SECT_AMT), 0) + ROUND(SUM(ASTS20_BLW_AMT), 0)
+                ) AS TOT_SECT_AMT
+                , ROUND(SUM(S0_SECT_AMT), 0) AS S0_SECT_AMT
+                , ROUND(SUM(S1_SECT_AMT), 0) AS S1_SECT_AMT
+                , ROUND(SUM(S2_SECT_AMT), 0) AS S2_SECT_AMT
+                , ROUND(SUM(S3_SECT_AMT), 0) AS S3_SECT_AMT
+                , ROUND(SUM(S4_SECT_AMT), 0) AS S4_SECT_AMT
+                , ROUND(SUM(S5_SECT_AMT), 0) AS S5_SECT_AMT
+                , ROUND(SUM(S6_SECT_AMT), 0) AS S6_SECT_AMT
+                , ROUND(SUM(S7_SECT_AMT), 0) AS S7_SECT_AMT
+                , ROUND(SUM(S8_SECT_AMT), 0) AS S8_SECT_AMT
+                , ROUND(SUM(S9_SECT_AMT), 0) AS S9_SECT_AMT
+                , ROUND(SUM(S10_SECT_AMT), 0) AS S10_SECT_AMT
+                , ROUND(SUM(S11_SECT_AMT), 0) AS S11_SECT_AMT
+                , ROUND(SUM(S12_SECT_AMT), 0) AS S12_SECT_AMT
+                , ROUND(SUM(S13_SECT_AMT), 0) AS S13_SECT_AMT
+                , ROUND(SUM(S14_SECT_AMT), 0) AS S14_SECT_AMT
+                , ROUND(SUM(S15_SECT_AMT), 0) AS S15_SECT_AMT
+                , ROUND(SUM(S16_SECT_AMT), 0) AS S16_SECT_AMT
+                , ROUND(SUM(S17_SECT_AMT), 0) AS S17_SECT_AMT
+                , ROUND(SUM(S18_SECT_AMT), 0) AS S18_SECT_AMT
+                , ROUND(SUM(S19_SECT_AMT), 0) AS S19_SECT_AMT
+                , ROUND(SUM(S20_SECT_AMT), 0) AS S20_SECT_AMT
+                , ROUND(SUM(ASTS20_BLW_AMT), 0) AS ASTS20_BLW_AMT
+                , (ROUND(SUM(S0_WT_PRIN), 0) + ROUND(SUM(S1_WT_PRIN), 0) + ROUND(SUM(S2_WT_PRIN), 0) + ROUND(SUM(S3_WT_PRIN), 0) + ROUND(SUM(S4_WT_PRIN), 0)
+                    + ROUND(SUM(S5_WT_PRIN), 0) + ROUND(SUM(S6_WT_PRIN), 0)+ ROUND(SUM(S7_WT_PRIN), 0)+ ROUND(SUM(S8_WT_PRIN), 0) + ROUND(SUM(S9_WT_PRIN), 0)
+                    + ROUND(SUM(S10_WT_PRIN), 0) + ROUND(SUM(S11_WT_PRIN), 0)+ ROUND(SUM(S12_WT_PRIN), 0)+ ROUND(SUM(S13_WT_PRIN), 0) + ROUND(SUM(S14_WT_PRIN), 0)
+                    + ROUND(SUM(S15_WT_PRIN), 0) + ROUND(SUM(S16_WT_PRIN), 0)+ ROUND(SUM(S17_WT_PRIN), 0)+ ROUND(SUM(S18_WT_PRIN), 0) + ROUND(SUM(S19_WT_PRIN), 0)
+                    + ROUND(SUM(S20_WT_PRIN), 0) + ROUND(SUM(ASTS20_BLW_PRIN), 0)
+                ) AS TOT_WT_PRIN
+                , ROUND(SUM(S0_WT_PRIN), 0) AS S0_WT_PRIN
+                , ROUND(SUM(S1_WT_PRIN), 0) AS S1_WT_PRIN
+                , ROUND(SUM(S2_WT_PRIN), 0) AS S2_WT_PRIN
+                , ROUND(SUM(S3_WT_PRIN), 0) AS S3_WT_PRIN
+                , ROUND(SUM(S4_WT_PRIN), 0) AS S4_WT_PRIN
+                , ROUND(SUM(S5_WT_PRIN), 0) AS S5_WT_PRIN
+                , ROUND(SUM(S6_WT_PRIN), 0) AS S6_WT_PRIN
+                , ROUND(SUM(S7_WT_PRIN), 0) AS S7_WT_PRIN
+                , ROUND(SUM(S8_WT_PRIN), 0) AS S8_WT_PRIN
+                , ROUND(SUM(S9_WT_PRIN), 0) AS S9_WT_PRIN
+                , ROUND(SUM(S10_WT_PRIN), 0) AS S10_WT_PRIN
+                , ROUND(SUM(S11_WT_PRIN), 0) AS S11_WT_PRIN
+                , ROUND(SUM(S12_WT_PRIN), 0) AS S12_WT_PRIN
+                , ROUND(SUM(S13_WT_PRIN), 0) AS S13_WT_PRIN
+                , ROUND(SUM(S14_WT_PRIN), 0) AS S14_WT_PRIN
+                , ROUND(SUM(S15_WT_PRIN), 0) AS S15_WT_PRIN
+                , ROUND(SUM(S16_WT_PRIN), 0) AS S16_WT_PRIN
+                , ROUND(SUM(S17_WT_PRIN), 0) AS S17_WT_PRIN
+                , ROUND(SUM(S18_WT_PRIN), 0) AS S18_WT_PRIN
+                , ROUND(SUM(S19_WT_PRIN), 0) AS S19_WT_PRIN
+                , ROUND(SUM(S20_WT_PRIN), 0) AS S20_WT_PRIN
+            	, ROUND(SUM(ASTS20_BLW_PRIN), 0) AS ASTS20_BLW_PRIN
+                , MAX(PRNT_ORD) AS PRNT_ORD
+            FROM (
+                SELECT
+                    A.BASE_DATE
+                    , A.AC_BUSI_TC
+                    , B.LVL1
+                    , B.LVL2
+                    , B.LVL3
+                    , B.LVL4
+                    , B.LVL5
+                    , B.LVL6
+                    , B.LVL7
+                    , B.ACCT_C_NM
+                    , A.DIMS_CDNM1
+                    , A.DIMS_C1
+                    , A.DIMS_CDNM2
+                    , A.DIMS_C2
+                    , A.S0_SECT_AMT
+                    , A.S1_SECT_AMT
+                    , A.S2_SECT_AMT
+                    , A.S3_SECT_AMT
+                    , A.S4_SECT_AMT
+                    , A.S5_SECT_AMT
+                    , A.S6_SECT_AMT
+                    , A.S7_SECT_AMT
+                    , A.S8_SECT_AMT
+                    , A.S9_SECT_AMT
+                    , A.S10_SECT_AMT
+                    , A.S11_SECT_AMT
+                    , A.S12_SECT_AMT
+                    , A.S13_SECT_AMT
+                    , A.S14_SECT_AMT
+                    , A.S15_SECT_AMT
+                    , A.S16_SECT_AMT
+                    , A.S17_SECT_AMT
+                    , A.S18_SECT_AMT
+                    , A.S19_SECT_AMT
+                    , A.S20_SECT_AMT
+                    , A.ASTS20_BLW_AMT
+                    , A.S0_WT_PRIN
+                    , A.S1_WT_PRIN
+                    , A.S2_WT_PRIN
+                    , A.S3_WT_PRIN
+                    , A.S4_WT_PRIN
+                    , A.S5_WT_PRIN
+                    , A.S6_WT_PRIN
+                    , A.S7_WT_PRIN
+                    , A.S8_WT_PRIN
+                    , A.S9_WT_PRIN
+                    , A.S10_WT_PRIN
+                    , A.S11_WT_PRIN
+                    , A.S12_WT_PRIN
+                    , A.S13_WT_PRIN
+                    , A.S14_WT_PRIN
+                    , A.S15_WT_PRIN
+                    , A.S16_WT_PRIN
+                    , A.S17_WT_PRIN
+                    , A.S18_WT_PRIN
+                    , A.S19_WT_PRIN
+                    , A.S20_WT_PRIN
+                    , A.ASTS20_BLW_PRIN
+                    , B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||B.PRNT_ORD4||B.PRNT_ORD5||B.PRNT_ORD6||B.PRNT_ORD7||A.DIMS_C1||A.DIMS_C2 AS PRNT_ORD
+                FROM DATA_TB A
+                JOIN (
+			        SELECT 
+			            LEVEL, BASE_DATE, SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%') AS ACCT_PATH,
+			            REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 1 ) AS LVL1,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 2 ),TRIM(ACCT_C_NM)) AS LVL2,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 3 ),TRIM(ACCT_C_NM)) AS LVL3,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 4 ),TRIM(ACCT_C_NM)) AS LVL4,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 5 ),TRIM(ACCT_C_NM)) AS LVL5,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 6 ),TRIM(ACCT_C_NM)) AS LVL6,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 7 ),TRIM(ACCT_C_NM)) AS LVL7,
+			            TRIM(ACCT_C_NM) AS ACCT_C_NM,
+			            BS_PL_TC,
+			            ORG_CLAS_C,
+			            AC_BUSI_TC,
+			            ACCT_C,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 1 ),'9999') AS PRNT_ORD1,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 2 ),'9999') AS PRNT_ORD2,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 3 ),'9999') AS PRNT_ORD3,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 4 ),'9999') AS PRNT_ORD4,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 5 ),'9999') AS PRNT_ORD5,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 6 ),'9999') AS PRNT_ORD6,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 7 ),'9999') AS PRNT_ORD7
+			        FROM TSY_ACCT_MSTR_MNG
+			        WHERE BASE_DATE = (SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE <![CDATA[ <=  ]]> '20230930')
+
+			    	AND AC_BUSI_TC = '2102' /*회계구분*/
+			    	START WITH UP_ACCT_C = '0000000'
+			        CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+			    ) B ON B.ACCT_C = A.ACCT_C AND B.ORG_CLAS_C = A.ORG_CLAS_C AND B.AC_BUSI_TC = A.AC_BUSI_TC
+
+            ) 
+            GROUP BY LVL1, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMS_CDNM1, DIMS_CDNM2
+        )
+		GROUP BY 
+			LVL1
+			, ROLLUP(LVL2, LVL3)
+		ORDER BY PRNT_ORD_PATH, GRP_ID
+	</select>
+	
+	<select id="selectPerformanceTest2" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		 WITH TEMP AS (
+               SELECT ORG_CLAS_C
+                    , ACCT_C             /*계정코드*/
+                    , AC_BUSI_TC         /*회계사업구분코드*/
+                    , CASE WHEN RATE_SSTV_YN = 'N' THEN '비금리부' ELSE '금리부' END                                AS RATE_SSTV_NM   /*금리민감여부*/
+                    , SUM(CASE WHEN ALM_MTRT_SECT_C = '10'
+                               THEN RMBR_PAY_PRIN_AMT  
+                               ELSE 0
+                          END)                                                                                      AS TOT_AMT           /*합계-금액(이자)*/
+                    , CASE WHEN SUM(CASE WHEN ALM_MTRT_SECT_C = '10' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) != 0
+                           THEN SUM(CASE WHEN ALM_MTRT_SECT_C = '10' THEN RATE_WT_PRIN  ELSE 0 END) / SUM(CASE WHEN ALM_MTRT_SECT_C = '10' THEN RMBR_PAY_PRIN_AMT ELSE 0 END)
+                      END                                                                                           AS TOT_RATE             /*합계-이율*/
+                    , SUM(CASE WHEN ALM_MTRT_SECT_C = '10' THEN RATE_WT_PRIN END)                               AS TOT_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 1 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT  
+                                    END
+                          END)                                                                                      AS  M0_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 1 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M0_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 1 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M0_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 2 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT  
+                                    END
+                          END)                                                                                      AS  M1_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 2 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M1_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 2 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M1_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 3 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT  
+                                    END
+                          END)                                                                                      AS  M2_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 3 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M2_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 3 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M2_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 4 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT  
+                                    END
+                          END)                                                                                      AS  M3_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 4 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M3_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 4 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M3_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 5 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT  
+                                    END
+                          END)                                                                                      AS  M4_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 5 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M4_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 5 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M4_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 6 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT  
+                                    END
+                          END)                                                                                      AS  M5_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 6 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M5_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 6 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M5_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 7 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT  
+                                    END
+                          END)                                                                                      AS  M6_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 7 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M6_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 7 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M6_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 8 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT  
+                                    END
+                          END)                                                                                      AS  M7_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 8 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M7_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 8 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M7_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 9 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT  
+                                    END
+                          END)                                                                                      AS  M8_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 9 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M8_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 9 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M8_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 10 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT  
+                                    END
+                          END)                                                                                      AS  M9_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 10 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M9_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 10 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M9_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 11 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT  
+                                    END
+                          END)                                                                                      AS  M10_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 11 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M10_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 11 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M10_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 12 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT  
+                                    END
+                          END)                                                                                      AS  M11_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 12 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M11_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 12 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M11_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 13, 14, 15, 16, 17, 18 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT  
+                                    END
+                          END)                                                                                      AS  M12_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 13, 14, 15, 16, 17, 18 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M12_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 13, 14, 15, 16, 17, 18 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M12_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 19, 20, 21, 22, 23, 24 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT  
+                                    END
+                          END)                                                                                      AS  M13_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 19, 20, 21, 22, 23, 24 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M13_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 19, 20, 21, 22, 23, 24 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M13_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 25, 26 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT  
+                                    END
+                          END)                                                                                      AS  M14_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 25, 26 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M14_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 25, 26 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M14_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 27 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT  
+                                    END
+                          END)                                                                                      AS  M15_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 27 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M15_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 27 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M15_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 28 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT  
+                                    END
+                          END)                                                                                      AS  M16_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 28 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M16_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 28 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M16_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 29, 30, 31, 32, 33 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT  
+                                    END
+                          END)                                                                                      AS  M17_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 29, 30, 31, 32, 33 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M17_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 29, 30, 31, 32, 33 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M17_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 34, 35, 36, 37, 38 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT  
+                                    END
+                          END)                                                                                      AS  M18_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 34, 35, 36, 37, 38 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M18_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 34, 35, 36, 37, 38 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M18_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 39, 40, 41, 42, 43 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT  
+                                    END
+                          END)                                                                                      AS  M19_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 39, 40, 41, 42, 43 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M19_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 39, 40, 41, 42, 43 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M19_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 44 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT  
+                                    END
+                          END)                                                                                      AS  M20_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 44 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M20_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( 44 )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M20_RATE_WT_PRIN /* 가중평균금리 합계 */
+
+                    , SUM(CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C != '10'
+                               THEN RMBR_PAY_PRIN_AMT  
+                          END)                                                                                      AS NDCR_AMT /*요주의이하-금액*/
+                    , SUM(CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C != '10'
+                               THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                         THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                    END
+                          END)                                                                                      AS  NDCR_RATE /*월(이자)*/
+                    , SUM(CASE WHEN ALM_MTRT_SECT_C = '10' AND ASTS_SDTP_CLAS_C != '10' THEN RATE_WT_PRIN END)  AS NDCR_RATE_WT_PRIN /*가중평균금리 합계*/
+
+                 FROM (
+                           SELECT A.ORG_CLAS_C               AS ORG_CLAS_C
+                                , A.ACCT_C                   AS ACCT_C             /*계정코드*/
+
+                                , A.AC_BUSI_TC               AS AC_BUSI_TC         /*회계사업구분코드*/
+
+                                , A.RATE_SSTV_YN             AS RATE_SSTV_YN       /*금리민감여부*/
+                                , A.ALM_MTRT_SECT_C          AS ALM_MTRT_SECT_C    /*ALM만기구간코드*/
+                                , A.ASTS_SDTP_CLAS_C         AS ASTS_SDTP_CLAS_C   /*자산건전성분류코드*/
+                                , A.MTRT_SECT_SEQ            AS MTRT_SECT_SEQ      /*만기구간일련번호*/
+                                , SUM(A.RMBR_PAY_PRIN_AMT)   AS RMBR_PAY_PRIN_AMT  /*상환지급원금금액*/
+                                , SUM(A.RMBR_PAY_INT_AMT )   AS RMBR_PAY_INT_AMT   /*상환지급이자금액*/
+                                , SUM(A.RATE_WT_PRIN )   AS RATE_WT_PRIN   /*가중평균적용금리*/
+
+										FROM TRT_RATE_GAP_TOT A
+
+                            WHERE A.BASE_DATE = TO_CHAR(LAST_DAY(TO_DATE('20230930', 'YYYYMMDD')), 'YYYYMMDD') /*기준년월*/
+                              AND A.ALM_WORK_TC       = 'M'                               /*ALM작업구분코드*/
+                              AND A.RATE_SNRO_NO      = '1'                               /*금리시나리오번호*/
+                              AND A.ORG_CLAS_C        = '30'
+
+                              AND A.AC_BUSI_TC        = '2102'                     /*회계사업구분코드*/
+
+                              AND A.FUTU_POT_SECT_CNT = TO_NUMBER( '0' ) /*미래시점구간수*/
+
+                              AND A.NEW_CAP_QTY_TC    = '0'                 /*신규자금량구분코드*/
+
+                              AND A.CAP_QTY_SNRO_NO = '1'                /*자금량시나리오번호 디폴트:1*/
+
+                              AND A.CS_BHOR_REFL_YN   = 'N'                /*고객행동*/
+
+                                  AND A.BR_C = '120'
+
+                            GROUP BY A.ORG_CLAS_C
+                                   , A.ACCT_C              /*계정코드*/
+
+                                   , A.AC_BUSI_TC          /*회계사업구분코드*/
+
+                                   , A.RATE_SSTV_YN        /*금리민감여부*/
+                                   , A.ALM_MTRT_SECT_C     /*ALM만기구간코드*/
+                                   , A.ASTS_SDTP_CLAS_C    /*자산건전성분류코드*/
+                                   , A.MTRT_SECT_SEQ       /*만기구간일련번호*/
+
+                      )
+             GROUP BY ORG_CLAS_C
+                    , ACCT_C              /*계정코드*/
+                    , AC_BUSI_TC          /*회계사업구분코드*/
+                    , RATE_SSTV_YN        /*금리민감여부*/
+
+        )
+       SELECT LVL1                                                                                                                AS L1_NM
+
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3), 7, LVL1||' 합계', RATE_SSTV_NM)                                         AS RATE_SSTV_NM
+            , CASE WHEN LVL1 = '자산' THEN DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3), 3, RATE_SSTV_NM||LVL1||DECODE(RATE_SSTV_NM, '금리부', ' 합계(A)', ' 합계'), LVL2)
+                   WHEN LVL1 = '부채' THEN DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3), 3, RATE_SSTV_NM||LVL1||DECODE(RATE_SSTV_NM, '금리부', ' 합계(B)', ' 합계'), LVL2)
+                   ELSE                    DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3), 3, RATE_SSTV_NM||LVL1||' 합계',    LVL2)
+              END                                                                                                                   AS L2_NM
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3), 1, LVL2||' 소계', LVL3)                                                 AS L3_NM
+
+            , GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3)                                                                                AS GRP_ID 
+            , ''                                                                                                                  AS DIMENSION1
+            , ''                                                                                                                  AS DIMENSION2
+
+            , CASE WHEN SUM(TOT_AMT) !=0 THEN ROUND(SUM(TOT_AMT) / TO_NUMBER('1000000'))                 END   AS TOT_AMT
+            , CASE WHEN SUM(TOT_AMT) !=0  THEN ROUND(SUM(TOT_RATE_WT_PRIN) / SUM(TOT_AMT) * 100, 2) ELSE 0 END   AS TOT_RATE
+
+            , CASE WHEN SUM(M0_AMT) !=0 THEN ROUND(SUM(M0_AMT) / TO_NUMBER('1000000'))                      END  AS M0_AMT   
+			, CASE WHEN SUM(M0_AMT) !=0 THEN ROUND(SUM(M0_RATE_WT_PRIN) / SUM(M0_AMT) * 100, 2) ELSE 0 END  AS M0_RATE
+
+            , CASE WHEN SUM(M1_AMT) !=0 THEN ROUND(SUM(M1_AMT) / TO_NUMBER('1000000'))                      END  AS M1_AMT   
+			, CASE WHEN SUM(M1_AMT) !=0 THEN ROUND(SUM(M1_RATE_WT_PRIN) / SUM(M1_AMT) * 100, 2) ELSE 0 END  AS M1_RATE
+
+            , CASE WHEN SUM(M2_AMT) !=0 THEN ROUND(SUM(M2_AMT) / TO_NUMBER('1000000'))                      END  AS M2_AMT   
+			, CASE WHEN SUM(M2_AMT) !=0 THEN ROUND(SUM(M2_RATE_WT_PRIN) / SUM(M2_AMT) * 100, 2) ELSE 0 END  AS M2_RATE
+
+            , CASE WHEN SUM(M3_AMT) !=0 THEN ROUND(SUM(M3_AMT) / TO_NUMBER('1000000'))                      END  AS M3_AMT   
+			, CASE WHEN SUM(M3_AMT) !=0 THEN ROUND(SUM(M3_RATE_WT_PRIN) / SUM(M3_AMT) * 100, 2) ELSE 0 END  AS M3_RATE
+
+            , CASE WHEN SUM(M4_AMT) !=0 THEN ROUND(SUM(M4_AMT) / TO_NUMBER('1000000'))                      END  AS M4_AMT   
+			, CASE WHEN SUM(M4_AMT) !=0 THEN ROUND(SUM(M4_RATE_WT_PRIN) / SUM(M4_AMT) * 100, 2) ELSE 0 END  AS M4_RATE
+
+            , CASE WHEN SUM(M5_AMT) !=0 THEN ROUND(SUM(M5_AMT) / TO_NUMBER('1000000'))                      END  AS M5_AMT   
+			, CASE WHEN SUM(M5_AMT) !=0 THEN ROUND(SUM(M5_RATE_WT_PRIN) / SUM(M5_AMT) * 100, 2) ELSE 0 END  AS M5_RATE
+
+            , CASE WHEN SUM(M6_AMT) !=0 THEN ROUND(SUM(M6_AMT) / TO_NUMBER('1000000'))                      END  AS M6_AMT   
+			, CASE WHEN SUM(M6_AMT) !=0 THEN ROUND(SUM(M6_RATE_WT_PRIN) / SUM(M6_AMT) * 100, 2) ELSE 0 END  AS M6_RATE
+
+            , CASE WHEN SUM(M7_AMT) !=0 THEN ROUND(SUM(M7_AMT) / TO_NUMBER('1000000'))                      END  AS M7_AMT   
+			, CASE WHEN SUM(M7_AMT) !=0 THEN ROUND(SUM(M7_RATE_WT_PRIN) / SUM(M7_AMT) * 100, 2) ELSE 0 END  AS M7_RATE
+
+            , CASE WHEN SUM(M8_AMT) !=0 THEN ROUND(SUM(M8_AMT) / TO_NUMBER('1000000'))                      END  AS M8_AMT   
+			, CASE WHEN SUM(M8_AMT) !=0 THEN ROUND(SUM(M8_RATE_WT_PRIN) / SUM(M8_AMT) * 100, 2) ELSE 0 END  AS M8_RATE
+
+            , CASE WHEN SUM(M9_AMT) !=0 THEN ROUND(SUM(M9_AMT) / TO_NUMBER('1000000'))                      END  AS M9_AMT   
+			, CASE WHEN SUM(M9_AMT) !=0 THEN ROUND(SUM(M9_RATE_WT_PRIN) / SUM(M9_AMT) * 100, 2) ELSE 0 END  AS M9_RATE
+
+            , CASE WHEN SUM(M10_AMT) !=0 THEN ROUND(SUM(M10_AMT) / TO_NUMBER('1000000'))                      END  AS M10_AMT   
+			, CASE WHEN SUM(M10_AMT) !=0 THEN ROUND(SUM(M10_RATE_WT_PRIN) / SUM(M10_AMT) * 100, 2) ELSE 0 END  AS M10_RATE
+
+            , CASE WHEN SUM(M11_AMT) !=0 THEN ROUND(SUM(M11_AMT) / TO_NUMBER('1000000'))                      END  AS M11_AMT   
+			, CASE WHEN SUM(M11_AMT) !=0 THEN ROUND(SUM(M11_RATE_WT_PRIN) / SUM(M11_AMT) * 100, 2) ELSE 0 END  AS M11_RATE
+
+            , CASE WHEN SUM(M12_AMT) !=0 THEN ROUND(SUM(M12_AMT) / TO_NUMBER('1000000'))                      END  AS M12_AMT   
+			, CASE WHEN SUM(M12_AMT) !=0 THEN ROUND(SUM(M12_RATE_WT_PRIN) / SUM(M12_AMT) * 100, 2) ELSE 0 END  AS M12_RATE
+
+            , CASE WHEN SUM(M13_AMT) !=0 THEN ROUND(SUM(M13_AMT) / TO_NUMBER('1000000'))                      END  AS M13_AMT   
+			, CASE WHEN SUM(M13_AMT) !=0 THEN ROUND(SUM(M13_RATE_WT_PRIN) / SUM(M13_AMT) * 100, 2) ELSE 0 END  AS M13_RATE
+
+            , CASE WHEN SUM(M14_AMT) !=0 THEN ROUND(SUM(M14_AMT) / TO_NUMBER('1000000'))                      END  AS M14_AMT   
+			, CASE WHEN SUM(M14_AMT) !=0 THEN ROUND(SUM(M14_RATE_WT_PRIN) / SUM(M14_AMT) * 100, 2) ELSE 0 END  AS M14_RATE
+
+            , CASE WHEN SUM(M15_AMT) !=0 THEN ROUND(SUM(M15_AMT) / TO_NUMBER('1000000'))                      END  AS M15_AMT   
+			, CASE WHEN SUM(M15_AMT) !=0 THEN ROUND(SUM(M15_RATE_WT_PRIN) / SUM(M15_AMT) * 100, 2) ELSE 0 END  AS M15_RATE
+
+            , CASE WHEN SUM(M16_AMT) !=0 THEN ROUND(SUM(M16_AMT) / TO_NUMBER('1000000'))                      END  AS M16_AMT   
+			, CASE WHEN SUM(M16_AMT) !=0 THEN ROUND(SUM(M16_RATE_WT_PRIN) / SUM(M16_AMT) * 100, 2) ELSE 0 END  AS M16_RATE
+
+            , CASE WHEN SUM(M17_AMT) !=0 THEN ROUND(SUM(M17_AMT) / TO_NUMBER('1000000'))                      END  AS M17_AMT   
+			, CASE WHEN SUM(M17_AMT) !=0 THEN ROUND(SUM(M17_RATE_WT_PRIN) / SUM(M17_AMT) * 100, 2) ELSE 0 END  AS M17_RATE
+
+            , CASE WHEN SUM(M18_AMT) !=0 THEN ROUND(SUM(M18_AMT) / TO_NUMBER('1000000'))                      END  AS M18_AMT   
+			, CASE WHEN SUM(M18_AMT) !=0 THEN ROUND(SUM(M18_RATE_WT_PRIN) / SUM(M18_AMT) * 100, 2) ELSE 0 END  AS M18_RATE
+
+            , CASE WHEN SUM(M19_AMT) !=0 THEN ROUND(SUM(M19_AMT) / TO_NUMBER('1000000'))                      END  AS M19_AMT   
+			, CASE WHEN SUM(M19_AMT) !=0 THEN ROUND(SUM(M19_RATE_WT_PRIN) / SUM(M19_AMT) * 100, 2) ELSE 0 END  AS M19_RATE
+
+            , CASE WHEN SUM(M20_AMT) !=0 THEN ROUND(SUM(M20_AMT) / TO_NUMBER('1000000'))                      END  AS M20_AMT   
+			, CASE WHEN SUM(M20_AMT) !=0 THEN ROUND(SUM(M20_RATE_WT_PRIN) / SUM(M20_AMT) * 100, 2) ELSE 0 END  AS M20_RATE
+
+            , CASE WHEN SUM(NDCR_AMT) !=0 THEN ROUND(SUM(NDCR_AMT) / TO_NUMBER('1000000'))                  END  AS NDCR_AMT
+            , CASE WHEN SUM(NDCR_AMT) !=0 THEN ROUND(SUM(NDCR_RATE_WT_PRIN) / SUM(NDCR_AMT) * 100, 2) ELSE 0  END  AS NDCR_RATE
+
+        FROM (
+               SELECT B.LVL1
+                    , A.RATE_SSTV_NM
+                    , B.LVL2
+                    , B.LVL3
+                    , B.LVL4
+                    , B.LVL5
+                    , B.LVL6
+                    , B.LVL7
+                    , B.ACCT_C_NM
+                    , A.TOT_AMT
+                    , A.TOT_RATE
+                    , A.TOT_RATE_WT_PRIN
+
+                    , A.M0_AMT
+                    , A.M0_RATE
+                    , A.M0_RATE_WT_PRIN
+
+                    , A.M1_AMT
+                    , A.M1_RATE
+                    , A.M1_RATE_WT_PRIN
+
+                    , A.M2_AMT
+                    , A.M2_RATE
+                    , A.M2_RATE_WT_PRIN
+
+                    , A.M3_AMT
+                    , A.M3_RATE
+                    , A.M3_RATE_WT_PRIN
+
+                    , A.M4_AMT
+                    , A.M4_RATE
+                    , A.M4_RATE_WT_PRIN
+
+                    , A.M5_AMT
+                    , A.M5_RATE
+                    , A.M5_RATE_WT_PRIN
+
+                    , A.M6_AMT
+                    , A.M6_RATE
+                    , A.M6_RATE_WT_PRIN
+
+                    , A.M7_AMT
+                    , A.M7_RATE
+                    , A.M7_RATE_WT_PRIN
+
+                    , A.M8_AMT
+                    , A.M8_RATE
+                    , A.M8_RATE_WT_PRIN
+
+                    , A.M9_AMT
+                    , A.M9_RATE
+                    , A.M9_RATE_WT_PRIN
+
+                    , A.M10_AMT
+                    , A.M10_RATE
+                    , A.M10_RATE_WT_PRIN
+
+                    , A.M11_AMT
+                    , A.M11_RATE
+                    , A.M11_RATE_WT_PRIN
+
+                    , A.M12_AMT
+                    , A.M12_RATE
+                    , A.M12_RATE_WT_PRIN
+
+                    , A.M13_AMT
+                    , A.M13_RATE
+                    , A.M13_RATE_WT_PRIN
+
+                    , A.M14_AMT
+                    , A.M14_RATE
+                    , A.M14_RATE_WT_PRIN
+
+                    , A.M15_AMT
+                    , A.M15_RATE
+                    , A.M15_RATE_WT_PRIN
+
+                    , A.M16_AMT
+                    , A.M16_RATE
+                    , A.M16_RATE_WT_PRIN
+
+                    , A.M17_AMT
+                    , A.M17_RATE
+                    , A.M17_RATE_WT_PRIN
+
+                    , A.M18_AMT
+                    , A.M18_RATE
+                    , A.M18_RATE_WT_PRIN
+
+                    , A.M19_AMT
+                    , A.M19_RATE
+                    , A.M19_RATE_WT_PRIN
+
+                    , A.M20_AMT
+                    , A.M20_RATE
+                    , A.M20_RATE_WT_PRIN
+
+                    , A.NDCR_AMT
+                    , A.NDCR_RATE
+                    , A.NDCR_RATE_WT_PRIN
+                    , B.PRNT_ORD1
+                    , B.PRNT_ORD2
+                    , B.PRNT_ORD3
+                    , B.PRNT_ORD4
+                    , B.PRNT_ORD5
+                    , B.PRNT_ORD6
+                    , B.PRNT_ORD7
+
+                FROM TEMP A
+                   , (
+                        SELECT LEVEL
+                             , BASE_DATE
+                             , SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%') AS ACCT_PATH
+                             , REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 1 ) AS LVL1
+                             , REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 2 ) AS LVL2
+                             , REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 3 ) AS LVL3
+                             , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 4 ),TRIM(ACCT_C_NM))  AS LVL4
+                             , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 5 ),TRIM(ACCT_C_NM))  AS LVL5
+                             , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 6 ),TRIM(ACCT_C_NM))  AS LVL6
+                             , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 7 ),TRIM(ACCT_C_NM))  AS LVL7
+                             , TRIM(ACCT_C_NM) AS ACCT_C_NM
+                             , ORG_CLAS_C
+                             , AC_BUSI_TC
+                             , ACCT_C
+                             , TO_NUMBER(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 1 )                    )  AS PRNT_ORD1
+                             , TO_NUMBER(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 2 )                    )  AS PRNT_ORD2
+                             , TO_NUMBER(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 3 )                    )  AS PRNT_ORD3
+                             , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 4 ),TRIM(PRNT_ORD)))  AS PRNT_ORD4
+                             , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 5 ),TRIM(PRNT_ORD)))  AS PRNT_ORD5
+                             , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 6 ),TRIM(PRNT_ORD)))  AS PRNT_ORD6
+                             , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 7 ),TRIM(PRNT_ORD)))  AS PRNT_ORD7
+                          FROM TSY_ACCT_MSTR_MNG
+                         WHERE BASE_DATE  = (SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE<![CDATA[ <=  ]]> TO_CHAR(LAST_DAY(TO_DATE('20230930', 'YYYYMMDD')), 'YYYYMMDD'))
+                           AND USE_YN     = 'Y'
+                           AND ORG_CLAS_C = '30'
+
+                           AND AC_BUSI_TC = '2102'
+
+                         START WITH UP_ACCT_C  = '0000000'
+                       CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+                     ) B
+
+               WHERE B.ACCT_C     = A.ACCT_C
+                 AND B.AC_BUSI_TC = A.AC_BUSI_TC
+                 AND B.ORG_CLAS_C = A.ORG_CLAS_C
+
+              )
+        GROUP BY LVL1 
+
+                             , ROLLUP(RATE_SSTV_NM, LVL2, LVL3)
+
+        ORDER BY MAX(PRNT_ORD1) 
+               , CASE WHEN RATE_SSTV_NM LIKE '금리%'   THEN 1
+                      WHEN RATE_SSTV_NM LIKE '비금리%' THEN 2
+                      ELSE 3
+                 END    
+
+               , MAX(PRNT_ORD2)
+               , MAX(PRNT_ORD3)
+
+               , GRP_ID
+	</select>
+	
+	<select id="selectPerformanceTest3" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT 3333 AS COL1  FROM DUAL
+	</select>
+	
+	<select id="selectPerformanceTest4" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT 4444 AS COL1  FROM DUAL
+	</select>
+	
+	<select id="selectPerformanceTest5" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT 5555 AS COL1  FROM DUAL
+	</select>
+
+<!-- ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ -->
+
+
+	<select id="employeeList" resultType="java.util.HashMap">
+	
+	SELECT 
+	       LVL1                                                           AS EMP_NAME1    
+	     , DECODE( GROUPING_ID(LVL2,LVL3,LVL4),7, LVL1 || ' 소계', LVL2 )  AS EMP_NAME2   
+	     , DECODE( GROUPING_ID(LVL2,LVL3,LVL4),3, LVL2 || ' 소계', LVL3 )  AS EMP_NAME3 
+	     , DECODE( GROUPING_ID(LVL2,LVL3,LVL4),1, LVL3 || ' 소계', LVL4 )  AS EMP_NAME4   
+	     , GROUPING_ID(LVL2,LVL3,LVL4)                                     AS GRP_ID
+	     , SUM(SALARY) AS SALARY
+	  FROM
+	  (
+	    SELECT
+	           REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(EMP_NAME,'%'),'[^%]+' ,'1','1') AS LVL1   
+	         , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(EMP_NAME,'%'),'[^%]+' ,'1','2'),EMP_NAME) AS LVL2
+	         , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(EMP_NAME,'%'),'[^%]+' ,'1','3'),EMP_NAME) AS LVL3
+	         , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(EMP_NAME,'%'),'[^%]+' ,'1','4'),EMP_NAME) AS LVL4 
+	         , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(EMP_NAME,'%'),'[^%]+' ,'1','5'),EMP_NAME) AS LVL5   
+	         , EMP_NO
+	         , DEP_NO
+	         , JIKUP
+	         , SALARY
+	         , HIRE_DATE
+	         , JUMIN_NUM
+	         , PHONE
+	         , MGR_EMP_NO
+	      FROM EMPLOYEE
+	     START WITH MGR_EMP_NO IS NULL
+	     CONNECT BY PRIOR EMP_NO = MGR_EMP_NO
+	  )A
+	  GROUP BY  
+	       LVL1, ROLLUP(LVL2,LVL3,LVL4) 
+	
+	</select>
+
+
+
+
+</mapper>

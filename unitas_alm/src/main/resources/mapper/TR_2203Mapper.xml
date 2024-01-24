@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_2203Mapper">
+
+	<!-- 금리EVE NII 조회  -->
+	<select id="selectRateEveNiiList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT 
+		    A.MTRT_SECT_NM
+		    , A.MTRT_SECT_SEQ
+		    , TO_CHAR(A.RATE_RFM_MDDL_POT_VAL, 'FM990.0000') AS RATE_RFM_MDDL_POT_VAL
+		    , B.NS1_DISC_CALC_APLY_PRIN_AMT
+		    , B.NS2_DISC_CALC_APLY_PRIN_AMT
+		    , B.NS3_DISC_CALC_APLY_PRIN_AMT
+		    , C.ES1_DISC_CALC_APLY_PRIN_AMT
+		    , C.ES2_DISC_CALC_APLY_PRIN_AMT
+		    , C.ES3_DISC_CALC_APLY_PRIN_AMT
+		    , C.ES4_DISC_CALC_APLY_PRIN_AMT
+		    , C.ES5_DISC_CALC_APLY_PRIN_AMT
+		    , C.ES6_DISC_CALC_APLY_PRIN_AMT
+		    , C.ES7_DISC_CALC_APLY_PRIN_AMT
+		FROM TSY_MTRT_SECT_MNG A
+		LEFT JOIN 
+		(
+		    SELECT MTRT_SECT_SEQ
+		        , ROUND(SUM(NS1_DISC_CALC_APLY_PRIN_AMT), 0) AS NS1_DISC_CALC_APLY_PRIN_AMT
+		        , ROUND(SUM(NS2_DISC_CALC_APLY_PRIN_AMT), 0) AS NS2_DISC_CALC_APLY_PRIN_AMT
+		        , ROUND(SUM(NS3_DISC_CALC_APLY_PRIN_AMT), 0) AS NS3_DISC_CALC_APLY_PRIN_AMT
+		    FROM (
+		        SELECT 
+		            BASE_DATE
+		            , ALM_WORK_TC
+		            , ORG_CLAS_C
+		            , BR_C
+		            , CUR_C
+		            , AC_BUSI_TC
+		            , SNRO_NO
+		            , ALM_MTRT_SECT_C
+		            , MTRT_SECT_SEQ
+		            , RATE_SSTV_YN
+		            , CASE WHEN SNRO_NO=1                                      THEN NVL(DISC_CALC_APLY_PRIN_AMT, 0) ELSE 0 END AS NS1_DISC_CALC_APLY_PRIN_AMT
+		            , CASE WHEN SNRO_NO=2 AND MTRT_SECT_SEQ <![CDATA[ <= ]]> 6 THEN NVL(DISC_CALC_APLY_PRIN_AMT, 0) ELSE NULL END AS NS2_DISC_CALC_APLY_PRIN_AMT
+		            , CASE WHEN SNRO_NO=3 AND MTRT_SECT_SEQ <![CDATA[ <= ]]> 6 THEN NVL(DISC_CALC_APLY_PRIN_AMT, 0) ELSE NULL END AS NS3_DISC_CALC_APLY_PRIN_AMT
+		        FROM TBI_NII_RSLT_TOT A
+		        WHERE BASE_DATE = #{sch_base_date}
+		<if test='sch_br_c == "ALL"'>
+				AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BR_TC = '03') /*전체조합*/
+		</if>
+		<if test="sch_br_c != 'ALL'">
+			<if test="sch_br_c == '001'">
+				AND A.BR_C = '001' /*중앙회*/
+			</if>
+			<if test="sch_br_c != '001' and (sch_blng_hq_br_c == '' or sch_blng_hq_br_c == null)">
+				AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{sch_br_c}) /*도지회별합산*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'Y'.toString()">
+				AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{sch_br_c}) /*단위조합별조회(지소포함)*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'N'.toString()">
+				AND A.BR_C = #{sch_br_c}
+			</if>
+		</if>
+		<choose>
+			<when test="sch_ac_busi_tc == '0000'">
+		        AND AC_BUSI_TC IN ('1105', '1106', '1107')
+		    </when>
+		    <otherwise>
+		    	AND AC_BUSI_TC = #{sch_ac_busi_tc}
+		    </otherwise>
+		</choose>
+		    )
+		    GROUP BY MTRT_SECT_SEQ
+		) B ON B.MTRT_SECT_SEQ = A.MTRT_SECT_SEQ
+		LEFT JOIN 
+		(
+		    SELECT MTRT_SECT_SEQ
+		        , ROUND(SUM(ES1_DISC_CALC_APLY_PRIN_AMT), 0) AS ES1_DISC_CALC_APLY_PRIN_AMT
+		        , ROUND(SUM(ES2_DISC_CALC_APLY_PRIN_AMT), 0) AS ES2_DISC_CALC_APLY_PRIN_AMT
+		        , ROUND(SUM(ES3_DISC_CALC_APLY_PRIN_AMT), 0) AS ES3_DISC_CALC_APLY_PRIN_AMT
+		        , ROUND(SUM(ES4_DISC_CALC_APLY_PRIN_AMT), 0) AS ES4_DISC_CALC_APLY_PRIN_AMT
+		        , ROUND(SUM(ES5_DISC_CALC_APLY_PRIN_AMT), 0) AS ES5_DISC_CALC_APLY_PRIN_AMT
+		        , ROUND(SUM(ES6_DISC_CALC_APLY_PRIN_AMT), 0) AS ES6_DISC_CALC_APLY_PRIN_AMT
+		        , ROUND(SUM(ES7_DISC_CALC_APLY_PRIN_AMT), 0) AS ES7_DISC_CALC_APLY_PRIN_AMT
+		    FROM (
+		        SELECT 
+		            BASE_DATE
+		            , ALM_WORK_TC
+		            , ORG_CLAS_C
+		            , BR_C
+		            , CUR_C
+		            , AC_BUSI_TC
+		            , SNRO_NO
+		            , ALM_MTRT_SECT_C
+		            , MTRT_SECT_SEQ
+		            , RATE_SSTV_YN
+		            , CASE WHEN SNRO_NO=1 THEN NVL(DISC_CALC_APLY_PRIN_AMT, 0) ELSE 0 END AS ES1_DISC_CALC_APLY_PRIN_AMT
+		            , CASE WHEN SNRO_NO=2 THEN NVL(DISC_CALC_APLY_PRIN_AMT, 0) ELSE 0 END AS ES2_DISC_CALC_APLY_PRIN_AMT
+		            , CASE WHEN SNRO_NO=3 THEN NVL(DISC_CALC_APLY_PRIN_AMT, 0) ELSE 0 END AS ES3_DISC_CALC_APLY_PRIN_AMT
+		            , CASE WHEN SNRO_NO=4 THEN NVL(DISC_CALC_APLY_PRIN_AMT, 0) ELSE 0 END AS ES4_DISC_CALC_APLY_PRIN_AMT
+		            , CASE WHEN SNRO_NO=5 THEN NVL(DISC_CALC_APLY_PRIN_AMT, 0) ELSE 0 END AS ES5_DISC_CALC_APLY_PRIN_AMT
+		            , CASE WHEN SNRO_NO=6 THEN NVL(DISC_CALC_APLY_PRIN_AMT, 0) ELSE 0 END AS ES6_DISC_CALC_APLY_PRIN_AMT
+		            , CASE WHEN SNRO_NO=7 THEN NVL(DISC_CALC_APLY_PRIN_AMT, 0) ELSE 0 END AS ES7_DISC_CALC_APLY_PRIN_AMT
+		        FROM TBI_EVE_RSLT_TOT A
+		        WHERE BASE_DATE = #{sch_base_date}
+		<if test='sch_br_c == "ALL"'>
+				AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BR_TC = '03') /*전체조합*/
+		</if>
+		<if test="sch_br_c != 'ALL'">
+			<if test="sch_br_c == '001'">
+				AND A.BR_C = '001' /*중앙회*/
+			</if>
+			<if test="sch_br_c != '001' and (sch_blng_hq_br_c == '' or sch_blng_hq_br_c == null)">
+				AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{sch_br_c}) /*도지회별합산*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'Y'.toString()">
+				AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{sch_br_c}) /*단위조합별조회(지소포함)*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'N'.toString()">
+				AND A.BR_C = #{sch_br_c}
+			</if>
+		</if>
+		<choose>
+			<when test="sch_ac_busi_tc == '0000'">
+		        AND AC_BUSI_TC IN ('1105', '1106', '1107')
+		    </when>
+		    <otherwise>
+		    	AND AC_BUSI_TC = #{sch_ac_busi_tc}
+		    </otherwise>
+		</choose>
+		    )
+		    GROUP BY MTRT_SECT_SEQ
+		) C ON C.MTRT_SECT_SEQ = A.MTRT_SECT_SEQ
+		WHERE A.ALM_MTRT_SECT_C = '20'
+		ORDER BY A.MTRT_SECT_SEQ
+	</select>
+	
+	<select id="selectTR_2203Tier1" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT
+			SUM(ROUND(RPRT_SECT_4_AMT, 0)) AS RPRT_SECT_4_AMT
+		FROM TBI_LQDT_RSLT_TOT	--	BASEL_유동성결과집계
+		WHERE BASE_DATE = #{sch_base_date}
+		<if test='sch_br_c == "ALL"'>
+		AND BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BR_TC = '03') /*전체조합*/
+		</if>
+		<if test="sch_br_c != 'ALL'">
+			<if test="sch_br_c == '001'">
+		AND BR_C = '001' /*중앙회*/
+			</if>
+			<if test="sch_br_c != '001' and (sch_blng_hq_br_c == '' or sch_blng_hq_br_c == null)">
+		AND BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{sch_br_c}) /*도지회별합산*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null">
+		AND BR_C IN (SELECT MO_BR_C FROM TTL_BR_C_INFO WHERE BR_C = #{sch_br_c}) /*모점소기준 합산*/
+			</if>
+		</if>
+		<choose>
+			<when test="sch_ac_busi_tc == '0000'">
+		AND AC_BUSI_TC IN ('1105', '1106', '1107')
+		    </when>
+		    <otherwise>
+		AND AC_BUSI_TC = #{sch_ac_busi_tc}
+		    </otherwise>
+		</choose>
+		AND BSL3_LQDT_RPRT_C = '20'
+		AND BSL3_LQDT_RPRT_ITEM_VAL = 'A11'	
+	</select>
+	
+	<select id="selectBaseDateSchCbList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT 
+			TO_CHAR(TO_DATE(MAX(BASE_DATE), 'YYYYMMDD'), 'YYYY-MM') AS BASE_DATE 
+		FROM TBI_NII_RSLT_TOT
+	</select>
+
+</mapper>

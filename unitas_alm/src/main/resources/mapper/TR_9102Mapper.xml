@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_9102Mapper">
+
+	<select id="tr_9102SelectList" parameterType="java.util.Map" resultType="java.util.HashMap">
+	
+			<!-- 원화계정코드(WCUR_ACCT_C)를 없앴다.
+			           계정처리 여부 컬럼도 -> 최하위여부  컬럼으로 바뀌었다.      
+			           뭐하는 컬럼인지 잘모르겠지만... 
+			-->
+
+       		SELECT
+               ACCT_C
+               , TRIM(ACCT_C_NM) AS "ACCT_C_NM"
+               , BS_PL_TC
+               , DR_CR_TC
+               , UP_ACCT_C
+               , LWST_YN
+               , USE_YN
+               , PRNT_ORD
+               , OBJ_ACCT_C
+               , DR_CR_CHNG_YN
+               , ACCT_LVL   
+               , EXTR_UNIT_C
+               , LQDT_GD_TC
+               , LQDT_DTL_GD_TC
+               , LQDT_CS_CLAS_C
+               , DISC_RT_APLY_RATE_C
+               , DEP_INSR_KIND_C
+               , RATE_SSTV_YN    
+               , MKBT_SNB_YN
+               , CORE_DEP_YN
+               , MTRT_CLCL_DIFC_YN
+               , FCTN_MTRT_UNIT_C
+               , FCTN_MTRT_VAL
+               , LQDT_MTRT_ADJ_C
+               , LQDT_EXCP_OBJ_C
+               , LQDT_EXCP_RTO
+               , LAST_CHNG_ID
+           FROM 
+               TSY_ACCT_MSTR_MNG
+          WHERE
+           	   BASE_DATE = #{BASE_DATE}
+               AND ORG_CLAS_C = #{ORG_CLAS_C}
+               AND AC_BUSI_TC = #{AC_BUSI_TC}             
+			
+           ORDER BY CASE WHEN LAST_CHNG_ID = 'BATCH' THEN 0 END  
+                  , PRNT_ORD   
+
+	        
+	</select>
+
+
+	<update id="tr_9102SaveList" parameterType="java.util.Map">
+
+		UPDATE 
+			  TSY_ACCT_MSTR_MNG
+		   SET
+	   		  ACCT_LVL   				= #{ACCT_LVL}
+              ,EXTR_UNIT_C				= #{EXTR_UNIT_C}
+              ,LQDT_GD_TC				= #{LQDT_GD_TC}
+              ,LQDT_DTL_GD_TC			= #{LQDT_DTL_GD_TC}
+              ,LQDT_CS_CLAS_C			= #{LQDT_CS_CLAS_C}
+              ,DISC_RT_APLY_RATE_C		= #{DISC_RT_APLY_RATE_C}
+              ,DEP_INSR_KIND_C			= #{DEP_INSR_KIND_C}
+              ,RATE_SSTV_YN    			= #{RATE_SSTV_YN}
+              ,MKBT_SNB_YN				= CASE
+             								WHEN #{MKBT_SNB_YN} = 'U' THEN NULL  -- U : 화면에서 NULL 값의 코드 이다. 
+             								ELSE #{MKBT_SNB_YN}
+             							  END	
+              ,CORE_DEP_YN				= CASE
+             								WHEN #{CORE_DEP_YN} = 'U' THEN NULL  -- U : 화면에서 NULL 값의 코드 이다. 
+             								ELSE #{CORE_DEP_YN}
+             							  END
+              ,MTRT_CLCL_DIFC_YN		= #{MTRT_CLCL_DIFC_YN}
+              ,FCTN_MTRT_UNIT_C			= #{FCTN_MTRT_UNIT_C}
+              ,FCTN_MTRT_VAL			= #{FCTN_MTRT_VAL}
+              ,LQDT_MTRT_ADJ_C			= #{LQDT_MTRT_ADJ_C}
+              ,LQDT_EXCP_OBJ_C			= #{LQDT_EXCP_OBJ_C}
+              ,LQDT_EXCP_RTO			= #{LQDT_EXCP_RTO}
+              ,LAST_CHNG_ID             = #{session.USID}
+              ,LAST_CHNG_DT             = SYSDATE
+         WHERE
+        	  ACCT_C = #{ACCT_C}       
+	
+	</update>
+
+
+
+
+	<select id="ExtrUnitC" resultType="java.util.HashMap" >
+	
+		SELECT 
+			DTL_CLAS_VAL  AS "CODE"
+			,DTL_CLAS_VAL || '(' || DTL_CLAS_NM || ')' AS "TEXT"
+		FROM
+			TSY_CO_MNG
+		WHERE
+			DTL_CLAS_VAL != '-'
+		    AND 
+		    CO_C = 'EXTR_UNIT_C'		
+	
+	</select>
+
+	<select id="LqdtGdTC" resultType="java.util.HashMap" >
+	
+		SELECT 
+			DTL_CLAS_VAL  AS "CODE"
+			,DTL_CLAS_VAL || '(' || DTL_CLAS_NM || ')' AS "TEXT"
+		FROM
+			TSY_CO_MNG
+		WHERE
+			DTL_CLAS_VAL != '-'
+		    AND 
+		    CO_C = 'LQDT_GD_TC'		
+	
+	</select>
+	
+	<select id="LqdtDtlGdTC" resultType="java.util.HashMap" >
+	
+		SELECT 
+			DTL_CLAS_VAL  AS "CODE"
+			,DTL_CLAS_VAL || '(' || DTL_CLAS_NM || ')' AS "TEXT"
+		FROM
+			TSY_CO_MNG
+		WHERE
+			DTL_CLAS_VAL != '-'
+		    AND 
+		    CO_C = 'LQDT_DTL_GD_TC'		
+	
+	</select>
+	
+	<select id="LqdtCsClasC" resultType="java.util.HashMap" >
+	
+		SELECT 
+			DTL_CLAS_VAL  AS "CODE"
+			,DTL_CLAS_VAL || '(' || DTL_CLAS_NM || ')' AS "TEXT"
+		FROM
+			TSY_CO_MNG
+		WHERE
+			DTL_CLAS_VAL != '-'
+		    AND 
+		    CO_C = 'LQDT_CS_CLAS_C'		
+	
+	</select>
+	
+	<select id="DepInsrKindC" resultType="java.util.HashMap" >
+	
+		SELECT 
+			DTL_CLAS_VAL  AS "CODE"
+			,DTL_CLAS_VAL || '(' || DTL_CLAS_NM || ')' AS "TEXT"
+		FROM
+			TSY_CO_MNG
+		WHERE
+			DTL_CLAS_VAL != '-'
+		    AND 
+		    CO_C = 'DEP_INSR_KIND_C'		
+	
+	</select>
+	
+	<select id="LqdtMtrtAdjC" resultType="java.util.HashMap" >
+	
+		SELECT 
+			DTL_CLAS_VAL  AS "CODE"
+			,DTL_CLAS_VAL || '(' || DTL_CLAS_NM || ')' AS "TEXT"
+		FROM
+			TSY_CO_MNG
+		WHERE
+			DTL_CLAS_VAL != '-'
+		    AND 
+		    CO_C = 'LQDT_MTRT_ADJ_C'		
+	
+	</select>
+	
+	<select id="LqdtExcpObjC" resultType="java.util.HashMap" >
+	
+		SELECT 
+			DTL_CLAS_VAL  AS "CODE"
+			,DTL_CLAS_VAL || '(' || DTL_CLAS_NM || ')' AS "TEXT"
+		FROM
+			TSY_CO_MNG
+		WHERE
+			DTL_CLAS_VAL != '-'
+		    AND 
+		    CO_C = 'LQDT_EXCP_OBJ_C'		
+	
+	</select>
+
+	<select id="DiscRtAplyRateC" resultType="java.util.HashMap" >
+	
+		SELECT
+		    DISTINCT ALM_BASE_RATE_C   						   AS "CODE"
+		    ,ALM_BASE_RATE_C || '(' || ALM_BASE_RATE_NM || ')' AS "TEXT"
+		FROM 
+		    TSY_ALM_BASE_RATE_MNG 
+		WHERE
+		    ALM_BASE_RATE_C LIKE '11%'
+		ORDER BY 
+		    ALM_BASE_RATE_C 		
+	
+	</select>
+
+</mapper>

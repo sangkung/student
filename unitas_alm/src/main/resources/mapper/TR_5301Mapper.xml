@@ -1,0 +1,627 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_5301Mapper">
+
+    <!-- 시나리오 코드 조회 -->
+    <select id="selectSimuNo" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+SELECT ORG_CLAS_C                    AS ORG_CLAS_C
+     , BR_C                          AS BR_C
+     , AC_BUSI_TC                    AS AC_BUSI_TC
+     , SIMU_NO                       AS SIMU_NO
+     , '('||SIMU_NO||') '||SIMU_NM   AS SIMU_NM
+  FROM TSI_USER_SIMU_MNG
+ GROUP BY ORG_CLAS_C
+        , BR_C
+        , AC_BUSI_TC
+        , SIMU_NO
+        , SIMU_NM
+ ORDER BY ORG_CLAS_C
+        , BR_C
+        , AC_BUSI_TC
+        , SIMU_NO
+    </select>
+	
+	<!-- 유동성갭 내역 조회  -->
+	<select id="selectLqdtGapList" parameterType="java.util.Map" resultType="java.util.HashMap">
+        WITH DATA_TB AS (
+           SELECT BASE_DATE
+                , ORG_CLAS_C
+                , AC_BUSI_TC
+                , ACCT_C
+			    , CASE WHEN MTRT_SECT_SEQ = 1 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S0_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 2 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S1_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 3 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S2_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 4 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S3_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 5 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S4_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 6 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S5_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 7 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S6_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 8 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S7_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 9 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S8_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 10 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S9_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 11 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S10_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 12 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S11_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ &gt;= 13 AND MTRT_SECT_SEQ &lt;=18 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S12_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ &gt;= 19 AND MTRT_SECT_SEQ &lt;=24 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S13_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ &gt;= 25 AND MTRT_SECT_SEQ &lt;=26 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S14_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 27 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S15_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 28 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S16_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ &gt;= 29 AND MTRT_SECT_SEQ &lt;=33 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S17_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ &gt;= 34 AND MTRT_SECT_SEQ &lt;=38 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S18_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ &gt;= 39 AND MTRT_SECT_SEQ &lt;=43 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S19_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ &gt;= 44 AND ASTS_SDTP_CLAS_C = '10' THEN KRW_PRIN_AMT ELSE 0 END AS S20_SECT_AMT
+			    , CASE WHEN ASTS_SDTP_CLAS_C != '10' THEN KRW_PRIN_AMT ELSE 0 END AS ASTS20_BLW_AMT    
+			    , CASE WHEN MTRT_SECT_SEQ = 1 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S0_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 2 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S1_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 3 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S2_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 4 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S3_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 5 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S4_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 6 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S5_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 7 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S6_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 8 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S7_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 9 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S8_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 10 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S9_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 11 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S10_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 12 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S11_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ &gt;= 13 AND MTRT_SECT_SEQ &lt;=18 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S12_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ &gt;= 19 AND MTRT_SECT_SEQ &lt;=24 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S13_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ &gt;= 25 AND MTRT_SECT_SEQ &lt;=26 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S14_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 27 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S15_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ = 28 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S16_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ &gt;= 29 AND MTRT_SECT_SEQ &lt;=33 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S17_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ &gt;= 34 AND MTRT_SECT_SEQ &lt;=38 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S18_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ &gt;= 39 AND MTRT_SECT_SEQ &lt;=43 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S19_WT_PRIN
+			    , CASE WHEN MTRT_SECT_SEQ &gt;= 44 AND ASTS_SDTP_CLAS_C = '10' THEN RATE_WT_PRIN ELSE 0 END AS S20_WT_PRIN
+			    , CASE WHEN ASTS_SDTP_CLAS_C != '10' THEN RATE_WT_PRIN ELSE 0 END AS ASTS20_BLW_PRIN
+                  <if test="sch_dims_item_no != '' and sch_dims_item_no != null">
+                , (SELECT DIMS_CDNM FROM TSY_DIMS_ITEM_MNG WHERE DIMS_ITEM_NO = #{sch_dims_item_no}  AND DIMS_C_VAL = DECODE(DIMS_ITEM_NO, '2', TO_CHAR(TO_NUMBER(SUBSTR(REGEXP_SUBSTR(DIMS_ATTR_CNTN,'[^|]+' , 1 , #{sch_dims_item_no} ),2,3))), REGEXP_SUBSTR(DIMS_ATTR_CNTN,'[^|]+' , 1 , #{sch_dims_item_no} )) ) AS DIMS_CDNM1
+                , REGEXP_SUBSTR(DIMS_ATTR_CNTN,'[^|]+' , 1 , #{sch_dims_item_no} )  AS DIMS_C1
+                  </if>
+                  <if test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null">
+                , (SELECT DIMS_CDNM FROM TSY_DIMS_ITEM_MNG WHERE DIMS_ITEM_NO = #{sch_dims_item_no2} AND DIMS_C_VAL = DECODE(DIMS_ITEM_NO, '2', TO_CHAR(TO_NUMBER(SUBSTR(REGEXP_SUBSTR(DIMS_ATTR_CNTN,'[^|]+' , 1 , #{sch_dims_item_no2} ),2,3))), REGEXP_SUBSTR(DIMS_ATTR_CNTN,'[^|]+' , 1 , #{sch_dims_item_no2} )) ) AS DIMS_CDNM2
+                , REGEXP_SUBSTR(DIMS_ATTR_CNTN,'[^|]+' , 1 , #{sch_dims_item_no2} ) AS DIMS_C2
+                  </if>
+                  <if test="sch_dims_item_no == '' or sch_dims_item_no == null">
+                , '' AS DIMS_CDNM1
+                , '0' AS DIMS_C1
+                  </if>
+                  <if test="sch_dims_item_no2 == '' or sch_dims_item_no2 == null">
+                , '' AS DIMS_CDNM2
+                , '0' AS DIMS_C2
+                  </if>
+             FROM TSI_USER_LQDT_GAP_TOT    /*시뮬레이션_사용자유동성갭집계*/
+            WHERE BASE_DATE         = #{sch_base_date}
+              AND ALM_WORK_TC       = #{sch_day_month} /*월일                 */
+              AND SIMU_NO           = #{sch_simu_no}   /*시뮬레이션번호       */
+              AND FUTU_POT_SECT_CNT = #{sch_futu_pot}  /*분석시점구분 0:현시점*/
+              AND NEW_CAP_QTY_TC    = #{sch_new_capq}  /*신규자금량 0:미포함  */
+              <choose>
+                  <when test="sch_ac_busi_tc == '0000'">
+                      AND AC_BUSI_TC IN ('1105', '1106', '1107') /*회계구분*/
+                  </when>
+                  <otherwise>
+                      AND AC_BUSI_TC = #{sch_ac_busi_tc}
+                  </otherwise>
+              </choose>
+		<if test='sch_br_c == "ALL"'>
+			AND BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BR_TC = '03') /*전체조합*/
+		</if>
+		<if test="sch_br_c != 'ALL'">
+			<if test="sch_br_c == '001'">
+			AND BR_C = '001' /*중앙회*/
+			</if>
+			<if test="sch_br_c != '001' and (sch_blng_hq_br_c == '' or sch_blng_hq_br_c == null)">
+			AND BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{sch_br_c}) /*도지회별합산*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'Y'.toString()">
+			AND BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{sch_br_c}) /*단위조합별조회(지소포함)*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'N'.toString()">
+			AND BR_C = #{sch_br_c}
+			</if>
+		</if>
+		)
+		SELECT MAX(BASE_DATE) AS BASE_DATE 
+		     , LVL1 AS ACCT_C_NM1
+		<if test="sch_acc_tc_lvl == 1">
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, GROUPING_ID (DIMS_CDNM1) AS GRP_ID
+			, DECODE(GROUPING_ID (DIMS_CDNM1), 1, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), DIMS_CDNM1) AS DIMS_CDNM1
+			, '' AS DIMS_CDNM2	
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, GROUPING_ID (DIMS_CDNM1, DIMS_CDNM2) AS GRP_ID
+			, DECODE(GROUPING_ID (DIMS_CDNM1, DIMS_CDNM2), 3, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), DIMS_CDNM1) AS DIMS_CDNM1
+			, DECODE(GROUPING_ID (DIMS_CDNM1, DIMS_CDNM2), 1, DIMS_CDNM1||' 소계', DIMS_CDNM2) AS DIMS_CDNM2	
+				</when>
+				<otherwise>
+			, 0 AS GRP_ID	
+			, '' AS DIMS_CDNM1
+			, '' AS DIMS_CDNM2
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 2">
+			, DECODE(GROUPING_ID (LVL2), 1, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), LVL2) AS ACCT_C_NM2 
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, GROUPING_ID (LVL2, DIMS_CDNM1) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, DIMS_CDNM1), 1, LVL2||' 소계', DIMS_CDNM1) AS DIMS_CDNM1	
+			, '' AS DIMS_CDNM2
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, GROUPING_ID (LVL2, DIMS_CDNM1, DIMS_CDNM2) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, DIMS_CDNM1, DIMS_CDNM2), 3, LVL2||' 소계', DIMS_CDNM1) AS DIMS_CDNM1
+			, DECODE(GROUPING_ID (LVL2, DIMS_CDNM1, DIMS_CDNM2), 1, DIMS_CDNM1||' 소계', DIMS_CDNM2) AS DIMS_CDNM2	
+				</when>
+				<otherwise>
+			, GROUPING_ID (LVL2) AS GRP_ID	
+			, '' AS DIMS_CDNM1
+			, '' AS DIMS_CDNM2
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 3">
+			, DECODE(GROUPING_ID (LVL2, LVL3), 3, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), LVL2) AS ACCT_C_NM2 
+			, DECODE(GROUPING_ID (LVL2, LVL3), 1, LVL2||' 소계', LVL3) AS ACCT_C_NM3 
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, GROUPING_ID (LVL2, LVL3, DIMS_CDNM1) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, LVL3, DIMS_CDNM1), 1, LVL3||' 소계', DIMS_CDNM1) AS DIMS_CDNM1	
+			, '' AS DIMS_CDNM2
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, GROUPING_ID (LVL2, LVL3, DIMS_CDNM1, DIMS_CDNM2) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, LVL3, DIMS_CDNM1, DIMS_CDNM2), 3, LVL3||' 소계', DIMS_CDNM1) AS DIMS_CDNM1
+			, DECODE(GROUPING_ID (LVL2, LVL3, DIMS_CDNM1, DIMS_CDNM2), 1, DIMS_CDNM1||' 소계', DIMS_CDNM2) AS DIMS_CDNM2	
+				</when>
+				<otherwise>
+			, GROUPING_ID (LVL2, LVL3) AS GRP_ID	
+			, '' AS DIMS_CDNM1
+			, '' AS DIMS_CDNM2
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 4">
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4), 7, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), LVL2) AS ACCT_C_NM2 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4), 3, LVL2||' 소계', LVL3) AS ACCT_C_NM3 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4), 1, LVL3||' 소계', LVL4) AS ACCT_C_NM4
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, GROUPING_ID (LVL2, LVL3, LVL4, DIMS_CDNM1) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, DIMS_CDNM1), 1, LVL4||' 소계', DIMS_CDNM1) AS DIMS_CDNM1	
+			, '' AS DIMS_CDNM2
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, GROUPING_ID (LVL2, LVL3, LVL4, DIMS_CDNM1, DIMS_CDNM2) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, DIMS_CDNM1, DIMS_CDNM2), 3, LVL4||' 소계', DIMS_CDNM1) AS DIMS_CDNM1
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, DIMS_CDNM1, DIMS_CDNM2), 1, DIMS_CDNM1||' 소계', DIMS_CDNM2) AS DIMS_CDNM2	
+				</when>
+				<otherwise>
+			, GROUPING_ID (LVL2, LVL3, LVL4) AS GRP_ID	
+			, '' AS DIMS_CDNM1
+			, '' AS DIMS_CDNM2
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 5">
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5), 15, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), LVL2) AS ACCT_C_NM2 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5), 7, LVL2||' 소계', LVL3) AS ACCT_C_NM3 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5), 3, LVL3||' 소계', LVL4) AS ACCT_C_NM4 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5), 1, LVL4||' 소계', LVL5) AS ACCT_C_NM5 
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, GROUPING_ID (LVL2, LVL3, LVL4, LVL5, DIMS_CDNM1) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, DIMS_CDNM1), 1, LVL5||' 소계', DIMS_CDNM1) AS DIMS_CDNM1	
+			, '' AS DIMS_CDNM2
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, GROUPING_ID (LVL2, LVL3, LVL4, LVL5, DIMS_CDNM1, DIMS_CDNM2) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, DIMS_CDNM1, DIMS_CDNM2), 3, LVL5||' 소계', DIMS_CDNM1) AS DIMS_CDNM1
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, DIMS_CDNM1, DIMS_CDNM2), 1, DIMS_CDNM1||' 소계', DIMS_CDNM2) AS DIMS_CDNM2	
+				</when>
+				<otherwise>
+			, GROUPING_ID (LVL2, LVL3, LVL4, LVL5) AS GRP_ID	
+			, '' AS DIMS_CDNM1
+			, '' AS DIMS_CDNM2
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 6">
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 31, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), LVL2) AS ACCT_C_NM2 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 15, LVL2||' 소계', LVL3) AS ACCT_C_NM3 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 7, LVL3||' 소계', LVL4) AS ACCT_C_NM4 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 3, LVL4||' 소계', LVL5) AS ACCT_C_NM5 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 1, LVL5||' 소계', LVL6) AS ACCT_C_NM6
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, DIMS_CDNM1) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, DIMS_CDNM1), 1, LVL6||' 소계', DIMS_CDNM1) AS DIMS_CDNM1	
+			, '' AS DIMS_CDNM2
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, DIMS_CDNM1, DIMS_CDNM2) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, DIMS_CDNM1, DIMS_CDNM2), 3, LVL6||' 소계', DIMS_CDNM1) AS DIMS_CDNM1
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, DIMS_CDNM1, DIMS_CDNM2), 1, DIMS_CDNM1||' 소계', DIMS_CDNM2) AS DIMS_CDNM2
+				</when>
+				<otherwise>
+			, GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6) AS GRP_ID	
+			, '' AS DIMS_CDNM1
+			, '' AS DIMS_CDNM2
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 7">
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 63, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), LVL2) AS ACCT_C_NM2
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 31, LVL2||' 소계', LVL3) AS ACCT_C_NM3 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 15, LVL3||' 소계', LVL4) AS ACCT_C_NM4 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 7, LVL4||' 소계', LVL5) AS ACCT_C_NM5 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 3, LVL5||' 소계', LVL6) AS ACCT_C_NM6 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 1, LVL6||' 소계', LVL7) AS ACCT_C_NM7
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMS_CDNM1) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMS_CDNM1), 1, LVL6||' 소계', DIMS_CDNM1) AS DIMS_CDNM1	
+			, '' AS DIMS_CDNM2
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMS_CDNM1, DIMS_CDNM2) AS GRP_ID
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMS_CDNM1, DIMS_CDNM2), 3, LVL7||' 소계', DIMS_CDNM1) AS DIMS_CDNM1
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6,, LVL7 DIMS_CDNM1, DIMS_CDNM2), 1, DIMS_CDNM1||' 소계', DIMS_CDNM2) AS DIMS_CDNM2
+				</when>
+				<otherwise>
+			, GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7) AS GRP_ID	
+			, '' AS DIMS_CDNM1
+			, '' AS DIMS_CDNM2
+				</otherwise>
+			</choose>
+		</if>	
+			, SUM(TOT_SECT_AMT) AS TOT_SECT_AMT
+			, SUM(S0_SECT_AMT) AS S0_SECT_AMT
+            , SUM(S1_SECT_AMT) AS S1_SECT_AMT
+            , SUM(S2_SECT_AMT) AS S2_SECT_AMT
+            , SUM(S3_SECT_AMT) AS S3_SECT_AMT
+            , SUM(S4_SECT_AMT) AS S4_SECT_AMT
+            , SUM(S5_SECT_AMT) AS S5_SECT_AMT
+            , SUM(S6_SECT_AMT) AS S6_SECT_AMT
+            , SUM(S7_SECT_AMT) AS S7_SECT_AMT
+            , SUM(S8_SECT_AMT) AS S8_SECT_AMT
+            , SUM(S9_SECT_AMT) AS  S9_SECT_AMT
+            , SUM(S10_SECT_AMT) AS  S10_SECT_AMT
+            , SUM(S11_SECT_AMT) AS  S11_SECT_AMT
+            , SUM(S12_SECT_AMT) AS  S12_SECT_AMT
+            , SUM(S13_SECT_AMT) AS  S13_SECT_AMT
+            , SUM(S14_SECT_AMT) AS  S14_SECT_AMT
+            , SUM(S15_SECT_AMT) AS  S15_SECT_AMT
+            , SUM(S16_SECT_AMT) AS  S16_SECT_AMT
+            , SUM(S17_SECT_AMT) AS  S17_SECT_AMT
+            , SUM(S18_SECT_AMT) AS  S18_SECT_AMT
+            , SUM(S19_SECT_AMT) AS  S19_SECT_AMT
+            , SUM(S20_SECT_AMT) AS  S20_SECT_AMT
+            , SUM(ASTS20_BLW_AMT) AS ASTS20_BLW_AMT
+            , SUM(TOT_WT_PRIN) AS TOT_WT_PRIN
+            , SUM(S0_WT_PRIN) AS S0_WT_PRIN
+            , SUM(S1_WT_PRIN) AS S1_WT_PRIN
+            , SUM(S2_WT_PRIN) AS S2_WT_PRIN
+            , SUM(S3_WT_PRIN) AS S3_WT_PRIN
+            , SUM(S4_WT_PRIN) AS S4_WT_PRIN
+            , SUM(S5_WT_PRIN) AS S5_WT_PRIN
+            , SUM(S6_WT_PRIN) AS S6_WT_PRIN
+            , SUM(S7_WT_PRIN) AS S7_WT_PRIN
+            , SUM(S8_WT_PRIN) AS S8_WT_PRIN
+            , SUM(S9_WT_PRIN) AS  S9_WT_PRIN
+            , SUM(S10_WT_PRIN) AS  S10_WT_PRIN
+            , SUM(S11_WT_PRIN) AS  S11_WT_PRIN
+            , SUM(S12_WT_PRIN) AS  S12_WT_PRIN
+            , SUM(S13_WT_PRIN) AS  S13_WT_PRIN
+            , SUM(S14_WT_PRIN) AS  S14_WT_PRIN
+            , SUM(S15_WT_PRIN) AS  S15_WT_PRIN
+            , SUM(S16_WT_PRIN) AS  S16_WT_PRIN
+            , SUM(S17_WT_PRIN) AS  S17_WT_PRIN
+            , SUM(S18_WT_PRIN) AS  S18_WT_PRIN
+            , SUM(S19_WT_PRIN) AS  S19_WT_PRIN
+            , SUM(S20_WT_PRIN) AS  S20_WT_PRIN
+            , SUM(ASTS20_BLW_PRIN) AS ASTS20_BLW_PRIN
+            , CASE WHEN SUM(TOT_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(TOT_WT_PRIN)/SUM(TOT_SECT_AMT),5) END AS TOT_MTRT_SECT_RATE
+            , CASE WHEN SUM(S0_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S0_WT_PRIN)/SUM(S0_SECT_AMT),5) END AS S0_MTRT_SECT_RATE
+            , CASE WHEN SUM(S1_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S1_WT_PRIN)/SUM(S1_SECT_AMT),5) END AS S1_MTRT_SECT_RATE
+            , CASE WHEN SUM(S2_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S2_WT_PRIN)/SUM(S2_SECT_AMT),5) END AS S2_MTRT_SECT_RATE
+            , CASE WHEN SUM(S3_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S3_WT_PRIN)/SUM(S3_SECT_AMT),5) END AS S3_MTRT_SECT_RATE
+            , CASE WHEN SUM(S4_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S4_WT_PRIN)/SUM(S4_SECT_AMT),5) END AS S4_MTRT_SECT_RATE
+            , CASE WHEN SUM(S5_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S5_WT_PRIN)/SUM(S5_SECT_AMT),5) END AS S5_MTRT_SECT_RATE
+            , CASE WHEN SUM(S6_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S6_WT_PRIN)/SUM(S6_SECT_AMT),5) END AS S6_MTRT_SECT_RATE
+            , CASE WHEN SUM(S7_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S7_WT_PRIN)/SUM(S7_SECT_AMT),5) END AS S7_MTRT_SECT_RATE
+            , CASE WHEN SUM(S8_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S8_WT_PRIN)/SUM(S8_SECT_AMT),5) END AS S8_MTRT_SECT_RATE
+            , CASE WHEN SUM(S9_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S9_WT_PRIN)/SUM(S9_SECT_AMT),5) END AS S9_MTRT_SECT_RATE
+            , CASE WHEN SUM(S10_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S10_WT_PRIN)/SUM(S10_SECT_AMT),5) END AS S10_MTRT_SECT_RATE
+            , CASE WHEN SUM(S11_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S11_WT_PRIN)/SUM(S11_SECT_AMT),5) END AS S11_MTRT_SECT_RATE
+            , CASE WHEN SUM(S12_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S12_WT_PRIN)/SUM(S12_SECT_AMT),5) END AS S12_MTRT_SECT_RATE
+            , CASE WHEN SUM(S13_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S13_WT_PRIN)/SUM(S13_SECT_AMT),5) END AS S13_MTRT_SECT_RATE
+            , CASE WHEN SUM(S14_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S14_WT_PRIN)/SUM(S14_SECT_AMT),5) END AS S14_MTRT_SECT_RATE
+            , CASE WHEN SUM(S15_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S15_WT_PRIN)/SUM(S15_SECT_AMT),5) END AS S15_MTRT_SECT_RATE
+            , CASE WHEN SUM(S16_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S16_WT_PRIN)/SUM(S16_SECT_AMT),5) END AS S16_MTRT_SECT_RATE
+            , CASE WHEN SUM(S17_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S17_WT_PRIN)/SUM(S17_SECT_AMT),5) END AS S17_MTRT_SECT_RATE
+            , CASE WHEN SUM(S18_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S18_WT_PRIN)/SUM(S18_SECT_AMT),5) END AS S18_MTRT_SECT_RATE
+            , CASE WHEN SUM(S19_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S19_WT_PRIN)/SUM(S19_SECT_AMT),5) END AS S19_MTRT_SECT_RATE
+            , CASE WHEN SUM(S20_SECT_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(S20_WT_PRIN)/SUM(S20_SECT_AMT),5) END AS S20_MTRT_SECT_RATE
+            , CASE WHEN SUM(ASTS20_BLW_AMT) = 0 THEN 0 ELSE ROUND(100*SUM(ASTS20_BLW_PRIN)/SUM(ASTS20_BLW_AMT),5) END AS ASTS20_BLW_RATE
+		    , MAX(PRNT_ORD) AS PRNT_ORD_PATH
+        FROM (
+            SELECT 
+                MAX(BASE_DATE) AS BASE_DATE
+                , LVL1, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMS_CDNM1, DIMS_CDNM2
+                , (ROUND(SUM(S0_SECT_AMT), 0) + ROUND(SUM(S1_SECT_AMT), 0) + ROUND(SUM(S2_SECT_AMT), 0) + ROUND(SUM(S3_SECT_AMT), 0) + ROUND(SUM(S4_SECT_AMT), 0)
+                    + ROUND(SUM(S5_SECT_AMT), 0) + ROUND(SUM(S6_SECT_AMT), 0)+ ROUND(SUM(S7_SECT_AMT), 0)+ ROUND(SUM(S8_SECT_AMT), 0) + ROUND(SUM(S9_SECT_AMT), 0)
+                    + ROUND(SUM(S10_SECT_AMT), 0) + ROUND(SUM(S11_SECT_AMT), 0)+ ROUND(SUM(S12_SECT_AMT), 0)+ ROUND(SUM(S13_SECT_AMT), 0) + ROUND(SUM(S14_SECT_AMT), 0)
+                    + ROUND(SUM(S15_SECT_AMT), 0) + ROUND(SUM(S16_SECT_AMT), 0)+ ROUND(SUM(S17_SECT_AMT), 0)+ ROUND(SUM(S18_SECT_AMT), 0) + ROUND(SUM(S19_SECT_AMT), 0)
+                    + ROUND(SUM(S20_SECT_AMT), 0) + ROUND(SUM(ASTS20_BLW_AMT), 0)
+                ) AS TOT_SECT_AMT
+                , ROUND(SUM(S0_SECT_AMT), 0) AS S0_SECT_AMT
+                , ROUND(SUM(S1_SECT_AMT), 0) AS S1_SECT_AMT
+                , ROUND(SUM(S2_SECT_AMT), 0) AS S2_SECT_AMT
+                , ROUND(SUM(S3_SECT_AMT), 0) AS S3_SECT_AMT
+                , ROUND(SUM(S4_SECT_AMT), 0) AS S4_SECT_AMT
+                , ROUND(SUM(S5_SECT_AMT), 0) AS S5_SECT_AMT
+                , ROUND(SUM(S6_SECT_AMT), 0) AS S6_SECT_AMT
+                , ROUND(SUM(S7_SECT_AMT), 0) AS S7_SECT_AMT
+                , ROUND(SUM(S8_SECT_AMT), 0) AS S8_SECT_AMT
+                , ROUND(SUM(S9_SECT_AMT), 0) AS S9_SECT_AMT
+                , ROUND(SUM(S10_SECT_AMT), 0) AS S10_SECT_AMT
+                , ROUND(SUM(S11_SECT_AMT), 0) AS S11_SECT_AMT
+                , ROUND(SUM(S12_SECT_AMT), 0) AS S12_SECT_AMT
+                , ROUND(SUM(S13_SECT_AMT), 0) AS S13_SECT_AMT
+                , ROUND(SUM(S14_SECT_AMT), 0) AS S14_SECT_AMT
+                , ROUND(SUM(S15_SECT_AMT), 0) AS S15_SECT_AMT
+                , ROUND(SUM(S16_SECT_AMT), 0) AS S16_SECT_AMT
+                , ROUND(SUM(S17_SECT_AMT), 0) AS S17_SECT_AMT
+                , ROUND(SUM(S18_SECT_AMT), 0) AS S18_SECT_AMT
+                , ROUND(SUM(S19_SECT_AMT), 0) AS S19_SECT_AMT
+                , ROUND(SUM(S20_SECT_AMT), 0) AS S20_SECT_AMT
+                , ROUND(SUM(ASTS20_BLW_AMT), 0) AS ASTS20_BLW_AMT
+                , (ROUND(SUM(S0_WT_PRIN), 0) + ROUND(SUM(S1_WT_PRIN), 0) + ROUND(SUM(S2_WT_PRIN), 0) + ROUND(SUM(S3_WT_PRIN), 0) + ROUND(SUM(S4_WT_PRIN), 0)
+                    + ROUND(SUM(S5_WT_PRIN), 0) + ROUND(SUM(S6_WT_PRIN), 0)+ ROUND(SUM(S7_WT_PRIN), 0)+ ROUND(SUM(S8_WT_PRIN), 0) + ROUND(SUM(S9_WT_PRIN), 0)
+                    + ROUND(SUM(S10_WT_PRIN), 0) + ROUND(SUM(S11_WT_PRIN), 0)+ ROUND(SUM(S12_WT_PRIN), 0)+ ROUND(SUM(S13_WT_PRIN), 0) + ROUND(SUM(S14_WT_PRIN), 0)
+                    + ROUND(SUM(S15_WT_PRIN), 0) + ROUND(SUM(S16_WT_PRIN), 0)+ ROUND(SUM(S17_WT_PRIN), 0)+ ROUND(SUM(S18_WT_PRIN), 0) + ROUND(SUM(S19_WT_PRIN), 0)
+                    + ROUND(SUM(S20_WT_PRIN), 0) + ROUND(SUM(ASTS20_BLW_PRIN), 0)
+                ) AS TOT_WT_PRIN
+                , ROUND(SUM(S0_WT_PRIN), 0) AS S0_WT_PRIN
+                , ROUND(SUM(S1_WT_PRIN), 0) AS S1_WT_PRIN
+                , ROUND(SUM(S2_WT_PRIN), 0) AS S2_WT_PRIN
+                , ROUND(SUM(S3_WT_PRIN), 0) AS S3_WT_PRIN
+                , ROUND(SUM(S4_WT_PRIN), 0) AS S4_WT_PRIN
+                , ROUND(SUM(S5_WT_PRIN), 0) AS S5_WT_PRIN
+                , ROUND(SUM(S6_WT_PRIN), 0) AS S6_WT_PRIN
+                , ROUND(SUM(S7_WT_PRIN), 0) AS S7_WT_PRIN
+                , ROUND(SUM(S8_WT_PRIN), 0) AS S8_WT_PRIN
+                , ROUND(SUM(S9_WT_PRIN), 0) AS S9_WT_PRIN
+                , ROUND(SUM(S10_WT_PRIN), 0) AS S10_WT_PRIN
+                , ROUND(SUM(S11_WT_PRIN), 0) AS S11_WT_PRIN
+                , ROUND(SUM(S12_WT_PRIN), 0) AS S12_WT_PRIN
+                , ROUND(SUM(S13_WT_PRIN), 0) AS S13_WT_PRIN
+                , ROUND(SUM(S14_WT_PRIN), 0) AS S14_WT_PRIN
+                , ROUND(SUM(S15_WT_PRIN), 0) AS S15_WT_PRIN
+                , ROUND(SUM(S16_WT_PRIN), 0) AS S16_WT_PRIN
+                , ROUND(SUM(S17_WT_PRIN), 0) AS S17_WT_PRIN
+                , ROUND(SUM(S18_WT_PRIN), 0) AS S18_WT_PRIN
+                , ROUND(SUM(S19_WT_PRIN), 0) AS S19_WT_PRIN
+                , ROUND(SUM(S20_WT_PRIN), 0) AS S20_WT_PRIN
+            	, ROUND(SUM(ASTS20_BLW_PRIN), 0) AS ASTS20_BLW_PRIN
+                , MAX(PRNT_ORD) AS PRNT_ORD
+            FROM (
+                SELECT
+                    A.BASE_DATE
+                    , A.AC_BUSI_TC
+                    , B.LVL1
+                    , B.LVL2
+                    , B.LVL3
+                    , B.LVL4
+                    , B.LVL5
+                    , B.LVL6
+                    , B.LVL7
+                    , B.ACCT_C_NM
+                    , A.DIMS_CDNM1
+                    , A.DIMS_C1
+                    , A.DIMS_CDNM2
+                    , A.DIMS_C2
+                    , A.S0_SECT_AMT
+                    , A.S1_SECT_AMT
+                    , A.S2_SECT_AMT
+                    , A.S3_SECT_AMT
+                    , A.S4_SECT_AMT
+                    , A.S5_SECT_AMT
+                    , A.S6_SECT_AMT
+                    , A.S7_SECT_AMT
+                    , A.S8_SECT_AMT
+                    , A.S9_SECT_AMT
+                    , A.S10_SECT_AMT
+                    , A.S11_SECT_AMT
+                    , A.S12_SECT_AMT
+                    , A.S13_SECT_AMT
+                    , A.S14_SECT_AMT
+                    , A.S15_SECT_AMT
+                    , A.S16_SECT_AMT
+                    , A.S17_SECT_AMT
+                    , A.S18_SECT_AMT
+                    , A.S19_SECT_AMT
+                    , A.S20_SECT_AMT
+                    , A.ASTS20_BLW_AMT
+                    , A.S0_WT_PRIN
+                    , A.S1_WT_PRIN
+                    , A.S2_WT_PRIN
+                    , A.S3_WT_PRIN
+                    , A.S4_WT_PRIN
+                    , A.S5_WT_PRIN
+                    , A.S6_WT_PRIN
+                    , A.S7_WT_PRIN
+                    , A.S8_WT_PRIN
+                    , A.S9_WT_PRIN
+                    , A.S10_WT_PRIN
+                    , A.S11_WT_PRIN
+                    , A.S12_WT_PRIN
+                    , A.S13_WT_PRIN
+                    , A.S14_WT_PRIN
+                    , A.S15_WT_PRIN
+                    , A.S16_WT_PRIN
+                    , A.S17_WT_PRIN
+                    , A.S18_WT_PRIN
+                    , A.S19_WT_PRIN
+                    , A.S20_WT_PRIN
+                    , A.ASTS20_BLW_PRIN
+                    
+                    <if test="sch_acc_tc_lvl == 1">
+                    , B.PRNT_ORD1||A.DIMS_C1||A.DIMS_C2 AS PRNT_ORD
+                    </if>
+                    <if test="sch_acc_tc_lvl == 2">
+                    , B.PRNT_ORD1||B.PRNT_ORD2||A.DIMS_C1||A.DIMS_C2 AS PRNT_ORD
+                    </if>
+                    <if test="sch_acc_tc_lvl == 3">
+                    , B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||A.DIMS_C1||A.DIMS_C2 AS PRNT_ORD
+                    </if>
+                    <if test="sch_acc_tc_lvl == 4">
+                    , B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||B.PRNT_ORD4||A.DIMS_C1||A.DIMS_C2 AS PRNT_ORD
+                    </if>
+                    <if test="sch_acc_tc_lvl == 5">
+                    , B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||B.PRNT_ORD4||B.PRNT_ORD5||A.DIMS_C1||A.DIMS_C2 AS PRNT_ORD
+                    </if>
+                    <if test="sch_acc_tc_lvl == 6">
+                    , B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||B.PRNT_ORD4||B.PRNT_ORD5||B.PRNT_ORD6||A.DIMS_C1||A.DIMS_C2 AS PRNT_ORD
+                    </if>
+                    <if test="sch_acc_tc_lvl == 7">
+                    , B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||B.PRNT_ORD4||B.PRNT_ORD5||B.PRNT_ORD6||B.PRNT_ORD7||A.DIMS_C1||A.DIMS_C2 AS PRNT_ORD
+                    </if>
+                FROM DATA_TB A
+                JOIN (
+			        SELECT 
+			            LEVEL, BASE_DATE, SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%') AS ACCT_PATH,
+			            REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 1 ) AS LVL1,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 2 ),TRIM(ACCT_C_NM)) AS LVL2,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 3 ),TRIM(ACCT_C_NM)) AS LVL3,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 4 ),TRIM(ACCT_C_NM)) AS LVL4,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 5 ),TRIM(ACCT_C_NM)) AS LVL5,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 6 ),TRIM(ACCT_C_NM)) AS LVL6,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 7 ),TRIM(ACCT_C_NM)) AS LVL7,
+			            TRIM(ACCT_C_NM) AS ACCT_C_NM,
+			            BS_PL_TC,
+			            ORG_CLAS_C,
+			            AC_BUSI_TC,
+			            ACCT_C,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 1 ),'9999') AS PRNT_ORD1,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 2 ),'9999') AS PRNT_ORD2,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 3 ),'9999') AS PRNT_ORD3,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 4 ),'9999') AS PRNT_ORD4,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 5 ),'9999') AS PRNT_ORD5,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 6 ),'9999') AS PRNT_ORD6,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 7 ),'9999') AS PRNT_ORD7
+			        FROM TSY_ACCT_MSTR_MNG
+			        WHERE BASE_DATE = (SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE &lt;= #{sch_base_date})
+		<choose>
+			<when test="sch_ac_busi_tc == '0000'">
+					AND AC_BUSI_TC = '1105' /*회계구분*/
+					START WITH UP_ACCT_C = '0000000'
+			        CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+			    ) B ON B.ACCT_C = A.ACCT_C AND B.ORG_CLAS_C = A.ORG_CLAS_C
+		    </when>
+		    <otherwise>
+			    	AND AC_BUSI_TC = #{sch_ac_busi_tc} /*회계구분*/
+			    	START WITH UP_ACCT_C = '0000000'
+			        CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+			    ) B ON B.ACCT_C = A.ACCT_C AND B.ORG_CLAS_C = A.ORG_CLAS_C AND B.AC_BUSI_TC = A.AC_BUSI_TC
+		    </otherwise>
+		</choose>
+            ) 
+            GROUP BY LVL1, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMS_CDNM1, DIMS_CDNM2
+        )
+		GROUP BY 
+			LVL1
+		<if test="sch_acc_tc_lvl == 1">
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, ROLLUP(DIMS_CDNM1)
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, ROLLUP(DIMS_CDNM1, DIMS_CDNM2)
+				</when>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 2">
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, ROLLUP(LVL2, DIMS_CDNM1)
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, ROLLUP(LVL2, DIMS_CDNM1, DIMS_CDNM2)
+				</when>
+				<otherwise>
+			, ROLLUP(LVL2)
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 3">
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, ROLLUP(LVL2, LVL3, DIMS_CDNM1)
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, ROLLUP(LVL2, LVL3, DIMS_CDNM1, DIMS_CDNM2)
+				</when>
+				<otherwise>
+			, ROLLUP(LVL2, LVL3)
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 4">
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, ROLLUP(LVL2, LVL3, LVL4, DIMS_CDNM1)
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, ROLLUP(LVL2, LVL3, LVL4, DIMS_CDNM1, DIMS_CDNM2)
+				</when>
+				<otherwise>
+			, ROLLUP(LVL2, LVL3, LVL4)
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 5">
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, ROLLUP(LVL2, LVL3, LVL4, LVL5, DIMS_CDNM1)
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, ROLLUP(LVL2, LVL3, LVL4, LVL5, DIMS_CDNM1, DIMS_CDNM2)
+				</when>
+				<otherwise>
+			, ROLLUP(LVL2, LVL3, LVL4, LVL5)
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 6">
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, ROLLUP(LVL2, LVL3, LVL4, LVL5, LVL6, DIMS_CDNM1)
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, ROLLUP(LVL2, LVL3, LVL4, LVL5, LVL6, DIMS_CDNM1, DIMS_CDNM2)
+				</when>
+				<otherwise>
+			, ROLLUP(LVL2, LVL3, LVL4, LVL5, LVL6)
+				</otherwise>
+			</choose>
+		</if>
+		<if test="sch_acc_tc_lvl == 7">
+			<choose>
+				<when test="sch_dims_item_no != '' and sch_dims_item_no != null and (sch_dims_item_no2 == '' or sch_dims_item_no2 == null)">
+			, ROLLUP(LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMS_CDNM1)
+				</when>
+				<when test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null and sch_dims_item_no != '' and sch_dims_item_no != null">
+			, ROLLUP(LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMS_CDNM1, DIMS_CDNM2)
+				</when>
+				<otherwise>
+			, ROLLUP(LVL2, LVL3, LVL4, LVL5, LVL6, LVL7)
+				</otherwise>
+			</choose>
+		</if>
+		ORDER BY PRNT_ORD_PATH, GRP_ID
+	</select>
+
+</mapper>

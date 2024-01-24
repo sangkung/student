@@ -1,0 +1,1671 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_1502Mapper">
+
+
+	<sql id="tr_1502With">
+			
+		/* 조달운용 추이분석 조회 */
+		
+		WITH PROCUREMENT AS(
+		
+		SELECT 
+		      BASE_DATE
+		    , ALM_WORK_TC
+		    , ORG_CLAS_C
+		    , BR_C
+		    , CUR_C
+		 	<if test="AC_BUSI_TC == '0000'">
+		 	, '1105' AS AC_BUSI_TC
+		 	</if>
+		 	<if test="AC_BUSI_TC != '0000'">
+		 	, AC_BUSI_TC
+		 	</if>
+		    , ACCT_C
+		    --------------------------------------------------잔액
+		    , NVL(CASE WHEN BASE_DATE = #{BASE_DATE} THEN BKPR_AMT                                                                                ELSE 0 END,0)   AS BKPR_AMT1
+		    , NVL(CASE WHEN BASE_DATE = #{BASE_DATE} THEN NEW_BKPR_AMT                                                                            ELSE 0 END,0)   AS NEW_BKPR_AMT1
+		    , NVL(CASE WHEN BASE_DATE = #{BASE_DATE} THEN BKPR_APLY_RATE_AMT                                                                      ELSE 0 END,0)   AS BKPR_APLY_RATE_AMT1
+		    , NVL(CASE WHEN BASE_DATE = #{BASE_DATE} THEN NEW_BKPR_APLY_RATE_AMT                                                                  ELSE 0 END,0)   AS NEW_BKPR_APLY_RATE_AMT1
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1 ) ,'YYYYMMDD') THEN BKPR_AMT                      ELSE 0 END,0)   AS BKPR_AMT2
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1 ) ,'YYYYMMDD') THEN NEW_BKPR_AMT                  ELSE 0 END,0)   AS NEW_BKPR_AMT2
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1 ) ,'YYYYMMDD') THEN BKPR_APLY_RATE_AMT            ELSE 0 END,0)   AS BKPR_APLY_RATE_AMT2
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1 ) ,'YYYYMMDD') THEN NEW_BKPR_APLY_RATE_AMT        ELSE 0 END,0)   AS NEW_BKPR_APLY_RATE_AMT2
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-2 ) ,'YYYYMMDD') THEN BKPR_AMT                      ELSE 0 END,0)   AS BKPR_AMT3
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-2 ) ,'YYYYMMDD') THEN NEW_BKPR_AMT                  ELSE 0 END,0)   AS NEW_BKPR_AMT3
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-2 ) ,'YYYYMMDD') THEN BKPR_APLY_RATE_AMT            ELSE 0 END,0)   AS BKPR_APLY_RATE_AMT3
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-2 ) ,'YYYYMMDD') THEN NEW_BKPR_APLY_RATE_AMT        ELSE 0 END,0)   AS NEW_BKPR_APLY_RATE_AMT3
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-3 ) ,'YYYYMMDD') THEN BKPR_AMT                      ELSE 0 END,0)   AS BKPR_AMT4
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-3 ) ,'YYYYMMDD') THEN NEW_BKPR_AMT                  ELSE 0 END,0)   AS NEW_BKPR_AMT4
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-3 ) ,'YYYYMMDD') THEN BKPR_APLY_RATE_AMT            ELSE 0 END,0)   AS BKPR_APLY_RATE_AMT4
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-3 ) ,'YYYYMMDD') THEN NEW_BKPR_APLY_RATE_AMT        ELSE 0 END,0)   AS NEW_BKPR_APLY_RATE_AMT4
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-4 ) ,'YYYYMMDD') THEN BKPR_AMT                      ELSE 0 END,0)   AS BKPR_AMT5
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-4 ) ,'YYYYMMDD') THEN NEW_BKPR_AMT                  ELSE 0 END,0)   AS NEW_BKPR_AMT5
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-4 ) ,'YYYYMMDD') THEN BKPR_APLY_RATE_AMT            ELSE 0 END,0)   AS BKPR_APLY_RATE_AMT5
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-4 ) ,'YYYYMMDD') THEN NEW_BKPR_APLY_RATE_AMT        ELSE 0 END,0)   AS NEW_BKPR_APLY_RATE_AMT5
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-5 ) ,'YYYYMMDD') THEN BKPR_AMT                      ELSE 0 END,0)   AS BKPR_AMT6
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-5 ) ,'YYYYMMDD') THEN NEW_BKPR_AMT                  ELSE 0 END,0)   AS NEW_BKPR_AMT6
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-5 ) ,'YYYYMMDD') THEN BKPR_APLY_RATE_AMT            ELSE 0 END,0)   AS BKPR_APLY_RATE_AMT6
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-5 ) ,'YYYYMMDD') THEN NEW_BKPR_APLY_RATE_AMT        ELSE 0 END,0)   AS NEW_BKPR_APLY_RATE_AMT6
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-6 ) ,'YYYYMMDD') THEN BKPR_AMT                      ELSE 0 END,0)   AS BKPR_AMT7
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-6 ) ,'YYYYMMDD') THEN NEW_BKPR_AMT                  ELSE 0 END,0)   AS NEW_BKPR_AMT7
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-6 ) ,'YYYYMMDD') THEN BKPR_APLY_RATE_AMT            ELSE 0 END,0)   AS BKPR_APLY_RATE_AMT7
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-6 ) ,'YYYYMMDD') THEN NEW_BKPR_APLY_RATE_AMT        ELSE 0 END,0)   AS NEW_BKPR_APLY_RATE_AMT7
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-7 ) ,'YYYYMMDD') THEN BKPR_AMT                      ELSE 0 END,0)   AS BKPR_AMT8
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-7 ) ,'YYYYMMDD') THEN NEW_BKPR_AMT                  ELSE 0 END,0)   AS NEW_BKPR_AMT8
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-7 ) ,'YYYYMMDD') THEN BKPR_APLY_RATE_AMT            ELSE 0 END,0)   AS BKPR_APLY_RATE_AMT8
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-7 ) ,'YYYYMMDD') THEN NEW_BKPR_APLY_RATE_AMT        ELSE 0 END,0)   AS NEW_BKPR_APLY_RATE_AMT8
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-8 ) ,'YYYYMMDD') THEN BKPR_AMT                      ELSE 0 END,0)   AS BKPR_AMT9
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-8 ) ,'YYYYMMDD') THEN NEW_BKPR_AMT                  ELSE 0 END,0)   AS NEW_BKPR_AMT9
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-8 ) ,'YYYYMMDD') THEN BKPR_APLY_RATE_AMT            ELSE 0 END,0)   AS BKPR_APLY_RATE_AMT9
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-8 ) ,'YYYYMMDD') THEN NEW_BKPR_APLY_RATE_AMT        ELSE 0 END,0)   AS NEW_BKPR_APLY_RATE_AMT9
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-9 ) ,'YYYYMMDD') THEN BKPR_AMT                      ELSE 0 END,0)   AS BKPR_AMT10
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-9 ) ,'YYYYMMDD') THEN NEW_BKPR_AMT                  ELSE 0 END,0)   AS NEW_BKPR_AMT10
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-9 ) ,'YYYYMMDD') THEN BKPR_APLY_RATE_AMT            ELSE 0 END,0)   AS BKPR_APLY_RATE_AMT10
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-9 ) ,'YYYYMMDD') THEN NEW_BKPR_APLY_RATE_AMT        ELSE 0 END,0)   AS NEW_BKPR_APLY_RATE_AMT10
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-10 ),'YYYYMMDD') THEN BKPR_AMT                      ELSE 0 END,0)   AS BKPR_AMT11
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-10 ),'YYYYMMDD') THEN NEW_BKPR_AMT                  ELSE 0 END,0)   AS NEW_BKPR_AMT11
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-10 ),'YYYYMMDD') THEN BKPR_APLY_RATE_AMT            ELSE 0 END,0)   AS BKPR_APLY_RATE_AMT11
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-10 ),'YYYYMMDD') THEN NEW_BKPR_APLY_RATE_AMT        ELSE 0 END,0)   AS NEW_BKPR_APLY_RATE_AMT11
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-11 ),'YYYYMMDD') THEN BKPR_AMT                      ELSE 0 END,0)   AS BKPR_AMT12
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-11 ),'YYYYMMDD') THEN NEW_BKPR_AMT                  ELSE 0 END,0)   AS NEW_BKPR_AMT12
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-11 ),'YYYYMMDD') THEN BKPR_APLY_RATE_AMT            ELSE 0 END,0)   AS BKPR_APLY_RATE_AMT12
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-11 ),'YYYYMMDD') THEN NEW_BKPR_APLY_RATE_AMT        ELSE 0 END,0)   AS NEW_BKPR_APLY_RATE_AMT12
+		    --------------------------------------------------월중                                                                 
+		    , NVL(CASE WHEN BASE_DATE = #{BASE_DATE} THEN MMW_AVG_BAL                                                                             ELSE 0 END,0)   AS MMW_AVG_BAL1
+		    , NVL(CASE WHEN BASE_DATE = #{BASE_DATE} THEN MMW_AVG_APLY_RATE_AMT                                                                   ELSE 0 END,0)   AS MMW_AVG_APLY_RATE_AMT1
+		    , NVL(CASE WHEN BASE_DATE = #{BASE_DATE} THEN MMW_PRFT_CST_AMT                                                                        ELSE 0 END,0)   AS MMW_PRFT_CST_AMT1
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1 ) ,'YYYYMMDD') THEN MMW_AVG_BAL                   ELSE 0 END,0)   AS MMW_AVG_BAL2
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1 ) ,'YYYYMMDD') THEN MMW_AVG_APLY_RATE_AMT         ELSE 0 END,0)   AS MMW_AVG_APLY_RATE_AMT2
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1 ) ,'YYYYMMDD') THEN MMW_PRFT_CST_AMT              ELSE 0 END,0)   AS MMW_PRFT_CST_AMT2
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-2 ) ,'YYYYMMDD') THEN MMW_AVG_BAL                   ELSE 0 END,0)   AS MMW_AVG_BAL3
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-2 ) ,'YYYYMMDD') THEN MMW_AVG_APLY_RATE_AMT         ELSE 0 END,0)   AS MMW_AVG_APLY_RATE_AMT3
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-2 ) ,'YYYYMMDD') THEN MMW_PRFT_CST_AMT              ELSE 0 END,0)   AS MMW_PRFT_CST_AMT3
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-3 ) ,'YYYYMMDD') THEN MMW_AVG_BAL                   ELSE 0 END,0)   AS MMW_AVG_BAL4
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-3 ) ,'YYYYMMDD') THEN MMW_AVG_APLY_RATE_AMT         ELSE 0 END,0)   AS MMW_AVG_APLY_RATE_AMT4
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-3 ) ,'YYYYMMDD') THEN MMW_PRFT_CST_AMT              ELSE 0 END,0)   AS MMW_PRFT_CST_AMT4
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-4 ) ,'YYYYMMDD') THEN MMW_AVG_BAL                   ELSE 0 END,0)   AS MMW_AVG_BAL5
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-4 ) ,'YYYYMMDD') THEN MMW_AVG_APLY_RATE_AMT         ELSE 0 END,0)   AS MMW_AVG_APLY_RATE_AMT5
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-4 ) ,'YYYYMMDD') THEN MMW_PRFT_CST_AMT              ELSE 0 END,0)   AS MMW_PRFT_CST_AMT5
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-5 ) ,'YYYYMMDD') THEN MMW_AVG_BAL                   ELSE 0 END,0)   AS MMW_AVG_BAL6
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-5 ) ,'YYYYMMDD') THEN MMW_AVG_APLY_RATE_AMT         ELSE 0 END,0)   AS MMW_AVG_APLY_RATE_AMT6
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-5 ) ,'YYYYMMDD') THEN MMW_PRFT_CST_AMT              ELSE 0 END,0)   AS MMW_PRFT_CST_AMT6
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-6 ) ,'YYYYMMDD') THEN MMW_AVG_BAL                   ELSE 0 END,0)   AS MMW_AVG_BAL7
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-6 ) ,'YYYYMMDD') THEN MMW_AVG_APLY_RATE_AMT         ELSE 0 END,0)   AS MMW_AVG_APLY_RATE_AMT7
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-6 ) ,'YYYYMMDD') THEN MMW_PRFT_CST_AMT              ELSE 0 END,0)   AS MMW_PRFT_CST_AMT7
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-7 ) ,'YYYYMMDD') THEN MMW_AVG_BAL                   ELSE 0 END,0)   AS MMW_AVG_BAL8
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-7 ) ,'YYYYMMDD') THEN MMW_AVG_APLY_RATE_AMT         ELSE 0 END,0)   AS MMW_AVG_APLY_RATE_AMT8
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-7 ) ,'YYYYMMDD') THEN MMW_PRFT_CST_AMT              ELSE 0 END,0)   AS MMW_PRFT_CST_AMT8
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-8 ) ,'YYYYMMDD') THEN MMW_AVG_BAL                   ELSE 0 END,0)   AS MMW_AVG_BAL9
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-8 ) ,'YYYYMMDD') THEN MMW_AVG_APLY_RATE_AMT         ELSE 0 END,0)   AS MMW_AVG_APLY_RATE_AMT9
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-8 ) ,'YYYYMMDD') THEN MMW_PRFT_CST_AMT              ELSE 0 END,0)   AS MMW_PRFT_CST_AMT9
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-9 ) ,'YYYYMMDD') THEN MMW_AVG_BAL                   ELSE 0 END,0)   AS MMW_AVG_BAL10
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-9 ) ,'YYYYMMDD') THEN MMW_AVG_APLY_RATE_AMT         ELSE 0 END,0)   AS MMW_AVG_APLY_RATE_AMT10
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-9 ) ,'YYYYMMDD') THEN MMW_PRFT_CST_AMT              ELSE 0 END,0)   AS MMW_PRFT_CST_AMT10
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-10 ),'YYYYMMDD') THEN MMW_AVG_BAL                   ELSE 0 END,0)   AS MMW_AVG_BAL11
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-10 ),'YYYYMMDD') THEN MMW_AVG_APLY_RATE_AMT         ELSE 0 END,0)   AS MMW_AVG_APLY_RATE_AMT11
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-10 ),'YYYYMMDD') THEN MMW_PRFT_CST_AMT              ELSE 0 END,0)   AS MMW_PRFT_CST_AMT11
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-11 ),'YYYYMMDD') THEN MMW_AVG_BAL                   ELSE 0 END,0)   AS MMW_AVG_BAL12
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-11 ),'YYYYMMDD') THEN MMW_AVG_APLY_RATE_AMT         ELSE 0 END,0)   AS MMW_AVG_APLY_RATE_AMT12
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-11 ),'YYYYMMDD') THEN MMW_PRFT_CST_AMT              ELSE 0 END,0)   AS MMW_PRFT_CST_AMT12
+		    , TO_NUMBER(SUBSTR(#{BASE_DATE},7,2)) 																												  AS MMW_AVG_DAY_CNT1
+		    , TO_NUMBER(SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1 ) ,'YYYYMMDD'),7,2)) 													  AS MMW_AVG_DAY_CNT2
+		    , TO_NUMBER(SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-2 ) ,'YYYYMMDD'),7,2)) 													  AS MMW_AVG_DAY_CNT3
+		    , TO_NUMBER(SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-3 ) ,'YYYYMMDD'),7,2)) 													  AS MMW_AVG_DAY_CNT4
+		    , TO_NUMBER(SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-4 ) ,'YYYYMMDD'),7,2)) 													  AS MMW_AVG_DAY_CNT5
+		    , TO_NUMBER(SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-5 ) ,'YYYYMMDD'),7,2)) 													  AS MMW_AVG_DAY_CNT6
+		    , TO_NUMBER(SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-6 ) ,'YYYYMMDD'),7,2)) 													  AS MMW_AVG_DAY_CNT7
+		    , TO_NUMBER(SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-7 ) ,'YYYYMMDD'),7,2)) 													  AS MMW_AVG_DAY_CNT8
+		    , TO_NUMBER(SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-8 ) ,'YYYYMMDD'),7,2)) 													  AS MMW_AVG_DAY_CNT9
+		    , TO_NUMBER(SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-9 ) ,'YYYYMMDD'),7,2)) 													  AS MMW_AVG_DAY_CNT10
+		    , TO_NUMBER(SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-10 ) ,'YYYYMMDD'),7,2)) 													  AS MMW_AVG_DAY_CNT11
+		    , TO_NUMBER(SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-11 ) ,'YYYYMMDD'),7,2)) 													  AS MMW_AVG_DAY_CNT12
+		    --------------------------------------------------기중                                          
+		    , NVL(CASE WHEN BASE_DATE = #{BASE_DATE} THEN AMG_SESN_ABAL                                                                           ELSE 0 END,0)   AS AMG_SESN_ABAL1
+		    , NVL(CASE WHEN BASE_DATE = #{BASE_DATE} THEN AMG_SESN_ABAL_RATE_AMT                                                                  ELSE 0 END,0)   AS AMG_SESN_ABAL_RATE_AMT1
+		    , NVL(CASE WHEN BASE_DATE = #{BASE_DATE} THEN AMG_SESN_PRFT_CST_AMT                                                                   ELSE 0 END,0)   AS AMG_SESN_PRFT_CST_AMT1
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1 ) ,'YYYYMMDD') THEN AMG_SESN_ABAL                 ELSE 0 END,0)   AS AMG_SESN_ABAL2
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1 ) ,'YYYYMMDD') THEN AMG_SESN_ABAL_RATE_AMT        ELSE 0 END,0)   AS AMG_SESN_ABAL_RATE_AMT2
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1 ) ,'YYYYMMDD') THEN AMG_SESN_PRFT_CST_AMT         ELSE 0 END,0)   AS AMG_SESN_PRFT_CST_AMT2
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-2 ) ,'YYYYMMDD') THEN AMG_SESN_ABAL                 ELSE 0 END,0)   AS AMG_SESN_ABAL3
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-2 ) ,'YYYYMMDD') THEN AMG_SESN_ABAL_RATE_AMT        ELSE 0 END,0)   AS AMG_SESN_ABAL_RATE_AMT3
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-2 ) ,'YYYYMMDD') THEN AMG_SESN_PRFT_CST_AMT         ELSE 0 END,0)   AS AMG_SESN_PRFT_CST_AMT3
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-3 ) ,'YYYYMMDD') THEN AMG_SESN_ABAL                 ELSE 0 END,0)   AS AMG_SESN_ABAL4
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-3 ) ,'YYYYMMDD') THEN AMG_SESN_ABAL_RATE_AMT        ELSE 0 END,0)   AS AMG_SESN_ABAL_RATE_AMT4
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-3 ) ,'YYYYMMDD') THEN AMG_SESN_PRFT_CST_AMT         ELSE 0 END,0)   AS AMG_SESN_PRFT_CST_AMT4
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-4 ) ,'YYYYMMDD') THEN AMG_SESN_ABAL                 ELSE 0 END,0)   AS AMG_SESN_ABAL5
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-4 ) ,'YYYYMMDD') THEN AMG_SESN_ABAL_RATE_AMT        ELSE 0 END,0)   AS AMG_SESN_ABAL_RATE_AMT5
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-4 ) ,'YYYYMMDD') THEN AMG_SESN_PRFT_CST_AMT         ELSE 0 END,0)   AS AMG_SESN_PRFT_CST_AMT5
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-5 ) ,'YYYYMMDD') THEN AMG_SESN_ABAL                 ELSE 0 END,0)   AS AMG_SESN_ABAL6
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-5 ) ,'YYYYMMDD') THEN AMG_SESN_ABAL_RATE_AMT        ELSE 0 END,0)   AS AMG_SESN_ABAL_RATE_AMT6
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-5 ) ,'YYYYMMDD') THEN AMG_SESN_PRFT_CST_AMT         ELSE 0 END,0)   AS AMG_SESN_PRFT_CST_AMT6
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-6 ) ,'YYYYMMDD') THEN AMG_SESN_ABAL                 ELSE 0 END,0)   AS AMG_SESN_ABAL7
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-6 ) ,'YYYYMMDD') THEN AMG_SESN_ABAL_RATE_AMT        ELSE 0 END,0)   AS AMG_SESN_ABAL_RATE_AMT7
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-6 ) ,'YYYYMMDD') THEN AMG_SESN_PRFT_CST_AMT         ELSE 0 END,0)   AS AMG_SESN_PRFT_CST_AMT7
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-7 ) ,'YYYYMMDD') THEN AMG_SESN_ABAL                 ELSE 0 END,0)   AS AMG_SESN_ABAL8
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-7 ) ,'YYYYMMDD') THEN AMG_SESN_ABAL_RATE_AMT        ELSE 0 END,0)   AS AMG_SESN_ABAL_RATE_AMT8
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-7 ) ,'YYYYMMDD') THEN AMG_SESN_PRFT_CST_AMT         ELSE 0 END,0)   AS AMG_SESN_PRFT_CST_AMT8
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-8 ) ,'YYYYMMDD') THEN AMG_SESN_ABAL                 ELSE 0 END,0)   AS AMG_SESN_ABAL9
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-8 ) ,'YYYYMMDD') THEN AMG_SESN_ABAL_RATE_AMT        ELSE 0 END,0)   AS AMG_SESN_ABAL_RATE_AMT9
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-8 ) ,'YYYYMMDD') THEN AMG_SESN_PRFT_CST_AMT         ELSE 0 END,0)   AS AMG_SESN_PRFT_CST_AMT9
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-9 ) ,'YYYYMMDD') THEN AMG_SESN_ABAL                 ELSE 0 END,0)   AS AMG_SESN_ABAL10
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-9 ) ,'YYYYMMDD') THEN AMG_SESN_ABAL_RATE_AMT        ELSE 0 END,0)   AS AMG_SESN_ABAL_RATE_AMT10
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-9 ) ,'YYYYMMDD') THEN AMG_SESN_PRFT_CST_AMT         ELSE 0 END,0)   AS AMG_SESN_PRFT_CST_AMT10
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-10 ),'YYYYMMDD') THEN AMG_SESN_ABAL                 ELSE 0 END,0)   AS AMG_SESN_ABAL11
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-10 ),'YYYYMMDD') THEN AMG_SESN_ABAL_RATE_AMT        ELSE 0 END,0)   AS AMG_SESN_ABAL_RATE_AMT11
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-10 ),'YYYYMMDD') THEN AMG_SESN_PRFT_CST_AMT         ELSE 0 END,0)   AS AMG_SESN_PRFT_CST_AMT11
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-11 ),'YYYYMMDD') THEN AMG_SESN_ABAL                 ELSE 0 END,0)   AS AMG_SESN_ABAL12
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-11 ),'YYYYMMDD') THEN AMG_SESN_ABAL_RATE_AMT        ELSE 0 END,0)   AS AMG_SESN_ABAL_RATE_AMT12
+		    , NVL(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-11 ),'YYYYMMDD') THEN AMG_SESN_PRFT_CST_AMT         ELSE 0 END,0)   AS AMG_SESN_PRFT_CST_AMT12
+		    , TO_DATE(#{BASE_DATE},'YYYYMMDD') - TO_DATE( SUBSTR(#{BASE_DATE},1,4) || '0101' ,'YYYYMMDD') + 1  													  AS AMG_SESN_DAY_CNT1
+		    , TO_DATE(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1 ),'YYYYMMDD'),'YYYYMMDD') 
+		       - 
+		      TO_DATE( SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1 ),'YYYYMMDD'),1,4) || '0101' ,'YYYYMMDD') + 1  							  AS AMG_SESN_DAY_CNT2
+		    , TO_DATE(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-2 ),'YYYYMMDD'),'YYYYMMDD') 
+		       - 
+		      TO_DATE( SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-2 ),'YYYYMMDD'),1,4) || '0101' ,'YYYYMMDD') + 1  							  AS AMG_SESN_DAY_CNT3
+		    , TO_DATE(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-3 ),'YYYYMMDD'),'YYYYMMDD') 
+		       - 
+		      TO_DATE( SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-3 ),'YYYYMMDD'),1,4) || '0101' ,'YYYYMMDD') + 1  							  AS AMG_SESN_DAY_CNT4
+		    , TO_DATE(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-4 ),'YYYYMMDD'),'YYYYMMDD') 
+		       - 
+		      TO_DATE( SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-4 ),'YYYYMMDD'),1,4) || '0101' ,'YYYYMMDD') + 1  							  AS AMG_SESN_DAY_CNT5
+		    , TO_DATE(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-5 ),'YYYYMMDD'),'YYYYMMDD') 
+		       - 
+		      TO_DATE( SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-5 ),'YYYYMMDD'),1,4) || '0101' ,'YYYYMMDD') + 1  							  AS AMG_SESN_DAY_CNT6
+		    , TO_DATE(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-6 ),'YYYYMMDD'),'YYYYMMDD') 
+		       - 
+		      TO_DATE( SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-6 ),'YYYYMMDD'),1,4) || '0101' ,'YYYYMMDD') + 1  							  AS AMG_SESN_DAY_CNT7
+		    , TO_DATE(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-7 ),'YYYYMMDD'),'YYYYMMDD') 
+		       - 
+		      TO_DATE( SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-7 ),'YYYYMMDD'),1,4) || '0101' ,'YYYYMMDD') + 1  							  AS AMG_SESN_DAY_CNT8
+		    , TO_DATE(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-8 ),'YYYYMMDD'),'YYYYMMDD') 
+		       - 
+		      TO_DATE( SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-8 ),'YYYYMMDD'),1,4) || '0101' ,'YYYYMMDD') + 1  							  AS AMG_SESN_DAY_CNT9
+		    , TO_DATE(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-9 ),'YYYYMMDD'),'YYYYMMDD') 
+		       - 
+		      TO_DATE( SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-9 ),'YYYYMMDD'),1,4) || '0101' ,'YYYYMMDD') + 1  							  AS AMG_SESN_DAY_CNT10
+		    , TO_DATE(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-10 ),'YYYYMMDD'),'YYYYMMDD') 
+		       - 
+		      TO_DATE( SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-10 ),'YYYYMMDD'),1,4) || '0101' ,'YYYYMMDD') + 1  							  AS AMG_SESN_DAY_CNT11
+		    , TO_DATE(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-11 ),'YYYYMMDD'),'YYYYMMDD') 
+		       - 
+		      TO_DATE( SUBSTR(TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-11 ),'YYYYMMDD'),1,4) || '0101' ,'YYYYMMDD') + 1  							  AS AMG_SESN_DAY_CNT12
+		    --------------------------------------------------
+		FROM  TSR_SPLY_OPR_STAT 
+		WHERE ALM_WORK_TC = 'M'
+		  AND CUR_C       = 'KRW'
+		  AND ORG_CLAS_C  = #{ORG_CLAS_C}
+		  AND BASE_DATE   IN( 
+		                        #{BASE_DATE} 
+		                       , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1 ),'YYYYMMDD')
+		                       , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-2 ),'YYYYMMDD')
+		                       , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-3 ),'YYYYMMDD')
+		                       , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-4 ),'YYYYMMDD')
+		                       , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-5 ),'YYYYMMDD')
+		                       , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-6 ),'YYYYMMDD')
+		                       , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-7 ),'YYYYMMDD')
+		                       , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-8 ),'YYYYMMDD')
+		                       , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-9 ),'YYYYMMDD')
+		                       , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-10 ),'YYYYMMDD')
+		                       , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'),-11 ),'YYYYMMDD')
+		                    )
+		 -- ( 회계구분  )
+		 --************************************************
+		 /* 중앙회 조회 시 에만 발생  */
+	 	<if test="AC_BUSI_TC == '0000'">
+	 		AND AC_BUSI_TC IN('1105','1106','1107')
+	 	</if>
+	 	<if test="AC_BUSI_TC != '0000'">
+	 		AND AC_BUSI_TC = #{AC_BUSI_TC}
+	 	</if>
+		 --************************************************
+		 
+		 
+		 -- ( 점소코드  )
+		 --************************************************
+		 -- 전체조합 조회 시 
+		 -- 신용회계 고정(2102)
+		 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'">
+		 	-- 모든 점소코드 나오기
+		 </if>
+		 
+		 -- 단위조합별 조회 시 (지소포함여부  yes/no)
+		 -- 신용회계 고정(2102)
+		 <if test="JISO_INCLUDE == 'yes' and BLNG_HQ_BR_C != ''">   
+		 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{BR_C} ) 
+		 </if>
+		 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+		 	AND BR_C     = #{BR_C}
+		 </if>
+		 
+		 -- 도지회별 조회 시 
+		 -- 신용회계 고정(2102)
+		 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+		 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} )
+		 </if>
+		 
+		 -- 중앙회 조회 시  
+		 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == '001'">
+			AND BR_C     = #{BR_C}
+		 </if>
+		 --************************************************
+		)
+	
+	</sql>
+
+
+    <!-- 조달운용 현황 조회(잔액)  -->  
+	<select id = "selectTR_1502_1" parameterType="java.util.Map" resultType="java.util.HashMap">
+	
+	   	<include refid="tr_1502With"></include>
+		   
+		SELECT
+	     	LVL1                                                                                                         	 AS ACCT_NM1
+	     	<if test="LVL == 2">
+	    	,DECODE( GROUPING_ID( LVL2 ), 1  , LVL1 || ' 소계', LVL2 )                            							 AS ACCT_NM2
+	    	,GROUPING_ID( LVL2 )                                                               								 AS GRP_ID   
+	     	</if>
+	     	<if test="LVL == 3">
+	    	,DECODE( GROUPING_ID( LVL2,LVL3 ), 3  , LVL1 || ' 소계', LVL2 )                            						 AS ACCT_NM2
+	    	,DECODE( GROUPING_ID( LVL2,LVL3 ), 1  , LVL2 || ' 소계', LVL3 )                            						 AS ACCT_NM3
+	    	,GROUPING_ID( LVL2,LVL3 )                                                               						 AS GRP_ID
+	     	</if>
+	     	<if test="LVL == 4">
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4 ), 7  , LVL1 || ' 소계', LVL2 )                            					 AS ACCT_NM2
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4 ), 3  , LVL2 || ' 소계', LVL3 )                            					 AS ACCT_NM3
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4 ), 1  , LVL3 || ' 소계', LVL4 )                            					 AS ACCT_NM4
+	    	,GROUPING_ID( LVL2,LVL3,LVL4 )                                                               					 AS GRP_ID
+	     	</if>
+	     	<if test="LVL == 5">
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ), 15 , LVL1 || ' 소계', LVL2 )                            				 AS ACCT_NM2
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ), 7  , LVL2 || ' 소계', LVL3 )                            				 AS ACCT_NM3
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ), 3  , LVL3 || ' 소계', LVL4 )                            				 AS ACCT_NM4
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ), 1  , LVL4 || ' 소계', LVL5 )                            				 AS ACCT_NM5
+	    	,GROUPING_ID( LVL2,LVL3,LVL4,LVL5   )                                                               			 AS GRP_ID
+	     	</if>
+	     	<if test="LVL == 6">
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ), 31 , LVL1 || ' 소계', LVL2 )                            		 AS ACCT_NM2
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ), 15 , LVL2 || ' 소계', LVL3 )                            		 AS ACCT_NM3
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ), 7  , LVL3 || ' 소계', LVL4 )                           		     AS ACCT_NM4
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ), 3  , LVL4 || ' 소계', LVL5 )                            		 AS ACCT_NM5
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ), 1  , LVL5 || ' 소계', LVL6 )                            		 AS ACCT_NM6
+	    	,GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 )                                                               			 AS GRP_ID
+	     	</if>
+	     	<if test="LVL == 7">
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ), 63 , LVL1 || ' 소계', LVL2 )                            	 AS ACCT_NM2
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ), 31 , LVL2 || ' 소계', LVL3 )                           	 AS ACCT_NM3
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ), 15 , LVL3 || ' 소계', LVL4 )                            	 AS ACCT_NM4
+	   	 	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ), 7  , LVL4 || ' 소계', LVL5 )                            	 AS ACCT_NM5
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ), 3  , LVL5 || ' 소계', LVL6 )                            	 AS ACCT_NM6
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ), 1  , LVL6 || ' 소계', LVL7 )                            	 AS ACCT_NM7
+	    	,GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7   )                                                                  AS GRP_ID   
+	     	</if> 
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(                   VIEW_BKPR_AMT1)                                                                           AS     BKPR_AMT1         
+		    ,SUM(               VIEW_NEW_BKPR_AMT1)                                                                           AS NEW_BKPR_AMT1  
+		    ,NVL(ROUND(SUM(    BKPR_APLY_RATE_AMT1    ) / DECODE(SUM(BKPR_AMT1    ),0,NULL,SUM(BKPR_AMT1    )), 2),0)         AS     AVG_RATE1 
+		    ,NVL(ROUND(SUM(NEW_BKPR_APLY_RATE_AMT1) / DECODE(SUM(NEW_BKPR_AMT1),0,NULL,SUM(NEW_BKPR_AMT1)), 2),0)             AS NEW_AVG_RATE1  
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(                   VIEW_BKPR_AMT2)                                                                           AS     BKPR_AMT2         
+		    ,SUM(               VIEW_NEW_BKPR_AMT2)                                                                           AS NEW_BKPR_AMT2  
+		    ,NVL(ROUND(SUM(    BKPR_APLY_RATE_AMT2    ) / DECODE(SUM(BKPR_AMT2    ),0,NULL,SUM(BKPR_AMT2    )), 2),0)         AS     AVG_RATE2 
+		    ,NVL(ROUND(SUM(NEW_BKPR_APLY_RATE_AMT2) / DECODE(SUM(NEW_BKPR_AMT2),0,NULL,SUM(NEW_BKPR_AMT2)), 2),0)             AS NEW_AVG_RATE2  
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(                   VIEW_BKPR_AMT3)                                                                           AS     BKPR_AMT3         
+		    ,SUM(               VIEW_NEW_BKPR_AMT3)                                                                           AS NEW_BKPR_AMT3  
+		    ,NVL(ROUND(SUM(    BKPR_APLY_RATE_AMT3    ) / DECODE(SUM(BKPR_AMT3    ),0,NULL,SUM(BKPR_AMT3    )), 2),0)         AS     AVG_RATE3 
+		    ,NVL(ROUND(SUM(NEW_BKPR_APLY_RATE_AMT3) / DECODE(SUM(NEW_BKPR_AMT3),0,NULL,SUM(NEW_BKPR_AMT3)), 2),0)             AS NEW_AVG_RATE3  
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(                   VIEW_BKPR_AMT4)                                                                           AS     BKPR_AMT4         
+		    ,SUM(               VIEW_NEW_BKPR_AMT4)                                                                           AS NEW_BKPR_AMT4  
+		    ,NVL(ROUND(SUM(    BKPR_APLY_RATE_AMT4    ) / DECODE(SUM(BKPR_AMT4    ),0,NULL,SUM(BKPR_AMT4    )), 2),0)         AS     AVG_RATE4 
+		    ,NVL(ROUND(SUM(NEW_BKPR_APLY_RATE_AMT4) / DECODE(SUM(NEW_BKPR_AMT4),0,NULL,SUM(NEW_BKPR_AMT4)), 2),0)             AS NEW_AVG_RATE4  
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(                   VIEW_BKPR_AMT5)                                                                           AS     BKPR_AMT5         
+		    ,SUM(               VIEW_NEW_BKPR_AMT5)                                                                           AS NEW_BKPR_AMT5  
+		    ,NVL(ROUND(SUM(    BKPR_APLY_RATE_AMT5    ) / DECODE(SUM(BKPR_AMT5    ),0,NULL,SUM(BKPR_AMT5    )), 2),0)         AS     AVG_RATE5 
+		    ,NVL(ROUND(SUM(NEW_BKPR_APLY_RATE_AMT5) / DECODE(SUM(NEW_BKPR_AMT5),0,NULL,SUM(NEW_BKPR_AMT5)), 2),0)             AS NEW_AVG_RATE5  
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(                   VIEW_BKPR_AMT6)                                                                           AS     BKPR_AMT6         
+		    ,SUM(               VIEW_NEW_BKPR_AMT6)                                                                           AS NEW_BKPR_AMT6  
+		    ,NVL(ROUND(SUM(    BKPR_APLY_RATE_AMT6    ) / DECODE(SUM(BKPR_AMT6    ),0,NULL,SUM(BKPR_AMT6    )), 2),0)         AS     AVG_RATE6 
+		    ,NVL(ROUND(SUM(NEW_BKPR_APLY_RATE_AMT6) / DECODE(SUM(NEW_BKPR_AMT6),0,NULL,SUM(NEW_BKPR_AMT6)), 2),0)             AS NEW_AVG_RATE6  
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(                   VIEW_BKPR_AMT7)                                                                           AS     BKPR_AMT7         
+		    ,SUM(               VIEW_NEW_BKPR_AMT7)                                                                           AS NEW_BKPR_AMT7  
+		    ,NVL(ROUND(SUM(    BKPR_APLY_RATE_AMT7    ) / DECODE(SUM(BKPR_AMT7    ),0,NULL,SUM(BKPR_AMT7    )), 2),0)         AS     AVG_RATE7 
+		    ,NVL(ROUND(SUM(NEW_BKPR_APLY_RATE_AMT7) / DECODE(SUM(NEW_BKPR_AMT7),0,NULL,SUM(NEW_BKPR_AMT7)), 2),0)             AS NEW_AVG_RATE7  
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(                   VIEW_BKPR_AMT8)                                                                           AS     BKPR_AMT8         
+		    ,SUM(               VIEW_NEW_BKPR_AMT8)                                                                           AS NEW_BKPR_AMT8  
+		    ,NVL(ROUND(SUM(    BKPR_APLY_RATE_AMT8    ) / DECODE(SUM(BKPR_AMT8    ),0,NULL,SUM(BKPR_AMT8    )), 2),0)         AS     AVG_RATE8 
+		    ,NVL(ROUND(SUM(NEW_BKPR_APLY_RATE_AMT8) / DECODE(SUM(NEW_BKPR_AMT8),0,NULL,SUM(NEW_BKPR_AMT8)), 2),0)             AS NEW_AVG_RATE8  
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(                   VIEW_BKPR_AMT9)                                                                           AS     BKPR_AMT9         
+		    ,SUM(               VIEW_NEW_BKPR_AMT9)                                                                           AS NEW_BKPR_AMT9  
+		    ,NVL(ROUND(SUM(    BKPR_APLY_RATE_AMT9    ) / DECODE(SUM(BKPR_AMT9    ),0,NULL,SUM(BKPR_AMT9    )), 2),0)         AS     AVG_RATE9 
+		    ,NVL(ROUND(SUM(NEW_BKPR_APLY_RATE_AMT9) / DECODE(SUM(NEW_BKPR_AMT9),0,NULL,SUM(NEW_BKPR_AMT9)), 2),0)             AS NEW_AVG_RATE9  
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(                   VIEW_BKPR_AMT10)                                                                          AS     BKPR_AMT10         
+		    ,SUM(               VIEW_NEW_BKPR_AMT10)                                                                          AS NEW_BKPR_AMT10  
+		    ,NVL(ROUND(SUM(    BKPR_APLY_RATE_AMT10    ) / DECODE(SUM(BKPR_AMT10    ),0,NULL,SUM(BKPR_AMT10    )), 2),0)      AS     AVG_RATE10 
+		    ,NVL(ROUND(SUM(NEW_BKPR_APLY_RATE_AMT10) / DECODE(SUM(NEW_BKPR_AMT10),0,NULL,SUM(NEW_BKPR_AMT10)), 2),0)          AS NEW_AVG_RATE10  
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(                   VIEW_BKPR_AMT11)                                                                          AS     BKPR_AMT11         
+		    ,SUM(               VIEW_NEW_BKPR_AMT11)                                                                          AS NEW_BKPR_AMT11  
+		    ,NVL(ROUND(SUM(    BKPR_APLY_RATE_AMT11    ) / DECODE(SUM(BKPR_AMT11    ),0,NULL,SUM(BKPR_AMT11    )), 2),0)      AS     AVG_RATE11 
+		    ,NVL(ROUND(SUM(NEW_BKPR_APLY_RATE_AMT11) / DECODE(SUM(NEW_BKPR_AMT11),0,NULL,SUM(NEW_BKPR_AMT11)), 2),0)          AS NEW_AVG_RATE11  
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(                   VIEW_BKPR_AMT12)                                                                          AS     BKPR_AMT12         
+		    ,SUM(               VIEW_NEW_BKPR_AMT12)                                                                          AS NEW_BKPR_AMT12  
+		    ,NVL(ROUND(SUM(    BKPR_APLY_RATE_AMT12    ) / DECODE(SUM(BKPR_AMT12    ),0,NULL,SUM(BKPR_AMT12    )), 2),0)      AS     AVG_RATE12 
+		    ,NVL(ROUND(SUM(NEW_BKPR_APLY_RATE_AMT12) / DECODE(SUM(NEW_BKPR_AMT12),0,NULL,SUM(NEW_BKPR_AMT12)), 2),0)          AS NEW_AVG_RATE12  
+		    --------------------------------------------------------------------------------------    			 
+	FROM 
+	(
+	    SELECT
+	         LVL1
+     	<if test="LVL == 2">
+        	,LVL2 
+     	</if>
+     	<if test="LVL == 3">
+        	,LVL2 
+        	,LVL3
+     	</if>
+     	<if test="LVL == 4">
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+     	</if>
+     	<if test="LVL == 5">
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+        	,LVL5
+     	</if>
+     	<if test="LVL == 6">
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+        	,LVL5
+        	,LVL6
+     	</if>
+     	<if test="LVL == 7"> 
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+        	,LVL5
+        	,LVL6
+        	,LVL7
+     	</if> 
+	        ,ROUND(SUM(        BKPR_AMT1)  / TO_NUMBER(#{AMT_UNIT}) )    	AS          VIEW_BKPR_AMT1      
+	        ,ROUND(SUM(    NEW_BKPR_AMT1)  / TO_NUMBER(#{AMT_UNIT}) )    	AS      VIEW_NEW_BKPR_AMT1 
+	        ,ROUND(SUM(        BKPR_AMT2)  / TO_NUMBER(#{AMT_UNIT}) )    	AS          VIEW_BKPR_AMT2      
+	        ,ROUND(SUM(    NEW_BKPR_AMT2)  / TO_NUMBER(#{AMT_UNIT}) )    	AS      VIEW_NEW_BKPR_AMT2 
+	        ,ROUND(SUM(        BKPR_AMT3)  / TO_NUMBER(#{AMT_UNIT}) )    	AS          VIEW_BKPR_AMT3      
+	        ,ROUND(SUM(    NEW_BKPR_AMT3)  / TO_NUMBER(#{AMT_UNIT}) )    	AS      VIEW_NEW_BKPR_AMT3 
+	        ,ROUND(SUM(        BKPR_AMT4)  / TO_NUMBER(#{AMT_UNIT}) )    	AS          VIEW_BKPR_AMT4      
+	        ,ROUND(SUM(    NEW_BKPR_AMT4)  / TO_NUMBER(#{AMT_UNIT}) )    	AS      VIEW_NEW_BKPR_AMT4 
+	        ,ROUND(SUM(        BKPR_AMT5)  / TO_NUMBER(#{AMT_UNIT}) )    	AS          VIEW_BKPR_AMT5      
+	        ,ROUND(SUM(    NEW_BKPR_AMT5)  / TO_NUMBER(#{AMT_UNIT}) )    	AS      VIEW_NEW_BKPR_AMT5 
+	        ,ROUND(SUM(        BKPR_AMT6)  / TO_NUMBER(#{AMT_UNIT}) )    	AS          VIEW_BKPR_AMT6      
+	        ,ROUND(SUM(    NEW_BKPR_AMT6)  / TO_NUMBER(#{AMT_UNIT}) )    	AS      VIEW_NEW_BKPR_AMT6 
+	        ,ROUND(SUM(        BKPR_AMT7)  / TO_NUMBER(#{AMT_UNIT}) )    	AS          VIEW_BKPR_AMT7      
+	        ,ROUND(SUM(    NEW_BKPR_AMT7)  / TO_NUMBER(#{AMT_UNIT}) )    	AS      VIEW_NEW_BKPR_AMT7 
+	        ,ROUND(SUM(        BKPR_AMT8)  / TO_NUMBER(#{AMT_UNIT}) )    	AS          VIEW_BKPR_AMT8      
+	        ,ROUND(SUM(    NEW_BKPR_AMT8)  / TO_NUMBER(#{AMT_UNIT}) )    	AS      VIEW_NEW_BKPR_AMT8 
+	        ,ROUND(SUM(        BKPR_AMT9)  / TO_NUMBER(#{AMT_UNIT}) )    	AS          VIEW_BKPR_AMT9      
+	        ,ROUND(SUM(    NEW_BKPR_AMT9)  / TO_NUMBER(#{AMT_UNIT}) )    	AS      VIEW_NEW_BKPR_AMT9 
+	        ,ROUND(SUM(        BKPR_AMT10) / TO_NUMBER(#{AMT_UNIT}) )    	AS          VIEW_BKPR_AMT10      
+	        ,ROUND(SUM(    NEW_BKPR_AMT10) / TO_NUMBER(#{AMT_UNIT}) )    	AS      VIEW_NEW_BKPR_AMT10 
+	        ,ROUND(SUM(        BKPR_AMT11) / TO_NUMBER(#{AMT_UNIT}) )    	AS          VIEW_BKPR_AMT11      
+	        ,ROUND(SUM(    NEW_BKPR_AMT11) / TO_NUMBER(#{AMT_UNIT}) )    	AS      VIEW_NEW_BKPR_AMT11 
+	        ,ROUND(SUM(        BKPR_AMT12) / TO_NUMBER(#{AMT_UNIT}) )    	AS          VIEW_BKPR_AMT12      
+	        ,ROUND(SUM(    NEW_BKPR_AMT12) / TO_NUMBER(#{AMT_UNIT}) )    	AS      VIEW_NEW_BKPR_AMT12
+	        -----------------------------------------------------------------------       
+	        ,SUM(              BKPR_AMT1)                		AS               BKPR_AMT1        
+	        ,SUM(          NEW_BKPR_AMT1)                		AS           NEW_BKPR_AMT1           
+	        ,SUM(    BKPR_APLY_RATE_AMT1)                		AS     BKPR_APLY_RATE_AMT1    
+	        ,SUM(NEW_BKPR_APLY_RATE_AMT1)                		AS NEW_BKPR_APLY_RATE_AMT1
+	        -----------------------------------------------------------------------      
+	        ,SUM(              BKPR_AMT2)                		AS               BKPR_AMT2        
+	        ,SUM(          NEW_BKPR_AMT2)                		AS           NEW_BKPR_AMT2           
+	        ,SUM(    BKPR_APLY_RATE_AMT2)                		AS     BKPR_APLY_RATE_AMT2    
+	        ,SUM(NEW_BKPR_APLY_RATE_AMT2)                		AS NEW_BKPR_APLY_RATE_AMT2
+	        -----------------------------------------------------------------------      
+	        ,SUM(              BKPR_AMT3)                		AS               BKPR_AMT3       
+	        ,SUM(          NEW_BKPR_AMT3)                		AS           NEW_BKPR_AMT3           
+	        ,SUM(    BKPR_APLY_RATE_AMT3)                		AS     BKPR_APLY_RATE_AMT3    
+	        ,SUM(NEW_BKPR_APLY_RATE_AMT3)                		AS NEW_BKPR_APLY_RATE_AMT3
+	        -----------------------------------------------------------------------      
+	        ,SUM(              BKPR_AMT4)                		AS               BKPR_AMT4        
+	        ,SUM(          NEW_BKPR_AMT4)                		AS           NEW_BKPR_AMT4           
+	        ,SUM(    BKPR_APLY_RATE_AMT4)                		AS     BKPR_APLY_RATE_AMT4    
+	        ,SUM(NEW_BKPR_APLY_RATE_AMT4)                		AS NEW_BKPR_APLY_RATE_AMT4
+	        -----------------------------------------------------------------------      
+	        ,SUM(              BKPR_AMT5)                		AS               BKPR_AMT5        
+	        ,SUM(          NEW_BKPR_AMT5)                		AS           NEW_BKPR_AMT5           
+	        ,SUM(    BKPR_APLY_RATE_AMT5)                		AS     BKPR_APLY_RATE_AMT5    
+	        ,SUM(NEW_BKPR_APLY_RATE_AMT5)                		AS NEW_BKPR_APLY_RATE_AMT5
+	        -----------------------------------------------------------------------      
+	        ,SUM(              BKPR_AMT6)                		AS               BKPR_AMT6       
+	        ,SUM(          NEW_BKPR_AMT6)                		AS           NEW_BKPR_AMT6           
+	        ,SUM(    BKPR_APLY_RATE_AMT6)                		AS     BKPR_APLY_RATE_AMT6    
+	        ,SUM(NEW_BKPR_APLY_RATE_AMT6)                		AS NEW_BKPR_APLY_RATE_AMT6
+	        -----------------------------------------------------------------------      
+	        ,SUM(              BKPR_AMT7)                		AS               BKPR_AMT7        
+	        ,SUM(          NEW_BKPR_AMT7)                		AS           NEW_BKPR_AMT7           
+	        ,SUM(    BKPR_APLY_RATE_AMT7)                		AS     BKPR_APLY_RATE_AMT7    
+	        ,SUM(NEW_BKPR_APLY_RATE_AMT7)                		AS NEW_BKPR_APLY_RATE_AMT7
+	        -----------------------------------------------------------------------      
+	        ,SUM(              BKPR_AMT8)                		AS               BKPR_AMT8        
+	        ,SUM(          NEW_BKPR_AMT8)                		AS           NEW_BKPR_AMT8           
+	        ,SUM(    BKPR_APLY_RATE_AMT8)                		AS     BKPR_APLY_RATE_AMT8    
+	        ,SUM(NEW_BKPR_APLY_RATE_AMT8)                		AS NEW_BKPR_APLY_RATE_AMT8
+	        -----------------------------------------------------------------------     
+	        ,SUM(              BKPR_AMT9)                		AS               BKPR_AMT9        
+	        ,SUM(          NEW_BKPR_AMT9)                		AS           NEW_BKPR_AMT9           
+	        ,SUM(    BKPR_APLY_RATE_AMT9)                		AS     BKPR_APLY_RATE_AMT9    
+	        ,SUM(NEW_BKPR_APLY_RATE_AMT9)                		AS NEW_BKPR_APLY_RATE_AMT9
+	        -----------------------------------------------------------------------     
+	        ,SUM(              BKPR_AMT10)               		AS               BKPR_AMT10       
+	        ,SUM(          NEW_BKPR_AMT10)               		AS           NEW_BKPR_AMT10           
+	        ,SUM(    BKPR_APLY_RATE_AMT10)               		AS     BKPR_APLY_RATE_AMT10    
+	        ,SUM(NEW_BKPR_APLY_RATE_AMT10)               		AS NEW_BKPR_APLY_RATE_AMT10
+	        -----------------------------------------------------------------------     
+	        ,SUM(              BKPR_AMT11)               		AS               BKPR_AMT11        
+	        ,SUM(          NEW_BKPR_AMT11)                		AS           NEW_BKPR_AMT11           
+	        ,SUM(    BKPR_APLY_RATE_AMT11)               	    AS     BKPR_APLY_RATE_AMT11    
+	        ,SUM(NEW_BKPR_APLY_RATE_AMT11)                	 	AS NEW_BKPR_APLY_RATE_AMT11
+	        -----------------------------------------------------------------------     
+	        ,SUM(              BKPR_AMT12)                		AS               BKPR_AMT12       
+	        ,SUM(          NEW_BKPR_AMT12)                		AS           NEW_BKPR_AMT12           
+	        ,SUM(    BKPR_APLY_RATE_AMT12)                		AS     BKPR_APLY_RATE_AMT12    
+	        ,SUM(NEW_BKPR_APLY_RATE_AMT12)                		AS NEW_BKPR_APLY_RATE_AMT12
+	        -----------------------------------------------------------------------
+	        ,MAX(PRNT_ORD1)                                     AS PRNT_ORD1
+	        ,MAX(PRNT_ORD2)                                     AS PRNT_ORD2
+	        ,MAX(PRNT_ORD3)                                     AS PRNT_ORD3
+	        ,MAX(PRNT_ORD4)                                     AS PRNT_ORD4
+	        ,MAX(PRNT_ORD5)                                     AS PRNT_ORD5
+	        ,MAX(PRNT_ORD6)                                     AS PRNT_ORD6
+	        ,MAX(PRNT_ORD7)                                     AS PRNT_ORD7
+	    FROM 
+	    (
+	        SELECT
+	             B.LVL1
+	            ,B.LVL2 
+	            ,B.LVL3
+	            ,B.LVL4
+	            ,B.LVL5
+	            ,B.LVL6
+	            ,B.LVL7
+	            ,B.ACCT_LVL
+	            ,A.BKPR_AMT1
+	            ,A.NEW_BKPR_AMT1
+	            ,A.BKPR_APLY_RATE_AMT1
+	            ,A.NEW_BKPR_APLY_RATE_AMT1
+	            ,A.BKPR_AMT2
+	            ,A.NEW_BKPR_AMT2
+	            ,A.BKPR_APLY_RATE_AMT2
+	            ,A.NEW_BKPR_APLY_RATE_AMT2
+	            ,A.BKPR_AMT3
+	            ,A.NEW_BKPR_AMT3
+	            ,A.BKPR_APLY_RATE_AMT3
+	            ,A.NEW_BKPR_APLY_RATE_AMT3
+	            ,A.BKPR_AMT4
+	            ,A.NEW_BKPR_AMT4
+	            ,A.BKPR_APLY_RATE_AMT4
+	            ,A.NEW_BKPR_APLY_RATE_AMT4
+	            ,A.BKPR_AMT5
+	            ,A.NEW_BKPR_AMT5
+	            ,A.BKPR_APLY_RATE_AMT5
+	            ,A.NEW_BKPR_APLY_RATE_AMT5
+	            ,A.BKPR_AMT6
+	            ,A.NEW_BKPR_AMT6
+	            ,A.BKPR_APLY_RATE_AMT6
+	            ,A.NEW_BKPR_APLY_RATE_AMT6
+	            ,A.BKPR_AMT7
+	            ,A.NEW_BKPR_AMT7
+	            ,A.BKPR_APLY_RATE_AMT7
+	            ,A.NEW_BKPR_APLY_RATE_AMT7
+	            ,A.BKPR_AMT8
+	            ,A.NEW_BKPR_AMT8
+	            ,A.BKPR_APLY_RATE_AMT8
+	            ,A.NEW_BKPR_APLY_RATE_AMT8
+	            ,A.BKPR_AMT9
+	            ,A.NEW_BKPR_AMT9
+	            ,A.BKPR_APLY_RATE_AMT9
+	            ,A.NEW_BKPR_APLY_RATE_AMT9
+	            ,A.BKPR_AMT10
+	            ,A.NEW_BKPR_AMT10
+	            ,A.BKPR_APLY_RATE_AMT10
+	            ,A.NEW_BKPR_APLY_RATE_AMT10
+	            ,A.BKPR_AMT11
+	            ,A.NEW_BKPR_AMT11
+	            ,A.BKPR_APLY_RATE_AMT11
+	            ,A.NEW_BKPR_APLY_RATE_AMT11
+	            ,A.BKPR_AMT12
+	            ,A.NEW_BKPR_AMT12
+	            ,A.BKPR_APLY_RATE_AMT12
+	            ,A.NEW_BKPR_APLY_RATE_AMT12
+	            ,B.PRNT_ORD1
+	            ,B.PRNT_ORD2
+	            ,B.PRNT_ORD3
+	            ,B.PRNT_ORD4
+	            ,B.PRNT_ORD5 
+	            ,B.PRNT_ORD6
+	            ,B.PRNT_ORD7
+	        FROM  PROCUREMENT A
+	        ,(
+	            SELECT
+	                  REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 1 )  AS LVL1 
+	                , NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 2 ),TRIM(ACCT_C_NM))  AS LVL2  
+	                , NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 3 ),TRIM(ACCT_C_NM))  AS LVL3  
+	                , NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 4 ),TRIM(ACCT_C_NM))  AS LVL4  
+	                , NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 5 ),TRIM(ACCT_C_NM))  AS LVL5  
+	                , NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 6 ),TRIM(ACCT_C_NM))  AS LVL6 
+	                , NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 7 ),TRIM(ACCT_C_NM))  AS LVL7 
+	                , TRIM(ACCT_C_NM)                                                                                       AS ACCT_C_NM
+	                , ORG_CLAS_C
+	                , AC_BUSI_TC
+	                , ACCT_C
+	                , ACCT_LVL
+	                , REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 1 )  AS PRNT_ORD1 
+	                , TO_NUMBER(    NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 2 ),TRIM(PRNT_ORD))    ) AS PRNT_ORD2  
+	                , TO_NUMBER(    NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 3 ),TRIM(PRNT_ORD))    ) AS PRNT_ORD3  
+	                , TO_NUMBER(    NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 4 ),TRIM(PRNT_ORD))    ) AS PRNT_ORD4  
+	                , TO_NUMBER(    NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 5 ),TRIM(PRNT_ORD))    ) AS PRNT_ORD5  
+	                , TO_NUMBER(    NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 6 ),TRIM(PRNT_ORD))    ) AS PRNT_ORD6  
+	                , TO_NUMBER(    NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 7 ),TRIM(PRNT_ORD))    ) AS PRNT_ORD7  
+	            FROM  TSY_ACCT_MSTR_MNG
+	            WHERE BASE_DATE = ( SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE  &lt;= #{BASE_DATE} )
+	              AND ORG_CLAS_C = #{ORG_CLAS_C}
+	              <if test="AC_BUSI_TC == '0000'">
+	              AND AC_BUSI_TC = '1105'
+	              </if>
+	              <if test="AC_BUSI_TC != '0000'">
+	              AND AC_BUSI_TC = #{AC_BUSI_TC}
+	              </if>
+	            START WITH UP_ACCT_C = '0000000'
+	            CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+	        )B
+	        WHERE 1=1
+	          AND A.ACCT_C     = B.ACCT_C 
+	          AND A.ORG_CLAS_C = B.ORG_CLAS_C 
+	          AND A.AC_BUSI_TC = B.AC_BUSI_TC 
+			  AND SUBSTR( A.ACCT_C, 1, 1) != '3' -- 자본(과목) 빼기
+	    )  
+	    GROUP BY 
+	         LVL1
+     	<if test="LVL == 2">
+        	,LVL2 
+     	</if>
+     	<if test="LVL == 3">
+        	,LVL2 
+        	,LVL3
+     	</if>
+     	<if test="LVL == 4">
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+     	</if>
+     	<if test="LVL == 5">
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+        	,LVL5
+     	</if>
+     	<if test="LVL == 6">
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+        	,LVL5
+        	,LVL6
+     	</if>
+     	<if test="LVL == 7"> 
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+        	,LVL5
+        	,LVL6
+        	,LVL7
+     	</if> 
+	)
+	GROUP BY
+			LVL1
+			<if test="LVL == 1">
+				ORDER BY 
+					MAX(PRNT_ORD1)
+			</if> 	    
+		    <if test="LVL == 2">
+		    	, ROLLUP( LVL2 )
+				ORDER BY
+				    MAX(PRNT_ORD1)
+				    ,MAX(PRNT_ORD2)
+				    ,GRP_ID
+		    </if>
+		    <if test="LVL == 3">
+		    	, ROLLUP( LVL2, LVL3 )
+				ORDER BY
+				    MAX(PRNT_ORD1)
+				    ,MAX(PRNT_ORD2)
+				    ,MAX(PRNT_ORD3)
+				    ,GRP_ID
+		    </if>
+		    <if test="LVL == 4">
+		    	, ROLLUP( LVL2, LVL3, LVL4 )
+				ORDER BY
+				    MAX(PRNT_ORD1)
+				    ,MAX(PRNT_ORD2)
+				    ,MAX(PRNT_ORD3)
+				    ,MAX(PRNT_ORD4)
+				    ,GRP_ID
+		    </if>
+		    <if test="LVL == 5">
+		    	, ROLLUP( LVL2, LVL3, LVL4, LVL5 )
+				ORDER BY
+				    MAX(PRNT_ORD1)
+				    ,MAX(PRNT_ORD2)
+				    ,MAX(PRNT_ORD3)
+				    ,MAX(PRNT_ORD4)
+				    ,MAX(PRNT_ORD5)
+				    ,GRP_ID
+		    </if>
+		    <if test="LVL == 6">
+		    	, ROLLUP( LVL2, LVL3, LVL4, LVL5, LVL6 )
+				ORDER BY
+				    MAX(PRNT_ORD1)
+				    ,MAX(PRNT_ORD2)
+				    ,MAX(PRNT_ORD3)
+				    ,MAX(PRNT_ORD4)
+				    ,MAX(PRNT_ORD5)
+				    ,MAX(PRNT_ORD6)
+				    ,GRP_ID
+		    </if>
+		    <if test="LVL == 7">
+		   		, ROLLUP( LVL2, LVL3, LVL4, LVL5, LVL6, LVL7 )
+				ORDER BY
+				     MAX(PRNT_ORD1)
+				    ,MAX(PRNT_ORD2)
+				    ,MAX(PRNT_ORD3)
+				    ,MAX(PRNT_ORD4)
+				    ,MAX(PRNT_ORD5)
+				    ,MAX(PRNT_ORD6)
+				    ,MAX(PRNT_ORD7)
+				    ,GRP_ID
+		    </if>
+	    
+
+	
+	</select>
+
+
+   <!-- 조달운용 현황 조회(월중)  -->
+	<select id = "selectTR_1502_2" parameterType="java.util.Map" resultType="java.util.HashMap">
+	
+	   	<include refid="tr_1502With"></include>
+		   
+		SELECT
+	     	LVL1                                                                                                         	 AS ACCT_NM1
+	     	<if test="LVL == 2">
+	    	,DECODE( GROUPING_ID( LVL2 ), 1  , LVL1 || ' 소계', LVL2 )                            							 AS ACCT_NM2
+	    	,GROUPING_ID( LVL2 )                                                               								 AS GRP_ID   
+	     	</if>
+	     	<if test="LVL == 3">
+	    	,DECODE( GROUPING_ID( LVL2,LVL3 ), 3  , LVL1 || ' 소계', LVL2 )                            						 AS ACCT_NM2
+	    	,DECODE( GROUPING_ID( LVL2,LVL3 ), 1  , LVL2 || ' 소계', LVL3 )                            						 AS ACCT_NM3
+	    	,GROUPING_ID( LVL2,LVL3 )                                                               						 AS GRP_ID
+	     	</if>
+	     	<if test="LVL == 4">
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4 ), 7  , LVL1 || ' 소계', LVL2 )                            					 AS ACCT_NM2
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4 ), 3  , LVL2 || ' 소계', LVL3 )                            					 AS ACCT_NM3
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4 ), 1  , LVL3 || ' 소계', LVL4 )                            					 AS ACCT_NM4
+	    	,GROUPING_ID( LVL2,LVL3,LVL4 )                                                               					 AS GRP_ID
+	     	</if>
+	     	<if test="LVL == 5">
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ), 15 , LVL1 || ' 소계', LVL2 )                            				 AS ACCT_NM2
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ), 7  , LVL2 || ' 소계', LVL3 )                            				 AS ACCT_NM3
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ), 3  , LVL3 || ' 소계', LVL4 )                            				 AS ACCT_NM4
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ), 1  , LVL4 || ' 소계', LVL5 )                            				 AS ACCT_NM5
+	    	,GROUPING_ID( LVL2,LVL3,LVL4,LVL5   )                                                               			 AS GRP_ID
+	     	</if>
+	     	<if test="LVL == 6">
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ), 31 , LVL1 || ' 소계', LVL2 )                            		 AS ACCT_NM2
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ), 15 , LVL2 || ' 소계', LVL3 )                            		 AS ACCT_NM3
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ), 7  , LVL3 || ' 소계', LVL4 )                           		     AS ACCT_NM4
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ), 3  , LVL4 || ' 소계', LVL5 )                            		 AS ACCT_NM5
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ), 1  , LVL5 || ' 소계', LVL6 )                            		 AS ACCT_NM6
+	    	,GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 )                                                               			 AS GRP_ID
+	     	</if>
+	     	<if test="LVL == 7">
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ), 63 , LVL1 || ' 소계', LVL2 )                            	 AS ACCT_NM2
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ), 31 , LVL2 || ' 소계', LVL3 )                           	 AS ACCT_NM3
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ), 15 , LVL3 || ' 소계', LVL4 )                            	 AS ACCT_NM4
+	   	 	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ), 7  , LVL4 || ' 소계', LVL5 )                            	 AS ACCT_NM5
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ), 3  , LVL5 || ' 소계', LVL6 )                            	 AS ACCT_NM6
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ), 1  , LVL6 || ' 소계', LVL7 )                            	 AS ACCT_NM7
+	    	,GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7   )                                                                  AS GRP_ID   
+	     	</if> 
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(               VIEW_MMW_AVG_BAL1 )                                                                         AS      MMW_AVG_BAL1  
+		    ,NVL(ROUND(SUM(MMW_AVG_APLY_RATE_AMT1 ) / DECODE(SUM( MMW_AVG_BAL1 ),0,NULL,SUM( MMW_AVG_BAL1 )), 2),0)         AS         AVG_RATE1         
+		    ,SUM(          VIEW_MMW_PRFT_CST_AMT1 )                                                                         AS     NEW_BKPR_AMT1 
+		    ,CASE
+                WHEN NVL(SUM(MMW_AVG_BAL1),0) = 0 THEN 0 
+                ELSE ROUND( SUM(MMW_PRFT_CST_AMT1) / SUM(MMW_AVG_BAL1) * 365 / MAX(MMW_AVG_DAY_CNT1) * 100 ,2)
+		     END                                                                                                            AS MMW_PRFT_CST_RTO1
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(               VIEW_MMW_AVG_BAL2 )                                                                         AS      MMW_AVG_BAL2  
+		    ,NVL(ROUND(SUM(MMW_AVG_APLY_RATE_AMT2 ) / DECODE(SUM( MMW_AVG_BAL2 ),0,NULL,SUM( MMW_AVG_BAL2 )), 2),0)         AS         AVG_RATE2         
+		    ,SUM(          VIEW_MMW_PRFT_CST_AMT2 )                                                                         AS     NEW_BKPR_AMT2 
+		    ,CASE
+                WHEN NVL(SUM(MMW_AVG_BAL2),0) = 0 THEN 0 
+                ELSE ROUND( SUM(MMW_PRFT_CST_AMT2) / SUM(MMW_AVG_BAL2) * 365 / MAX(MMW_AVG_DAY_CNT2) * 100 ,2)
+		     END                                                                                                            AS MMW_PRFT_CST_RTO2
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(               VIEW_MMW_AVG_BAL3 )                                                                         AS      MMW_AVG_BAL3  
+		    ,NVL(ROUND(SUM(MMW_AVG_APLY_RATE_AMT3 ) / DECODE(SUM( MMW_AVG_BAL3 ),0,NULL,SUM( MMW_AVG_BAL3 )), 2),0)         AS         AVG_RATE3         
+		    ,SUM(          VIEW_MMW_PRFT_CST_AMT3 )                                                                         AS     NEW_BKPR_AMT3 
+		    ,CASE
+                WHEN NVL(SUM(MMW_AVG_BAL3),0) = 0 THEN 0 
+                ELSE ROUND( SUM(MMW_PRFT_CST_AMT3) / SUM(MMW_AVG_BAL3) * 365 / MAX(MMW_AVG_DAY_CNT3) * 100 ,2)
+		     END                                                                                                            AS MMW_PRFT_CST_RTO3
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(               VIEW_MMW_AVG_BAL4 )                                                                         AS      MMW_AVG_BAL4  
+		    ,NVL(ROUND(SUM(MMW_AVG_APLY_RATE_AMT4 ) / DECODE(SUM( MMW_AVG_BAL4 ),0,NULL,SUM( MMW_AVG_BAL4 )), 2),0)         AS         AVG_RATE4         
+		    ,SUM(          VIEW_MMW_PRFT_CST_AMT4 )                                                                         AS     NEW_BKPR_AMT4
+		    ,CASE
+                WHEN NVL(SUM(MMW_AVG_BAL4),0) = 0 THEN 0 
+                ELSE ROUND( SUM(MMW_PRFT_CST_AMT4) / SUM(MMW_AVG_BAL4) * 365 / MAX(MMW_AVG_DAY_CNT4) * 100 ,2)
+		     END                                                                                                            AS MMW_PRFT_CST_RTO4  
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(               VIEW_MMW_AVG_BAL5 )                                                                         AS      MMW_AVG_BAL5  
+		    ,NVL(ROUND(SUM(MMW_AVG_APLY_RATE_AMT5 ) / DECODE(SUM( MMW_AVG_BAL5 ),0,NULL,SUM( MMW_AVG_BAL5 )), 2),0)         AS         AVG_RATE5         
+		    ,SUM(          VIEW_MMW_PRFT_CST_AMT5 )                                                                         AS     NEW_BKPR_AMT5 
+		    ,CASE
+                WHEN NVL(SUM(MMW_AVG_BAL5),0) = 0 THEN 0 
+                ELSE ROUND( SUM(MMW_PRFT_CST_AMT5) / SUM(MMW_AVG_BAL5) * 365 / MAX(MMW_AVG_DAY_CNT5) * 100 ,2)
+		     END                                                                                                            AS MMW_PRFT_CST_RTO5
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(               VIEW_MMW_AVG_BAL6 )                                                                         AS      MMW_AVG_BAL6  
+		    ,NVL(ROUND(SUM(MMW_AVG_APLY_RATE_AMT6 ) / DECODE(SUM( MMW_AVG_BAL6 ),0,NULL,SUM( MMW_AVG_BAL6 )), 2),0)         AS         AVG_RATE6         
+		    ,SUM(          VIEW_MMW_PRFT_CST_AMT6 )                                                                         AS     NEW_BKPR_AMT6 
+		    ,CASE
+                WHEN NVL(SUM(MMW_AVG_BAL6),0) = 0 THEN 0 
+                ELSE ROUND( SUM(MMW_PRFT_CST_AMT6) / SUM(MMW_AVG_BAL6) * 365 / MAX(MMW_AVG_DAY_CNT6) * 100 ,2)
+		     END                                                                                                            AS MMW_PRFT_CST_RTO6 
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(               VIEW_MMW_AVG_BAL7 )                                                                         AS      MMW_AVG_BAL7  
+		    ,NVL(ROUND(SUM(MMW_AVG_APLY_RATE_AMT7 ) / DECODE(SUM( MMW_AVG_BAL7 ),0,NULL,SUM( MMW_AVG_BAL7 )), 2),0)         AS         AVG_RATE7         
+		    ,SUM(          VIEW_MMW_PRFT_CST_AMT7 )                                                                         AS     NEW_BKPR_AMT7 
+		    ,CASE
+                WHEN NVL(SUM(MMW_AVG_BAL7),0) = 0 THEN 0 
+                ELSE ROUND( SUM(MMW_PRFT_CST_AMT7) / SUM(MMW_AVG_BAL7) * 365 / MAX(MMW_AVG_DAY_CNT7) * 100 ,2)
+		     END                                                                                                            AS MMW_PRFT_CST_RTO7
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(               VIEW_MMW_AVG_BAL8 )                                                                         AS      MMW_AVG_BAL8  
+		    ,NVL(ROUND(SUM(MMW_AVG_APLY_RATE_AMT8 ) / DECODE(SUM( MMW_AVG_BAL8 ),0,NULL,SUM( MMW_AVG_BAL8 )), 2),0)         AS         AVG_RATE8         
+		    ,SUM(          VIEW_MMW_PRFT_CST_AMT8 )                                                                         AS     NEW_BKPR_AMT8 
+		    ,CASE
+                WHEN NVL(SUM(MMW_AVG_BAL8),0) = 0 THEN 0 
+                ELSE ROUND( SUM(MMW_PRFT_CST_AMT8) / SUM(MMW_AVG_BAL8) * 365 / MAX(MMW_AVG_DAY_CNT8) * 100 ,2)
+		     END                                                                                                            AS MMW_PRFT_CST_RTO8
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(               VIEW_MMW_AVG_BAL9 )                                                                         AS      MMW_AVG_BAL9  
+		    ,NVL(ROUND(SUM(MMW_AVG_APLY_RATE_AMT9 ) / DECODE(SUM( MMW_AVG_BAL9 ),0,NULL,SUM( MMW_AVG_BAL9 )), 2),0)         AS         AVG_RATE9         
+		    ,SUM(          VIEW_MMW_PRFT_CST_AMT9 )                                                                         AS     NEW_BKPR_AMT9 
+		    ,CASE
+                WHEN NVL(SUM(MMW_AVG_BAL9),0) = 0 THEN 0 
+                ELSE ROUND( SUM(MMW_PRFT_CST_AMT9) / SUM(MMW_AVG_BAL9) * 365 / MAX(MMW_AVG_DAY_CNT9) * 100 ,2)
+		     END                                                                                                            AS MMW_PRFT_CST_RTO9
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(               VIEW_MMW_AVG_BAL10 )                                                                        AS      MMW_AVG_BAL10  
+		    ,NVL(ROUND(SUM(MMW_AVG_APLY_RATE_AMT10 ) / DECODE(SUM( MMW_AVG_BAL10 ),0,NULL,SUM( MMW_AVG_BAL10 )), 2),0)      AS         AVG_RATE10         
+		    ,SUM(          VIEW_MMW_PRFT_CST_AMT10 )                                                                        AS     NEW_BKPR_AMT10 
+		    ,CASE
+                WHEN NVL(SUM(MMW_AVG_BAL10),0) = 0 THEN 0 
+                ELSE ROUND( SUM(MMW_PRFT_CST_AMT10) / SUM(MMW_AVG_BAL10) * 365 / MAX(MMW_AVG_DAY_CNT10) * 100 ,2)
+		     END                                                                                                            AS MMW_PRFT_CST_RTO10 
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(               VIEW_MMW_AVG_BAL11 )                                                                        AS      MMW_AVG_BAL11  
+		    ,NVL(ROUND(SUM(MMW_AVG_APLY_RATE_AMT11 ) / DECODE(SUM( MMW_AVG_BAL11 ),0,NULL,SUM( MMW_AVG_BAL11 )), 2),0)      AS         AVG_RATE11         
+		    ,SUM(          VIEW_MMW_PRFT_CST_AMT11 )                                                                        AS     NEW_BKPR_AMT11 
+		    ,CASE
+                WHEN NVL(SUM(MMW_AVG_BAL11),0) = 0 THEN 0 
+                ELSE ROUND( SUM(MMW_PRFT_CST_AMT11) / SUM(MMW_AVG_BAL11) * 365 / MAX(MMW_AVG_DAY_CNT11) * 100 ,2)
+		     END                                                                                                            AS MMW_PRFT_CST_RTO11
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(               VIEW_MMW_AVG_BAL12 )                                                                        AS      MMW_AVG_BAL12  
+		    ,NVL(ROUND(SUM(MMW_AVG_APLY_RATE_AMT12 ) / DECODE(SUM( MMW_AVG_BAL12 ),0,NULL,SUM( MMW_AVG_BAL12 )), 2),0)      AS         AVG_RATE12         
+		    ,SUM(          VIEW_MMW_PRFT_CST_AMT12 )                                                                        AS     NEW_BKPR_AMT12 
+		    ,CASE
+                WHEN NVL(SUM(MMW_AVG_BAL12),0) = 0 THEN 0 
+                ELSE ROUND( SUM(MMW_PRFT_CST_AMT12) / SUM(MMW_AVG_BAL12) * 365 / MAX(MMW_AVG_DAY_CNT12) * 100 ,2)
+		     END                                                                                                            AS MMW_PRFT_CST_RTO12
+		    --------------------------------------------------------------------------------------           
+	FROM 
+	(
+	    SELECT
+	         LVL1
+     	<if test="LVL == 2">
+        	,LVL2 
+     	</if>
+     	<if test="LVL == 3">
+        	,LVL2 
+        	,LVL3
+     	</if>
+     	<if test="LVL == 4">
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+     	</if>
+     	<if test="LVL == 5">
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+        	,LVL5
+     	</if>
+     	<if test="LVL == 6">
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+        	,LVL5
+        	,LVL6
+     	</if>
+     	<if test="LVL == 7"> 
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+        	,LVL5
+        	,LVL6
+        	,LVL7
+     	</if> 
+	        ,ROUND(SUM(     MMW_AVG_BAL1)   / #{AMT_UNIT})    	AS       VIEW_MMW_AVG_BAL1      
+	        ,ROUND(SUM(MMW_PRFT_CST_AMT1)   / #{AMT_UNIT})    	AS  VIEW_MMW_PRFT_CST_AMT1 
+	        ,ROUND(SUM(     MMW_AVG_BAL2)   / #{AMT_UNIT})    	AS       VIEW_MMW_AVG_BAL2      
+	        ,ROUND(SUM(MMW_PRFT_CST_AMT2)   / #{AMT_UNIT})    	AS  VIEW_MMW_PRFT_CST_AMT2 
+	        ,ROUND(SUM(     MMW_AVG_BAL3)   / #{AMT_UNIT})    	AS       VIEW_MMW_AVG_BAL3      
+	        ,ROUND(SUM(MMW_PRFT_CST_AMT3)   / #{AMT_UNIT})    	AS  VIEW_MMW_PRFT_CST_AMT3 
+	        ,ROUND(SUM(     MMW_AVG_BAL4)   / #{AMT_UNIT})    	AS       VIEW_MMW_AVG_BAL4      
+	        ,ROUND(SUM(MMW_PRFT_CST_AMT4)   / #{AMT_UNIT})    	AS  VIEW_MMW_PRFT_CST_AMT4 
+	        ,ROUND(SUM(     MMW_AVG_BAL5)   / #{AMT_UNIT})    	AS       VIEW_MMW_AVG_BAL5      
+	        ,ROUND(SUM(MMW_PRFT_CST_AMT5)   / #{AMT_UNIT})    	AS  VIEW_MMW_PRFT_CST_AMT5 
+	        ,ROUND(SUM(     MMW_AVG_BAL6)   / #{AMT_UNIT})    	AS       VIEW_MMW_AVG_BAL6      
+	        ,ROUND(SUM(MMW_PRFT_CST_AMT6)   / #{AMT_UNIT})    	AS  VIEW_MMW_PRFT_CST_AMT6 
+	        ,ROUND(SUM(     MMW_AVG_BAL7)   / #{AMT_UNIT})    	AS       VIEW_MMW_AVG_BAL7      
+	        ,ROUND(SUM(MMW_PRFT_CST_AMT7)   / #{AMT_UNIT})    	AS  VIEW_MMW_PRFT_CST_AMT7 
+	        ,ROUND(SUM(     MMW_AVG_BAL8)   / #{AMT_UNIT})    	AS       VIEW_MMW_AVG_BAL8      
+	        ,ROUND(SUM(MMW_PRFT_CST_AMT8)   / #{AMT_UNIT})    	AS  VIEW_MMW_PRFT_CST_AMT8 
+	        ,ROUND(SUM(     MMW_AVG_BAL9)   / #{AMT_UNIT})    	AS       VIEW_MMW_AVG_BAL9      
+	        ,ROUND(SUM(MMW_PRFT_CST_AMT9)   / #{AMT_UNIT})    	AS  VIEW_MMW_PRFT_CST_AMT9 
+	        ,ROUND(SUM(     MMW_AVG_BAL10)  / #{AMT_UNIT})    	AS       VIEW_MMW_AVG_BAL10      
+	        ,ROUND(SUM(MMW_PRFT_CST_AMT10)  / #{AMT_UNIT})    	AS  VIEW_MMW_PRFT_CST_AMT10 
+	        ,ROUND(SUM(     MMW_AVG_BAL11)  / #{AMT_UNIT})    	AS       VIEW_MMW_AVG_BAL11      
+	        ,ROUND(SUM(MMW_PRFT_CST_AMT11)  / #{AMT_UNIT})    	AS  VIEW_MMW_PRFT_CST_AMT11 
+	        ,ROUND(SUM(     MMW_AVG_BAL12)  / #{AMT_UNIT})    	AS       VIEW_MMW_AVG_BAL12      
+	        ,ROUND(SUM(MMW_PRFT_CST_AMT12)  / #{AMT_UNIT})    	AS  VIEW_MMW_PRFT_CST_AMT12
+	        -----------------------------------------------------------------------      
+	        ,SUM(           MMW_AVG_BAL1)                  		AS           MMW_AVG_BAL1        
+	        ,SUM(      MMW_PRFT_CST_AMT1)                  		AS      MMW_PRFT_CST_AMT1           
+	        ,SUM( MMW_AVG_APLY_RATE_AMT1)                  		AS MMW_AVG_APLY_RATE_AMT1  
+	        -----------------------------------------------------------------------       
+	        ,SUM(           MMW_AVG_BAL2)                  		AS           MMW_AVG_BAL2        
+	        ,SUM(      MMW_PRFT_CST_AMT2)                  		AS      MMW_PRFT_CST_AMT2           
+	        ,SUM( MMW_AVG_APLY_RATE_AMT2)                  		AS MMW_AVG_APLY_RATE_AMT2  
+	        -----------------------------------------------------------------------      
+	        ,SUM(           MMW_AVG_BAL3)                  		AS           MMW_AVG_BAL3         
+	        ,SUM(      MMW_PRFT_CST_AMT3)                  		AS      MMW_PRFT_CST_AMT3           
+	        ,SUM( MMW_AVG_APLY_RATE_AMT3)                  		AS MMW_AVG_APLY_RATE_AMT3  
+	        -----------------------------------------------------------------------     
+	        ,SUM(           MMW_AVG_BAL4)                  		AS           MMW_AVG_BAL4        
+	        ,SUM(      MMW_PRFT_CST_AMT4)                  		AS      MMW_PRFT_CST_AMT4           
+	        ,SUM( MMW_AVG_APLY_RATE_AMT4)                  		AS MMW_AVG_APLY_RATE_AMT4  
+	        -----------------------------------------------------------------------     
+	        ,SUM(           MMW_AVG_BAL5)                  		AS           MMW_AVG_BAL5        
+	        ,SUM(      MMW_PRFT_CST_AMT5)                  		AS      MMW_PRFT_CST_AMT5           
+	        ,SUM( MMW_AVG_APLY_RATE_AMT5)                  		AS MMW_AVG_APLY_RATE_AMT5  
+	        -----------------------------------------------------------------------    
+	        ,SUM(           MMW_AVG_BAL6)                  		AS           MMW_AVG_BAL6        
+	        ,SUM(      MMW_PRFT_CST_AMT6)                  		AS      MMW_PRFT_CST_AMT6           
+	        ,SUM( MMW_AVG_APLY_RATE_AMT6)                  		AS MMW_AVG_APLY_RATE_AMT6  
+	        -----------------------------------------------------------------------      
+	        ,SUM(           MMW_AVG_BAL7)                  		AS           MMW_AVG_BAL7        
+	        ,SUM(      MMW_PRFT_CST_AMT7)                  		AS      MMW_PRFT_CST_AMT7           
+	        ,SUM( MMW_AVG_APLY_RATE_AMT7)                  		AS MMW_AVG_APLY_RATE_AMT7  
+	        -----------------------------------------------------------------------     
+	        ,SUM(           MMW_AVG_BAL8)                  		AS           MMW_AVG_BAL8      
+	        ,SUM(      MMW_PRFT_CST_AMT8)                  		AS      MMW_PRFT_CST_AMT8           
+	        ,SUM( MMW_AVG_APLY_RATE_AMT8)                  		AS MMW_AVG_APLY_RATE_AMT8  
+	        -----------------------------------------------------------------------    
+	        ,SUM(           MMW_AVG_BAL9)                  		AS           MMW_AVG_BAL9        
+	        ,SUM(      MMW_PRFT_CST_AMT9)                  		AS      MMW_PRFT_CST_AMT9           
+	        ,SUM( MMW_AVG_APLY_RATE_AMT9)                  		AS MMW_AVG_APLY_RATE_AMT9  
+	        -----------------------------------------------------------------------      
+	        ,SUM(           MMW_AVG_BAL10)                 		AS           MMW_AVG_BAL10        
+	        ,SUM(      MMW_PRFT_CST_AMT10)                 		AS      MMW_PRFT_CST_AMT10           
+	        ,SUM( MMW_AVG_APLY_RATE_AMT10)                 		AS MMW_AVG_APLY_RATE_AMT10  
+	        -----------------------------------------------------------------------      
+	        ,SUM(           MMW_AVG_BAL11)                 		AS           MMW_AVG_BAL11       
+	        ,SUM(      MMW_PRFT_CST_AMT11)                 		AS      MMW_PRFT_CST_AMT11           
+	        ,SUM( MMW_AVG_APLY_RATE_AMT11)                 		AS MMW_AVG_APLY_RATE_AMT11  
+	        -----------------------------------------------------------------------     
+	        ,SUM(           MMW_AVG_BAL12)                 		AS           MMW_AVG_BAL12        
+	        ,SUM(      MMW_PRFT_CST_AMT12)                 		AS      MMW_PRFT_CST_AMT12           
+	        ,SUM( MMW_AVG_APLY_RATE_AMT12)                 		AS MMW_AVG_APLY_RATE_AMT12  
+	        -----------------------------------------------------------------------
+	        ,MAX(PRNT_ORD1)                                     AS PRNT_ORD1
+	        ,MAX(PRNT_ORD2)                                     AS PRNT_ORD2
+	        ,MAX(PRNT_ORD3)                                     AS PRNT_ORD3
+	        ,MAX(PRNT_ORD4)                                     AS PRNT_ORD4
+	        ,MAX(PRNT_ORD5)                                     AS PRNT_ORD5
+	        ,MAX(PRNT_ORD6)                                     AS PRNT_ORD6
+	        ,MAX(PRNT_ORD7)                                     AS PRNT_ORD7
+	        ,MAX(MMW_AVG_DAY_CNT1)							    AS MMW_AVG_DAY_CNT1
+	        ,MAX(MMW_AVG_DAY_CNT2)							    AS MMW_AVG_DAY_CNT2
+	        ,MAX(MMW_AVG_DAY_CNT3)							    AS MMW_AVG_DAY_CNT3
+	        ,MAX(MMW_AVG_DAY_CNT4)							    AS MMW_AVG_DAY_CNT4
+	        ,MAX(MMW_AVG_DAY_CNT5)							    AS MMW_AVG_DAY_CNT5
+	        ,MAX(MMW_AVG_DAY_CNT6)							    AS MMW_AVG_DAY_CNT6
+	        ,MAX(MMW_AVG_DAY_CNT7)							    AS MMW_AVG_DAY_CNT7
+	        ,MAX(MMW_AVG_DAY_CNT8)							    AS MMW_AVG_DAY_CNT8
+	        ,MAX(MMW_AVG_DAY_CNT9)							    AS MMW_AVG_DAY_CNT9
+	        ,MAX(MMW_AVG_DAY_CNT10)							    AS MMW_AVG_DAY_CNT10
+	        ,MAX(MMW_AVG_DAY_CNT11)							    AS MMW_AVG_DAY_CNT11
+	        ,MAX(MMW_AVG_DAY_CNT12)							    AS MMW_AVG_DAY_CNT12	
+	    FROM 
+	    (
+	        SELECT
+	             B.LVL1
+	            ,B.LVL2 
+	            ,B.LVL3
+	            ,B.LVL4
+	            ,B.LVL5
+	            ,B.LVL6
+	            ,B.LVL7
+	            ,B.ACCT_LVL
+	            ,A.MMW_AVG_BAL1
+	            ,A.MMW_AVG_APLY_RATE_AMT1
+	            ,A.MMW_PRFT_CST_AMT1
+	            ,A.MMW_AVG_BAL2
+	            ,A.MMW_AVG_APLY_RATE_AMT2
+	            ,A.MMW_PRFT_CST_AMT2
+	            ,A.MMW_AVG_BAL3
+	            ,A.MMW_AVG_APLY_RATE_AMT3
+	            ,A.MMW_PRFT_CST_AMT3
+	            ,A.MMW_AVG_BAL4
+	            ,A.MMW_AVG_APLY_RATE_AMT4
+	            ,A.MMW_PRFT_CST_AMT4
+	            ,A.MMW_AVG_BAL5
+	            ,A.MMW_AVG_APLY_RATE_AMT5
+	            ,A.MMW_PRFT_CST_AMT5
+	            ,A.MMW_AVG_BAL6
+	            ,A.MMW_AVG_APLY_RATE_AMT6
+	            ,A.MMW_PRFT_CST_AMT6
+	            ,A.MMW_AVG_BAL7
+	            ,A.MMW_AVG_APLY_RATE_AMT7
+	            ,A.MMW_PRFT_CST_AMT7
+	            ,A.MMW_AVG_BAL8
+	            ,A.MMW_AVG_APLY_RATE_AMT8
+	            ,A.MMW_PRFT_CST_AMT8
+	            ,A.MMW_AVG_BAL9
+	            ,A.MMW_AVG_APLY_RATE_AMT9
+	            ,A.MMW_PRFT_CST_AMT9
+	            ,A.MMW_AVG_BAL10
+	            ,A.MMW_AVG_APLY_RATE_AMT10
+	            ,A.MMW_PRFT_CST_AMT10
+	            ,A.MMW_AVG_BAL11
+	            ,A.MMW_AVG_APLY_RATE_AMT11
+	            ,A.MMW_PRFT_CST_AMT11
+	            ,A.MMW_AVG_BAL12
+	            ,A.MMW_AVG_APLY_RATE_AMT12
+	            ,A.MMW_PRFT_CST_AMT12
+	            ,A.MMW_AVG_DAY_CNT1
+	            ,A.MMW_AVG_DAY_CNT2
+	            ,A.MMW_AVG_DAY_CNT3
+	            ,A.MMW_AVG_DAY_CNT4
+	            ,A.MMW_AVG_DAY_CNT5
+	            ,A.MMW_AVG_DAY_CNT6
+	            ,A.MMW_AVG_DAY_CNT7
+	            ,A.MMW_AVG_DAY_CNT8
+	            ,A.MMW_AVG_DAY_CNT9
+	            ,A.MMW_AVG_DAY_CNT10
+	            ,A.MMW_AVG_DAY_CNT11
+	            ,A.MMW_AVG_DAY_CNT12
+	            ,B.PRNT_ORD1
+	            ,B.PRNT_ORD2
+	            ,B.PRNT_ORD3
+	            ,B.PRNT_ORD4
+	            ,B.PRNT_ORD5 
+	            ,B.PRNT_ORD6
+	            ,B.PRNT_ORD7
+	        FROM  PROCUREMENT A
+	        ,(
+	            SELECT
+	                  REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 1 )  AS LVL1 
+	                , NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 2 ),TRIM(ACCT_C_NM))  AS LVL2  
+	                , NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 3 ),TRIM(ACCT_C_NM))  AS LVL3  
+	                , NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 4 ),TRIM(ACCT_C_NM))  AS LVL4  
+	                , NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 5 ),TRIM(ACCT_C_NM))  AS LVL5  
+	                , NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 6 ),TRIM(ACCT_C_NM))  AS LVL6 
+	                , NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 7 ),TRIM(ACCT_C_NM))  AS LVL7 
+	                , TRIM(ACCT_C_NM)                                                                                       AS ACCT_C_NM
+	                , ORG_CLAS_C
+	                , AC_BUSI_TC
+	                , ACCT_C
+	                , ACCT_LVL
+	                , REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 1 )  AS PRNT_ORD1 
+	                , TO_NUMBER(    NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 2 ),TRIM(PRNT_ORD))    ) AS PRNT_ORD2  
+	                , TO_NUMBER(    NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 3 ),TRIM(PRNT_ORD))    ) AS PRNT_ORD3  
+	                , TO_NUMBER(    NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 4 ),TRIM(PRNT_ORD))    ) AS PRNT_ORD4  
+	                , TO_NUMBER(    NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 5 ),TRIM(PRNT_ORD))    ) AS PRNT_ORD5  
+	                , TO_NUMBER(    NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 6 ),TRIM(PRNT_ORD))    ) AS PRNT_ORD6  
+	                , TO_NUMBER(    NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 7 ),TRIM(PRNT_ORD))    ) AS PRNT_ORD7  
+	            FROM  TSY_ACCT_MSTR_MNG
+	            WHERE BASE_DATE = ( SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE  &lt;= #{BASE_DATE} )
+	              AND ORG_CLAS_C = #{ORG_CLAS_C}
+	              <if test="AC_BUSI_TC == '0000'">
+	              AND AC_BUSI_TC = '1105'
+	              </if>
+	              <if test="AC_BUSI_TC != '0000'">
+	              AND AC_BUSI_TC = #{AC_BUSI_TC}
+	              </if>
+	            START WITH UP_ACCT_C = '0000000'
+	            CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+	        )B
+	        WHERE 1=1
+	          AND A.ACCT_C     = B.ACCT_C 
+	          AND A.ORG_CLAS_C = B.ORG_CLAS_C 
+	          AND A.AC_BUSI_TC = B.AC_BUSI_TC 
+			  AND SUBSTR( A.ACCT_C, 1, 1) != '3' -- 자본(과목) 빼기
+	    )  
+	    GROUP BY 
+	         LVL1
+     	<if test="LVL == 2">
+        	,LVL2 
+     	</if>
+     	<if test="LVL == 3">
+        	,LVL2 
+        	,LVL3
+     	</if>
+     	<if test="LVL == 4">
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+     	</if>
+     	<if test="LVL == 5">
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+        	,LVL5
+     	</if>
+     	<if test="LVL == 6">
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+        	,LVL5
+        	,LVL6
+     	</if>
+     	<if test="LVL == 7"> 
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+        	,LVL5
+        	,LVL6
+        	,LVL7
+     	</if> 
+	)
+	GROUP BY
+			LVL1
+			<if test="LVL == 1">
+				ORDER BY 
+					MAX(PRNT_ORD1)
+			</if> 	    
+		    <if test="LVL == 2">
+		    	, ROLLUP( LVL2 )
+				ORDER BY
+				    MAX(PRNT_ORD1)
+				    ,MAX(PRNT_ORD2)
+				    ,GRP_ID
+		    </if>
+		    <if test="LVL == 3">
+		    	, ROLLUP( LVL2, LVL3 )
+				ORDER BY
+				    MAX(PRNT_ORD1)
+				    ,MAX(PRNT_ORD2)
+				    ,MAX(PRNT_ORD3)
+				    ,GRP_ID
+		    </if>
+		    <if test="LVL == 4">
+		    	, ROLLUP( LVL2, LVL3, LVL4 )
+				ORDER BY
+				    MAX(PRNT_ORD1)
+				    ,MAX(PRNT_ORD2)
+				    ,MAX(PRNT_ORD3)
+				    ,MAX(PRNT_ORD4)
+				    ,GRP_ID
+		    </if>
+		    <if test="LVL == 5">
+		    	, ROLLUP( LVL2, LVL3, LVL4, LVL5 )
+				ORDER BY
+				    MAX(PRNT_ORD1)
+				    ,MAX(PRNT_ORD2)
+				    ,MAX(PRNT_ORD3)
+				    ,MAX(PRNT_ORD4)
+				    ,MAX(PRNT_ORD5)
+				    ,GRP_ID
+		    </if>
+		    <if test="LVL == 6">
+		    	, ROLLUP( LVL2, LVL3, LVL4, LVL5, LVL6 )
+				ORDER BY
+				    MAX(PRNT_ORD1)
+				    ,MAX(PRNT_ORD2)
+				    ,MAX(PRNT_ORD3)
+				    ,MAX(PRNT_ORD4)
+				    ,MAX(PRNT_ORD5)
+				    ,MAX(PRNT_ORD6)
+				    ,GRP_ID
+		    </if>
+		    <if test="LVL == 7">
+		   		, ROLLUP( LVL2, LVL3, LVL4, LVL5, LVL6, LVL7 )
+				ORDER BY
+				     MAX(PRNT_ORD1)
+				    ,MAX(PRNT_ORD2)
+				    ,MAX(PRNT_ORD3)
+				    ,MAX(PRNT_ORD4)
+				    ,MAX(PRNT_ORD5)
+				    ,MAX(PRNT_ORD6)
+				    ,MAX(PRNT_ORD7)
+				    ,GRP_ID
+		    </if>
+	    
+
+	
+	</select>
+	
+	
+	 <!-- 조달운용 현황 조회(기중)  -->
+	<select id = "selectTR_1502_3" parameterType="java.util.Map" resultType="java.util.HashMap">
+	
+	   	<include refid="tr_1502With"></include>
+		   
+		SELECT
+	     	LVL1                                                                                                         	 AS ACCT_NM1
+	     	<if test="LVL == 2">
+	    	,DECODE( GROUPING_ID( LVL2 ), 1  , LVL1 || ' 소계', LVL2 )                            							 AS ACCT_NM2
+	    	,GROUPING_ID( LVL2 )                                                               								 AS GRP_ID   
+	     	</if>
+	     	<if test="LVL == 3">
+	    	,DECODE( GROUPING_ID( LVL2,LVL3 ), 3  , LVL1 || ' 소계', LVL2 )                            						 AS ACCT_NM2
+	    	,DECODE( GROUPING_ID( LVL2,LVL3 ), 1  , LVL2 || ' 소계', LVL3 )                            						 AS ACCT_NM3
+	    	,GROUPING_ID( LVL2,LVL3 )                                                               						 AS GRP_ID
+	     	</if>
+	     	<if test="LVL == 4">
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4 ), 7  , LVL1 || ' 소계', LVL2 )                            					 AS ACCT_NM2
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4 ), 3  , LVL2 || ' 소계', LVL3 )                            					 AS ACCT_NM3
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4 ), 1  , LVL3 || ' 소계', LVL4 )                            					 AS ACCT_NM4
+	    	,GROUPING_ID( LVL2,LVL3,LVL4 )                                                               					 AS GRP_ID
+	     	</if>
+	     	<if test="LVL == 5">
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ), 15 , LVL1 || ' 소계', LVL2 )                            				 AS ACCT_NM2
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ), 7  , LVL2 || ' 소계', LVL3 )                            				 AS ACCT_NM3
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ), 3  , LVL3 || ' 소계', LVL4 )                            				 AS ACCT_NM4
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ), 1  , LVL4 || ' 소계', LVL5 )                            				 AS ACCT_NM5
+	    	,GROUPING_ID( LVL2,LVL3,LVL4,LVL5   )                                                               			 AS GRP_ID
+	     	</if>
+	     	<if test="LVL == 6">
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ), 31 , LVL1 || ' 소계', LVL2 )                            		 AS ACCT_NM2
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ), 15 , LVL2 || ' 소계', LVL3 )                            		 AS ACCT_NM3
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ), 7  , LVL3 || ' 소계', LVL4 )                           		     AS ACCT_NM4
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ), 3  , LVL4 || ' 소계', LVL5 )                            		 AS ACCT_NM5
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ), 1  , LVL5 || ' 소계', LVL6 )                            		 AS ACCT_NM6
+	    	,GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 )                                                               			 AS GRP_ID
+	     	</if>
+	     	<if test="LVL == 7">
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ), 63 , LVL1 || ' 소계', LVL2 )                            	 AS ACCT_NM2
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ), 31 , LVL2 || ' 소계', LVL3 )                           	 AS ACCT_NM3
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ), 15 , LVL3 || ' 소계', LVL4 )                            	 AS ACCT_NM4
+	   	 	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ), 7  , LVL4 || ' 소계', LVL5 )                            	 AS ACCT_NM5
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ), 3  , LVL5 || ' 소계', LVL6 )                            	 AS ACCT_NM6
+	    	,DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ), 1  , LVL6 || ' 소계', LVL7 )                            	 AS ACCT_NM7
+	    	,GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7   )                                                                  AS GRP_ID   
+	     	</if>   
+		    --------------------------------------------------------------------------------------     
+		    ,SUM(              VIEW_AMG_SESN_ABAL1 )                                                                         AS  AMG_SESN_ABAL1  
+		    ,NVL(ROUND(SUM(AMG_SESN_ABAL_RATE_AMT1 ) / DECODE(SUM( AMG_SESN_ABAL1 ),0,NULL,SUM( AMG_SESN_ABAL1 )), 2),0)     AS       AVG_RATE1         
+		    ,SUM(      VIEW_AMG_SESN_PRFT_CST_AMT1 )                                                                         AS   PRFT_CST_AMT1
+		    ,CASE
+                WHEN NVL(SUM(AMG_SESN_ABAL1),0) = 0 THEN 0 
+                ELSE ROUND( SUM(AMG_SESN_PRFT_CST_AMT1) / SUM(AMG_SESN_ABAL1) * 365 / MAX(AMG_SESN_DAY_CNT1) * 100 ,2)
+		     END                                                                                                             AS   PRFT_CST_RTO1  
+		    --------------------------------------------------------------------------------------    
+		    ,SUM(              VIEW_AMG_SESN_ABAL2 )                                                                         AS  AMG_SESN_ABAL2  
+		    ,NVL(ROUND(SUM(AMG_SESN_ABAL_RATE_AMT2 ) / DECODE(SUM( AMG_SESN_ABAL2 ),0,NULL,SUM( AMG_SESN_ABAL2 )), 2),0)     AS       AVG_RATE2         
+		    ,SUM(      VIEW_AMG_SESN_PRFT_CST_AMT2 )                                                                         AS   PRFT_CST_AMT2 
+		    ,CASE
+                WHEN NVL(SUM(AMG_SESN_ABAL2),0) = 0 THEN 0 
+                ELSE ROUND( SUM(AMG_SESN_PRFT_CST_AMT2) / SUM(AMG_SESN_ABAL2) * 365 / MAX(AMG_SESN_DAY_CNT2) * 100 ,2)
+		     END                                                                                                             AS   PRFT_CST_RTO2  
+		    --------------------------------------------------------------------------------------   
+		    ,SUM(              VIEW_AMG_SESN_ABAL3 )                                                                         AS  AMG_SESN_ABAL3  
+		    ,NVL(ROUND(SUM(AMG_SESN_ABAL_RATE_AMT3 ) / DECODE(SUM( AMG_SESN_ABAL3 ),0,NULL,SUM( AMG_SESN_ABAL3 )), 2),0)     AS       AVG_RATE3         
+		    ,SUM(      VIEW_AMG_SESN_PRFT_CST_AMT3 )                                                                         AS   PRFT_CST_AMT3 
+		    ,CASE
+                WHEN NVL(SUM(AMG_SESN_ABAL3),0) = 0 THEN 0 
+                ELSE ROUND( SUM(AMG_SESN_PRFT_CST_AMT3) / SUM(AMG_SESN_ABAL3) * 365 / MAX(AMG_SESN_DAY_CNT3) * 100 ,2)
+		     END                                                                                                             AS   PRFT_CST_RTO3  
+		    --------------------------------------------------------------------------------------   
+		    ,SUM(              VIEW_AMG_SESN_ABAL4 )                                                                         AS  AMG_SESN_ABAL4  
+		    ,NVL(ROUND(SUM(AMG_SESN_ABAL_RATE_AMT4 ) / DECODE(SUM( AMG_SESN_ABAL4 ),0,NULL,SUM( AMG_SESN_ABAL4 )), 2),0)     AS       AVG_RATE4         
+		    ,SUM(      VIEW_AMG_SESN_PRFT_CST_AMT4 )                                                                         AS   PRFT_CST_AMT4 
+		    ,CASE
+                WHEN NVL(SUM(AMG_SESN_ABAL4),0) = 0 THEN 0 
+                ELSE ROUND( SUM(AMG_SESN_PRFT_CST_AMT4) / SUM(AMG_SESN_ABAL4) * 365 / MAX(AMG_SESN_DAY_CNT4) * 100 ,2)
+		     END                                                                                                             AS   PRFT_CST_RTO4  
+		    --------------------------------------------------------------------------------------   
+		    ,SUM(              VIEW_AMG_SESN_ABAL5 )                                                                         AS  AMG_SESN_ABAL5  
+		    ,NVL(ROUND(SUM(AMG_SESN_ABAL_RATE_AMT5 ) / DECODE(SUM( AMG_SESN_ABAL5 ),0,NULL,SUM( AMG_SESN_ABAL5 )), 2),0)     AS       AVG_RATE5         
+		    ,SUM(      VIEW_AMG_SESN_PRFT_CST_AMT5 )                                                                         AS   PRFT_CST_AMT5 
+		    ,CASE
+                WHEN NVL(SUM(AMG_SESN_ABAL5),0) = 0 THEN 0 
+                ELSE ROUND( SUM(AMG_SESN_PRFT_CST_AMT5) / SUM(AMG_SESN_ABAL5) * 365 / MAX(AMG_SESN_DAY_CNT5) * 100 ,2)
+		     END                                                                                                             AS   PRFT_CST_RTO5  
+		    --------------------------------------------------------------------------------------   
+		    ,SUM(              VIEW_AMG_SESN_ABAL6 )                                                                         AS  AMG_SESN_ABAL6  
+		    ,NVL(ROUND(SUM(AMG_SESN_ABAL_RATE_AMT6 ) / DECODE(SUM( AMG_SESN_ABAL6 ),0,NULL,SUM( AMG_SESN_ABAL6 )), 2),0)     AS       AVG_RATE6         
+		    ,SUM(      VIEW_AMG_SESN_PRFT_CST_AMT6 )                                                                         AS   PRFT_CST_AMT6 
+		    ,CASE
+                WHEN NVL(SUM(AMG_SESN_ABAL6),0) = 0 THEN 0 
+                ELSE ROUND( SUM(AMG_SESN_PRFT_CST_AMT6) / SUM(AMG_SESN_ABAL6) * 365 / MAX(AMG_SESN_DAY_CNT6) * 100 ,2)
+		     END                                                                                                             AS   PRFT_CST_RTO6  
+		    --------------------------------------------------------------------------------------   
+		    ,SUM(              VIEW_AMG_SESN_ABAL7 )                                                                         AS  AMG_SESN_ABAL7  
+		    ,NVL(ROUND(SUM(AMG_SESN_ABAL_RATE_AMT7 ) / DECODE(SUM( AMG_SESN_ABAL7 ),0,NULL,SUM( AMG_SESN_ABAL7 )), 2),0)     AS       AVG_RATE7         
+		    ,SUM(      VIEW_AMG_SESN_PRFT_CST_AMT7 )                                                                         AS   PRFT_CST_AMT7 
+		    ,CASE
+                WHEN NVL(SUM(AMG_SESN_ABAL7),0) = 0 THEN 0 
+                ELSE ROUND( SUM(AMG_SESN_PRFT_CST_AMT7) / SUM(AMG_SESN_ABAL7) * 365 / MAX(AMG_SESN_DAY_CNT7) * 100 ,2)
+		     END                                                                                                             AS   PRFT_CST_RTO7  
+		    --------------------------------------------------------------------------------------   
+		    ,SUM(              VIEW_AMG_SESN_ABAL8 )                                                                         AS  AMG_SESN_ABAL8  
+		    ,NVL(ROUND(SUM(AMG_SESN_ABAL_RATE_AMT8 ) / DECODE(SUM( AMG_SESN_ABAL8 ),0,NULL,SUM( AMG_SESN_ABAL8 )), 2),0)     AS       AVG_RATE8         
+		    ,SUM(      VIEW_AMG_SESN_PRFT_CST_AMT8 )                                                                         AS   PRFT_CST_AMT8 
+		    ,CASE
+                WHEN NVL(SUM(AMG_SESN_ABAL8),0) = 0 THEN 0 
+                ELSE ROUND( SUM(AMG_SESN_PRFT_CST_AMT8) / SUM(AMG_SESN_ABAL8) * 365 / MAX(AMG_SESN_DAY_CNT8) * 100 ,2)
+		     END                                                                                                             AS   PRFT_CST_RTO8 
+		    --------------------------------------------------------------------------------------   
+		    ,SUM(              VIEW_AMG_SESN_ABAL9 )                                                                         AS  AMG_SESN_ABAL9  
+		    ,NVL(ROUND(SUM(AMG_SESN_ABAL_RATE_AMT9 ) / DECODE(SUM( AMG_SESN_ABAL9 ),0,NULL,SUM( AMG_SESN_ABAL9 )), 2),0)     AS       AVG_RATE9         
+		    ,SUM(      VIEW_AMG_SESN_PRFT_CST_AMT9 )                                                                         AS   PRFT_CST_AMT9
+		    ,CASE
+                WHEN NVL(SUM(AMG_SESN_ABAL9),0) = 0 THEN 0 
+                ELSE ROUND( SUM(AMG_SESN_PRFT_CST_AMT9) / SUM(AMG_SESN_ABAL9) * 365 / MAX(AMG_SESN_DAY_CNT9) * 100 ,2)
+		     END                                                                                                             AS   PRFT_CST_RTO9   
+		    --------------------------------------------------------------------------------------   
+		    ,SUM(              VIEW_AMG_SESN_ABAL10 )                                                                        AS  AMG_SESN_ABAL10  
+		    ,NVL(ROUND(SUM(AMG_SESN_ABAL_RATE_AMT10 ) / DECODE(SUM( AMG_SESN_ABAL10 ),0,NULL,SUM( AMG_SESN_ABAL10 )), 2),0)  AS       AVG_RATE10         
+		    ,SUM(      VIEW_AMG_SESN_PRFT_CST_AMT10 )                                                                        AS   PRFT_CST_AMT10 
+		    ,CASE
+                WHEN NVL(SUM(AMG_SESN_ABAL10),0) = 0 THEN 0 
+                ELSE ROUND( SUM(AMG_SESN_PRFT_CST_AMT10) / SUM(AMG_SESN_ABAL10) * 365 / MAX(AMG_SESN_DAY_CNT10) * 100 ,2)
+		     END                                                                                                             AS   PRFT_CST_RTO10  
+		    --------------------------------------------------------------------------------------   
+		    ,SUM(              VIEW_AMG_SESN_ABAL11 )                                                                        AS  AMG_SESN_ABAL11  
+		    ,NVL(ROUND(SUM(AMG_SESN_ABAL_RATE_AMT11 ) / DECODE(SUM( AMG_SESN_ABAL11 ),0,NULL,SUM( AMG_SESN_ABAL11 )), 2),0)  AS       AVG_RATE11         
+		    ,SUM(      VIEW_AMG_SESN_PRFT_CST_AMT11 )                                                                        AS   PRFT_CST_AMT11 
+		    ,CASE
+                WHEN NVL(SUM(AMG_SESN_ABAL11),0) = 0 THEN 0 
+                ELSE ROUND( SUM(AMG_SESN_PRFT_CST_AMT11) / SUM(AMG_SESN_ABAL11) * 365 / MAX(AMG_SESN_DAY_CNT11) * 100 ,2)
+		     END                                                                                                             AS   PRFT_CST_RTO11 
+		    --------------------------------------------------------------------------------------   
+		    ,SUM(              VIEW_AMG_SESN_ABAL12 )                                                                        AS  AMG_SESN_ABAL12  
+		    ,NVL(ROUND(SUM(AMG_SESN_ABAL_RATE_AMT12 ) / DECODE(SUM( AMG_SESN_ABAL12 ),0,NULL,SUM( AMG_SESN_ABAL12 )), 2),0)  AS       AVG_RATE12         
+		    ,SUM(      VIEW_AMG_SESN_PRFT_CST_AMT12 )                                                                        AS   PRFT_CST_AMT12 
+		    ,CASE
+                WHEN NVL(SUM(AMG_SESN_ABAL12),0) = 0 THEN 0 
+                ELSE ROUND( SUM(AMG_SESN_PRFT_CST_AMT12) / SUM(AMG_SESN_ABAL12) * 365 / MAX(AMG_SESN_DAY_CNT12) * 100 ,2)
+		     END                                                                                                             AS   PRFT_CST_RTO12  
+		    --------------------------------------------------------------------------------------    
+	FROM 
+	(
+	    SELECT
+	         LVL1
+     	<if test="LVL == 2">
+        	,LVL2 
+     	</if>
+     	<if test="LVL == 3">
+        	,LVL2 
+        	,LVL3
+     	</if>
+     	<if test="LVL == 4">
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+     	</if>
+     	<if test="LVL == 5">
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+        	,LVL5
+     	</if>
+     	<if test="LVL == 6">
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+        	,LVL5
+        	,LVL6
+     	</if>
+     	<if test="LVL == 7"> 
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+        	,LVL5
+        	,LVL6
+        	,LVL7
+     	</if> 
+	        ,ROUND(SUM(        AMG_SESN_ABAL1)  / #{AMT_UNIT} )  AS         VIEW_AMG_SESN_ABAL1  
+	        ,ROUND(SUM(AMG_SESN_PRFT_CST_AMT1)  / #{AMT_UNIT} )  AS VIEW_AMG_SESN_PRFT_CST_AMT1 
+	        ,ROUND(SUM(        AMG_SESN_ABAL2)  / #{AMT_UNIT} )  AS         VIEW_AMG_SESN_ABAL2  
+	        ,ROUND(SUM(AMG_SESN_PRFT_CST_AMT2)  / #{AMT_UNIT} )  AS VIEW_AMG_SESN_PRFT_CST_AMT2
+	        ,ROUND(SUM(        AMG_SESN_ABAL3)  / #{AMT_UNIT} )  AS         VIEW_AMG_SESN_ABAL3  
+	        ,ROUND(SUM(AMG_SESN_PRFT_CST_AMT3)  / #{AMT_UNIT} )  AS VIEW_AMG_SESN_PRFT_CST_AMT3
+	        ,ROUND(SUM(        AMG_SESN_ABAL4)  / #{AMT_UNIT} )  AS         VIEW_AMG_SESN_ABAL4  
+	        ,ROUND(SUM(AMG_SESN_PRFT_CST_AMT4)  / #{AMT_UNIT} )  AS VIEW_AMG_SESN_PRFT_CST_AMT4
+	        ,ROUND(SUM(        AMG_SESN_ABAL5)  / #{AMT_UNIT} )  AS         VIEW_AMG_SESN_ABAL5  
+	        ,ROUND(SUM(AMG_SESN_PRFT_CST_AMT5)  / #{AMT_UNIT} )  AS VIEW_AMG_SESN_PRFT_CST_AMT5
+	        ,ROUND(SUM(        AMG_SESN_ABAL6)  / #{AMT_UNIT} )  AS         VIEW_AMG_SESN_ABAL6  
+	        ,ROUND(SUM(AMG_SESN_PRFT_CST_AMT6)  / #{AMT_UNIT} )  AS VIEW_AMG_SESN_PRFT_CST_AMT6
+	        ,ROUND(SUM(        AMG_SESN_ABAL7)  / #{AMT_UNIT} )  AS         VIEW_AMG_SESN_ABAL7  
+	        ,ROUND(SUM(AMG_SESN_PRFT_CST_AMT7)  / #{AMT_UNIT} )  AS VIEW_AMG_SESN_PRFT_CST_AMT7
+	        ,ROUND(SUM(        AMG_SESN_ABAL8)  / #{AMT_UNIT} )  AS         VIEW_AMG_SESN_ABAL8  
+	        ,ROUND(SUM(AMG_SESN_PRFT_CST_AMT8)  / #{AMT_UNIT} )  AS VIEW_AMG_SESN_PRFT_CST_AMT8
+	        ,ROUND(SUM(        AMG_SESN_ABAL9)  / #{AMT_UNIT} )  AS         VIEW_AMG_SESN_ABAL9  
+	        ,ROUND(SUM(AMG_SESN_PRFT_CST_AMT9)  / #{AMT_UNIT} )  AS VIEW_AMG_SESN_PRFT_CST_AMT9
+	        ,ROUND(SUM(        AMG_SESN_ABAL10) / #{AMT_UNIT} )  AS         VIEW_AMG_SESN_ABAL10  
+	        ,ROUND(SUM(AMG_SESN_PRFT_CST_AMT10) / #{AMT_UNIT} )  AS VIEW_AMG_SESN_PRFT_CST_AMT10
+	        ,ROUND(SUM(        AMG_SESN_ABAL11) / #{AMT_UNIT} )  AS         VIEW_AMG_SESN_ABAL11  
+	        ,ROUND(SUM(AMG_SESN_PRFT_CST_AMT11) / #{AMT_UNIT} )  AS VIEW_AMG_SESN_PRFT_CST_AMT11
+	        ,ROUND(SUM(        AMG_SESN_ABAL12) / #{AMT_UNIT} )  AS         VIEW_AMG_SESN_ABAL12  
+	        ,ROUND(SUM(AMG_SESN_PRFT_CST_AMT12) / #{AMT_UNIT} )  AS VIEW_AMG_SESN_PRFT_CST_AMT12
+	        -----------------------------------------------------------------------      
+	        ,SUM(              AMG_SESN_ABAL1)                	AS AMG_SESN_ABAL1              
+	        ,SUM(      AMG_SESN_PRFT_CST_AMT1)                	AS AMG_SESN_PRFT_CST_AMT1           
+	        ,SUM(     AMG_SESN_ABAL_RATE_AMT1)                	AS AMG_SESN_ABAL_RATE_AMT1  
+	        -----------------------------------------------------------------------    
+	        ,SUM(              AMG_SESN_ABAL2)                	AS AMG_SESN_ABAL2             
+	        ,SUM(      AMG_SESN_PRFT_CST_AMT2)                	AS AMG_SESN_PRFT_CST_AMT2           
+	        ,SUM(     AMG_SESN_ABAL_RATE_AMT2)                	AS AMG_SESN_ABAL_RATE_AMT2  
+	        -----------------------------------------------------------------------  
+	        ,SUM(              AMG_SESN_ABAL3)                	AS AMG_SESN_ABAL3            
+	        ,SUM(      AMG_SESN_PRFT_CST_AMT3)                	AS AMG_SESN_PRFT_CST_AMT3           
+	        ,SUM(     AMG_SESN_ABAL_RATE_AMT3)                	AS AMG_SESN_ABAL_RATE_AMT3  
+	        -----------------------------------------------------------------------   
+	        ,SUM(              AMG_SESN_ABAL4)               	AS AMG_SESN_ABAL4              
+	        ,SUM(      AMG_SESN_PRFT_CST_AMT4)                	AS AMG_SESN_PRFT_CST_AMT4           
+	        ,SUM(     AMG_SESN_ABAL_RATE_AMT4)                	AS AMG_SESN_ABAL_RATE_AMT4  
+	        -----------------------------------------------------------------------    
+	        ,SUM(              AMG_SESN_ABAL5)                	AS AMG_SESN_ABAL5             
+	        ,SUM(      AMG_SESN_PRFT_CST_AMT5)                	AS AMG_SESN_PRFT_CST_AMT5           
+	        ,SUM(     AMG_SESN_ABAL_RATE_AMT5)                	AS AMG_SESN_ABAL_RATE_AMT5  
+	        -----------------------------------------------------------------------    
+	        ,SUM(              AMG_SESN_ABAL6)                	AS AMG_SESN_ABAL6             
+	        ,SUM(      AMG_SESN_PRFT_CST_AMT6)                	AS AMG_SESN_PRFT_CST_AMT6           
+	        ,SUM(     AMG_SESN_ABAL_RATE_AMT6)                	AS AMG_SESN_ABAL_RATE_AMT6  
+	        -----------------------------------------------------------------------    
+	        ,SUM(              AMG_SESN_ABAL7)                	AS AMG_SESN_ABAL7              
+	        ,SUM(      AMG_SESN_PRFT_CST_AMT7)                	AS AMG_SESN_PRFT_CST_AMT7           
+	        ,SUM(     AMG_SESN_ABAL_RATE_AMT7)                	AS AMG_SESN_ABAL_RATE_AMT7  
+	        -----------------------------------------------------------------------    
+	        ,SUM(              AMG_SESN_ABAL8)                	AS AMG_SESN_ABAL8             
+	        ,SUM(      AMG_SESN_PRFT_CST_AMT8)                	AS AMG_SESN_PRFT_CST_AMT8           
+	        ,SUM(     AMG_SESN_ABAL_RATE_AMT8)                	AS AMG_SESN_ABAL_RATE_AMT8  
+	        -----------------------------------------------------------------------    
+	        ,SUM(              AMG_SESN_ABAL9)                	AS AMG_SESN_ABAL9              
+	        ,SUM(      AMG_SESN_PRFT_CST_AMT9)                	AS AMG_SESN_PRFT_CST_AMT9           
+	        ,SUM(     AMG_SESN_ABAL_RATE_AMT9)                	AS AMG_SESN_ABAL_RATE_AMT9  
+	        -----------------------------------------------------------------------      
+	        ,SUM(              AMG_SESN_ABAL10)               	AS AMG_SESN_ABAL10              
+	        ,SUM(      AMG_SESN_PRFT_CST_AMT10)               	AS AMG_SESN_PRFT_CST_AMT10           
+	        ,SUM(     AMG_SESN_ABAL_RATE_AMT10)               	AS AMG_SESN_ABAL_RATE_AMT10  
+	        -----------------------------------------------------------------------  
+	        ,SUM(              AMG_SESN_ABAL11)                 AS AMG_SESN_ABAL11           
+	        ,SUM(      AMG_SESN_PRFT_CST_AMT11)               	AS AMG_SESN_PRFT_CST_AMT11          
+	        ,SUM(     AMG_SESN_ABAL_RATE_AMT11)               	AS AMG_SESN_ABAL_RATE_AMT11 
+	        -----------------------------------------------------------------------    
+	        ,SUM(              AMG_SESN_ABAL12)                 AS AMG_SESN_ABAL12            
+	        ,SUM(      AMG_SESN_PRFT_CST_AMT12)                 AS AMG_SESN_PRFT_CST_AMT12           
+	        ,SUM(     AMG_SESN_ABAL_RATE_AMT12)                 AS AMG_SESN_ABAL_RATE_AMT12  
+	        -----------------------------------------------------------------------
+	        ,MAX(PRNT_ORD1)                                    	AS PRNT_ORD1
+	        ,MAX(PRNT_ORD2)                                    	AS PRNT_ORD2
+	        ,MAX(PRNT_ORD3)                                    	AS PRNT_ORD3
+	        ,MAX(PRNT_ORD4)                                    	AS PRNT_ORD4
+	        ,MAX(PRNT_ORD5)                                    	AS PRNT_ORD5
+	        ,MAX(PRNT_ORD6)                                    	AS PRNT_ORD6
+	        ,MAX(PRNT_ORD7)                                    	AS PRNT_ORD7
+	        ,MAX(AMG_SESN_DAY_CNT1)								AS AMG_SESN_DAY_CNT1
+	        ,MAX(AMG_SESN_DAY_CNT2)								AS AMG_SESN_DAY_CNT2
+	        ,MAX(AMG_SESN_DAY_CNT3)								AS AMG_SESN_DAY_CNT3
+	        ,MAX(AMG_SESN_DAY_CNT4)								AS AMG_SESN_DAY_CNT4
+	        ,MAX(AMG_SESN_DAY_CNT5)								AS AMG_SESN_DAY_CNT5
+	        ,MAX(AMG_SESN_DAY_CNT6)								AS AMG_SESN_DAY_CNT6
+	        ,MAX(AMG_SESN_DAY_CNT7)								AS AMG_SESN_DAY_CNT7
+	        ,MAX(AMG_SESN_DAY_CNT8)								AS AMG_SESN_DAY_CNT8
+	        ,MAX(AMG_SESN_DAY_CNT9)								AS AMG_SESN_DAY_CNT9
+	        ,MAX(AMG_SESN_DAY_CNT10)							AS AMG_SESN_DAY_CNT10
+	        ,MAX(AMG_SESN_DAY_CNT11)							AS AMG_SESN_DAY_CNT11
+	        ,MAX(AMG_SESN_DAY_CNT12)							AS AMG_SESN_DAY_CNT12
+	    FROM 
+	    (
+	        SELECT
+	             B.LVL1
+	            ,B.LVL2 
+	            ,B.LVL3
+	            ,B.LVL4
+	            ,B.LVL5
+	            ,B.LVL6
+	            ,B.LVL7
+	            ,B.ACCT_LVL
+	            ,A.AMG_SESN_ABAL1
+	            ,A.AMG_SESN_ABAL_RATE_AMT1
+	            ,A.AMG_SESN_PRFT_CST_AMT1
+	            ,A.AMG_SESN_ABAL2
+	            ,A.AMG_SESN_ABAL_RATE_AMT2  
+	            ,A.AMG_SESN_PRFT_CST_AMT2
+	            ,A.AMG_SESN_ABAL3
+	            ,A.AMG_SESN_ABAL_RATE_AMT3
+	            ,A.AMG_SESN_PRFT_CST_AMT3
+	            ,A.AMG_SESN_ABAL4
+	            ,A.AMG_SESN_ABAL_RATE_AMT4
+	            ,A.AMG_SESN_PRFT_CST_AMT4
+	            ,A.AMG_SESN_ABAL5
+	            ,A.AMG_SESN_ABAL_RATE_AMT5
+	            ,A.AMG_SESN_PRFT_CST_AMT5
+	            ,A.AMG_SESN_ABAL6
+	            ,A.AMG_SESN_ABAL_RATE_AMT6
+	            ,A.AMG_SESN_PRFT_CST_AMT6
+	            ,A.AMG_SESN_ABAL7
+	            ,A.AMG_SESN_ABAL_RATE_AMT7
+	            ,A.AMG_SESN_PRFT_CST_AMT7
+	            ,A.AMG_SESN_ABAL8
+	            ,A.AMG_SESN_ABAL_RATE_AMT8
+	            ,A.AMG_SESN_PRFT_CST_AMT8
+	            ,A.AMG_SESN_ABAL9
+	            ,A.AMG_SESN_ABAL_RATE_AMT9
+	            ,A.AMG_SESN_PRFT_CST_AMT9
+	            ,A.AMG_SESN_ABAL10
+	            ,A.AMG_SESN_ABAL_RATE_AMT10
+	            ,A.AMG_SESN_PRFT_CST_AMT10
+	            ,A.AMG_SESN_ABAL11
+	            ,A.AMG_SESN_ABAL_RATE_AMT11
+	            ,A.AMG_SESN_PRFT_CST_AMT11
+	            ,A.AMG_SESN_ABAL12
+	            ,A.AMG_SESN_ABAL_RATE_AMT12
+	            ,A.AMG_SESN_PRFT_CST_AMT12
+	            ,A.AMG_SESN_DAY_CNT1
+	            ,A.AMG_SESN_DAY_CNT2
+	            ,A.AMG_SESN_DAY_CNT3
+	            ,A.AMG_SESN_DAY_CNT4
+	            ,A.AMG_SESN_DAY_CNT5
+	            ,A.AMG_SESN_DAY_CNT6
+	            ,A.AMG_SESN_DAY_CNT7
+	            ,A.AMG_SESN_DAY_CNT8
+	            ,A.AMG_SESN_DAY_CNT9
+	            ,A.AMG_SESN_DAY_CNT10
+	            ,A.AMG_SESN_DAY_CNT11
+	            ,A.AMG_SESN_DAY_CNT12
+	            ,B.PRNT_ORD1
+	            ,B.PRNT_ORD2
+	            ,B.PRNT_ORD3
+	            ,B.PRNT_ORD4
+	            ,B.PRNT_ORD5 
+	            ,B.PRNT_ORD6  
+	            ,B.PRNT_ORD7
+	        FROM  PROCUREMENT A
+	        ,(
+	            SELECT
+	                  REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 1 )  AS LVL1 
+	                , NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 2 ),TRIM(ACCT_C_NM))  AS LVL2  
+	                , NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 3 ),TRIM(ACCT_C_NM))  AS LVL3  
+	                , NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 4 ),TRIM(ACCT_C_NM))  AS LVL4  
+	                , NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 5 ),TRIM(ACCT_C_NM))  AS LVL5  
+	                , NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 6 ),TRIM(ACCT_C_NM))  AS LVL6 
+	                , NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(ACCT_C_NM) , '%' ) , '[^%]+' , 1 , 7 ),TRIM(ACCT_C_NM))  AS LVL7 
+	                , TRIM(ACCT_C_NM)                                                                                       AS ACCT_C_NM
+	                , ORG_CLAS_C
+	                , AC_BUSI_TC
+	                , ACCT_C
+	                , ACCT_LVL
+	                , REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 1 )  AS PRNT_ORD1 
+	                , TO_NUMBER(    NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 2 ),TRIM(PRNT_ORD))    ) AS PRNT_ORD2  
+	                , TO_NUMBER(    NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 3 ),TRIM(PRNT_ORD))    ) AS PRNT_ORD3  
+	                , TO_NUMBER(    NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 4 ),TRIM(PRNT_ORD))    ) AS PRNT_ORD4  
+	                , TO_NUMBER(    NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 5 ),TRIM(PRNT_ORD))    ) AS PRNT_ORD5  
+	                , TO_NUMBER(    NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 6 ),TRIM(PRNT_ORD))    ) AS PRNT_ORD6  
+	                , TO_NUMBER(    NVL(REGEXP_SUBSTR( SYS_CONNECT_BY_PATH( TRIM(PRNT_ORD) , '%' ) , '[^%]+' , 1 , 7 ),TRIM(PRNT_ORD))    ) AS PRNT_ORD7  
+	            FROM  TSY_ACCT_MSTR_MNG
+	            WHERE BASE_DATE = ( SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE  &lt;= #{BASE_DATE} )
+	              AND ORG_CLAS_C = #{ORG_CLAS_C}
+	              <if test="AC_BUSI_TC == '0000'">
+	              AND AC_BUSI_TC = '1105'
+	              </if>
+	              <if test="AC_BUSI_TC != '0000'">
+	              AND AC_BUSI_TC = #{AC_BUSI_TC}
+	              </if>
+	            START WITH UP_ACCT_C = '0000000'
+	            CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+	        )B
+	        WHERE 1=1
+	          AND A.ACCT_C     = B.ACCT_C 
+	          AND A.ORG_CLAS_C = B.ORG_CLAS_C 
+	          AND A.AC_BUSI_TC = B.AC_BUSI_TC 
+			  AND SUBSTR( A.ACCT_C, 1, 1) != '3' -- 자본(과목) 빼기
+	    )  
+	    GROUP BY 
+	         LVL1
+     	<if test="LVL == 2">
+        	,LVL2 
+     	</if>
+     	<if test="LVL == 3">
+        	,LVL2 
+        	,LVL3
+     	</if>
+     	<if test="LVL == 4">
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+     	</if>
+     	<if test="LVL == 5">
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+        	,LVL5
+     	</if>
+     	<if test="LVL == 6">
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+        	,LVL5
+        	,LVL6
+     	</if>
+     	<if test="LVL == 7"> 
+        	,LVL2 
+        	,LVL3
+        	,LVL4
+        	,LVL5
+        	,LVL6
+        	,LVL7
+     	</if> 
+	)
+	GROUP BY
+			LVL1
+			<if test="LVL == 1">
+				ORDER BY 
+					MAX(PRNT_ORD1)
+			</if> 	    
+		    <if test="LVL == 2">
+		    	, ROLLUP( LVL2 )
+				ORDER BY
+				    MAX(PRNT_ORD1)
+				    ,MAX(PRNT_ORD2)
+				    ,GRP_ID
+		    </if>
+		    <if test="LVL == 3">
+		    	, ROLLUP( LVL2, LVL3 )
+				ORDER BY
+				    MAX(PRNT_ORD1)
+				    ,MAX(PRNT_ORD2)
+				    ,MAX(PRNT_ORD3)
+				    ,GRP_ID
+		    </if>
+		    <if test="LVL == 4">
+		    	, ROLLUP( LVL2, LVL3, LVL4 )
+				ORDER BY
+				    MAX(PRNT_ORD1)
+				    ,MAX(PRNT_ORD2)
+				    ,MAX(PRNT_ORD3)
+				    ,MAX(PRNT_ORD4)
+				    ,GRP_ID
+		    </if>
+		    <if test="LVL == 5">
+		    	, ROLLUP( LVL2, LVL3, LVL4, LVL5 )
+				ORDER BY
+				    MAX(PRNT_ORD1)
+				    ,MAX(PRNT_ORD2)
+				    ,MAX(PRNT_ORD3)
+				    ,MAX(PRNT_ORD4)
+				    ,MAX(PRNT_ORD5)
+				    ,GRP_ID
+		    </if>
+		    <if test="LVL == 6">
+		    	, ROLLUP( LVL2, LVL3, LVL4, LVL5, LVL6 )
+				ORDER BY
+				    MAX(PRNT_ORD1)
+				    ,MAX(PRNT_ORD2)
+				    ,MAX(PRNT_ORD3)
+				    ,MAX(PRNT_ORD4)
+				    ,MAX(PRNT_ORD5)
+				    ,MAX(PRNT_ORD6)
+				    ,GRP_ID
+		    </if>
+		    <if test="LVL == 7">
+		   		, ROLLUP( LVL2, LVL3, LVL4, LVL5, LVL6, LVL7 )
+				ORDER BY
+				     MAX(PRNT_ORD1)
+				    ,MAX(PRNT_ORD2)
+				    ,MAX(PRNT_ORD3)
+				    ,MAX(PRNT_ORD4)
+				    ,MAX(PRNT_ORD5)
+				    ,MAX(PRNT_ORD6)
+				    ,MAX(PRNT_ORD7)
+				    ,GRP_ID
+		    </if>
+	    
+
+	
+	</select>
+
+
+</mapper>

@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_5208Mapper">
+
+	<!-- 배치실행 -->
+	<select id="execTr5208Procedure" statementType="CALLABLE" resultType="java.util.HashMap">
+        <!-- 시뮬레이션_SPREAD시나리오적용관리 -->
+		CALL ALMADM.SPSI_SPRD_SNRO_APLY_MNG (
+			 #{BASE_DATE,      mode=IN,  jdbcType=VARCHAR}
+			,#{ORG_CLAS_C,     mode=IN,  jdbcType=VARCHAR}
+			,#{BR_C,           mode=IN,  jdbcType=VARCHAR}
+			,#{NULL,           mode=IN,  jdbcType=VARCHAR}
+			,#{SNRO_NO,        mode=IN,  jdbcType=VARCHAR}
+			,#{USER_ID,        mode=IN,  jdbcType=VARCHAR}
+			,#{RESULT_CODE,    mode=OUT, jdbcType=VARCHAR}
+			,#{RESULT_MSG,     mode=OUT, jdbcType=VARCHAR}
+		)
+	</select>
+	
+    <select id="selectTr5208Main" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+SELECT T2.NM                                                                   AS AC_BUSI_TC
+     , T1.ACCT_C                                                               AS ACCT_C
+     , T1.ACCT_C_NM                                                            AS ACCT_C_NM
+     , T3.NM                                                                   AS FIX_VAR_TC
+     , DECODE(T1.RATE_VAR_CYCL, NULL, '', T1.RATE_VAR_CYCL||'개월')            AS RATE_VAR_CYCL
+     , T4.NM                                                                   AS PRIN_RMBR_METH_C
+     , T5.NM                                                                   AS ALM_BASE_RATE_C
+     , T6.NM                                                                   AS SNRO_SET_METH_C
+     , DECODE(T1.APLY_TRM_TC, NULL, '' , T1.APLY_TRM_TC||'개월')               AS APLY_TRM_TC
+     , DECODE(T1.APLY_BASE_RATE, NULL, '', ROUND(T1.APLY_BASE_RATE, 2)||'%')   AS APLY_BASE_RATE
+     , DECODE(T1.M1            , NULL, '', ROUND(T1.M1            , 2)||'%')   AS M1            
+     , DECODE(T1.M2            , NULL, '', ROUND(T1.M2            , 2)||'%')   AS M2            
+     , DECODE(T1.M3            , NULL, '', ROUND(T1.M3            , 2)||'%')   AS M3            
+     , DECODE(T1.M4            , NULL, '', ROUND(T1.M4            , 2)||'%')   AS M4            
+     , DECODE(T1.M5            , NULL, '', ROUND(T1.M5            , 2)||'%')   AS M5            
+     , DECODE(T1.M6            , NULL, '', ROUND(T1.M6            , 2)||'%')   AS M6            
+     , DECODE(T1.M7            , NULL, '', ROUND(T1.M7            , 2)||'%')   AS M7            
+     , DECODE(T1.M8            , NULL, '', ROUND(T1.M8            , 2)||'%')   AS M8            
+     , DECODE(T1.M9            , NULL, '', ROUND(T1.M9            , 2)||'%')   AS M9            
+     , DECODE(T1.M10           , NULL, '', ROUND(T1.M10           , 2)||'%')   AS M10           
+     , DECODE(T1.M11           , NULL, '', ROUND(T1.M11           , 2)||'%')   AS M11           
+     , DECODE(T1.M12           , NULL, '', ROUND(T1.M12           , 2)||'%')   AS M12           
+     , DECODE(T1.M13           , NULL, '', ROUND(T1.M13           , 2)||'%')   AS M13           
+     , DECODE(T1.M14           , NULL, '', ROUND(T1.M14           , 2)||'%')   AS M14           
+     , DECODE(T1.M15           , NULL, '', ROUND(T1.M15           , 2)||'%')   AS M15           
+     , DECODE(T1.M16           , NULL, '', ROUND(T1.M16           , 2)||'%')   AS M16           
+     , DECODE(T1.M17           , NULL, '', ROUND(T1.M17           , 2)||'%')   AS M17           
+     , DECODE(T1.M18           , NULL, '', ROUND(T1.M18           , 2)||'%')   AS M18           
+     , DECODE(T1.M19           , NULL, '', ROUND(T1.M19           , 2)||'%')   AS M19           
+     , DECODE(T1.M20           , NULL, '', ROUND(T1.M20           , 2)||'%')   AS M20           
+     , DECODE(T1.M21           , NULL, '', ROUND(T1.M21           , 2)||'%')   AS M21           
+     , DECODE(T1.M22           , NULL, '', ROUND(T1.M22           , 2)||'%')   AS M22           
+     , DECODE(T1.M23           , NULL, '', ROUND(T1.M23           , 2)||'%')   AS M23           
+     , DECODE(T1.M24           , NULL, '', ROUND(T1.M24           , 2)||'%')   AS M24           
+     , DECODE(T1.M25           , NULL, '', ROUND(T1.M25           , 2)||'%')   AS M25           
+     , DECODE(T1.M26           , NULL, '', ROUND(T1.M26           , 2)||'%')   AS M26           
+     , DECODE(T1.M27           , NULL, '', ROUND(T1.M27           , 2)||'%')   AS M27           
+     , DECODE(T1.M28           , NULL, '', ROUND(T1.M28           , 2)||'%')   AS M28           
+     , DECODE(T1.M29           , NULL, '', ROUND(T1.M29           , 2)||'%')   AS M29           
+     , DECODE(T1.M30           , NULL, '', ROUND(T1.M30           , 2)||'%')   AS M30           
+     , DECODE(T1.M31           , NULL, '', ROUND(T1.M31           , 2)||'%')   AS M31           
+     , DECODE(T1.M32           , NULL, '', ROUND(T1.M32           , 2)||'%')   AS M32           
+     , DECODE(T1.M33           , NULL, '', ROUND(T1.M33           , 2)||'%')   AS M33           
+     , DECODE(T1.M34           , NULL, '', ROUND(T1.M34           , 2)||'%')   AS M34           
+     , DECODE(T1.M35           , NULL, '', ROUND(T1.M35           , 2)||'%')   AS M35           
+     , DECODE(T1.M36           , NULL, '', ROUND(T1.M36           , 2)||'%')   AS M36           
+  FROM (
+         SELECT C.AC_BUSI_TC
+              , B.ACCT_C
+              , TRIM(C.ACCT_C_NM)  AS ACCT_C_NM
+              , B.FIX_VAR_TC
+              , B.RATE_VAR_CYCL
+              , B.PRIN_RMBR_METH_C
+              , B.ALM_BASE_RATE_C
+              , A.SNRO_SET_METH_C
+              , A.APLY_TRM_TC
+              , CASE WHEN AVG(D.BKPR_AMT) = 0 THEN 0
+                     ELSE AVG((D.MRGN_RATE) * D.BKPR_AMT) / AVG(D.BKPR_AMT)
+                END                                                                                                                        AS  APLY_BASE_RATE /*잔액기준마진이율*/
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   1), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M1
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   2), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M2
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   3), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M3
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   4), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M4
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   5), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M5
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   6), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M6
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   7), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M7
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   8), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M8
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   9), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M9
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  10), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M10
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  11), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M11
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  12), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M12
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  13), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M13
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  14), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M14
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  15), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M15
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  16), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M16
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  17), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M17
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  18), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M18
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  19), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M19
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  20), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M20
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  21), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M21
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  22), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M22
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  23), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M23
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  24), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M24
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  25), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M25
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  26), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M26
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  27), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M27
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  28), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M28
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  29), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M29
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  30), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M30
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  31), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M31
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  32), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M32
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  33), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M33
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  34), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M34
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  35), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M35
+              , AVG(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  36), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M36
+           FROM TSI_USER_SNRO_PEST_MNG A   /*시뮬레이션_사용자시나리오예측설정*/
+              , TSI_SPRD_SNRO_APLY_MNG B   /*시뮬레이션_Spread시나리오적용관리*/
+              , TSY_ACCT_MSTR_MNG      C   /*시스템_계정마스터관리            */
+              , (SELECT A.BASE_DATE, A.ORG_CLAS_C, A.BR_C, A.AC_BUSI_TC, A.ACCT_C, A.FIX_VAR_TC, A.RATE_VAR_CYCL, A.PRIN_RMBR_METH_C, A.ALM_BASE_RATE_C
+                     , SUM(BKPR_AMT) AS BKPR_AMT
+                     , CASE WHEN SUM(BKPR_AMT) = 0 THEN 0
+                            ELSE SUM(BKPR_AMT * MRGN_RATE) / SUM(BKPR_AMT)
+                       END AS MRGN_RATE
+                  FROM TIG_INTG_LDGR_M A    /*통합_통합원장_월                 */
+                 WHERE A.BASE_DATE       = #{BASE_DATE}
+                   AND A.ORG_CLAS_C      = #{ORG_CLAS_C}
+                   AND A.BR_C            = #{BR_C} 
+                   AND A.AC_BUSI_TC      = #{AC_BUSI_TC}
+                   AND A.LDGR_ACC_STAT_C = '1'
+                 GROUP BY A.BASE_DATE, A.ORG_CLAS_C, A.BR_C, A.AC_BUSI_TC, A.ACCT_C, A.FIX_VAR_TC, A.RATE_VAR_CYCL, A.PRIN_RMBR_METH_C, A.ALM_BASE_RATE_C
+                ) D
+          WHERE A.ORG_CLAS_C       = #{ORG_CLAS_C} 
+            AND A.BR_C             = #{BR_C}       
+            AND A.SNRO_NO          = #{SNRO_NO}    
+            AND A.SNRO_KIND_C      = #{SNRO_KIND_C} 
+            AND A.ORG_CLAS_C       = B.ORG_CLAS_C 
+            AND A.BR_C             = B.BR_C
+            AND A.AC_BUSI_TC       = B.AC_BUSI_TC
+            AND A.SNRO_NO          = B.SNRO_NO
+            AND A.ACCT_C           = B.ACCT_C
+            AND A.FIX_VAR_TC       = B.FIX_VAR_TC
+            AND A.RATE_VAR_CYCL    = B.RATE_VAR_CYCL
+            AND A.PRIN_RMBR_METH_C = B.PRIN_RMBR_METH_C
+            AND A.ALM_BASE_RATE_C  = B.ALM_BASE_RATE_C
+            AND B.BASE_DATE        = #{BASE_DATE}
+            AND C.BASE_DATE        = (SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE &lt;= TO_CHAR(LAST_DAY(TO_DATE(#{BASE_DATE}, 'YYYYMMDD')), 'YYYYMMDD'))
+            AND B.ORG_CLAS_C       = C.ORG_CLAS_C
+            AND B.ACCT_C           = C.ACCT_C
+            AND B.AC_BUSI_TC       = C.AC_BUSI_TC
+            AND C.AC_BUSI_TC       = #{AC_BUSI_TC}
+            AND C.BS_PL_TC         = 'BS'
+            AND B.BASE_DATE        = D.BASE_DATE
+            AND B.ORG_CLAS_C       = D.ORG_CLAS_C
+            AND B.BR_C             = D.BR_C
+            AND B.ACCT_C           = D.ACCT_C
+            AND B.FIX_VAR_TC       = D.FIX_VAR_TC
+            AND B.RATE_VAR_CYCL    = D.RATE_VAR_CYCL
+            AND B.PRIN_RMBR_METH_C = D.PRIN_RMBR_METH_C
+            AND B.ALM_BASE_RATE_C  = D.ALM_BASE_RATE_C
+            AND B.AC_BUSI_TC       = D.AC_BUSI_TC
+            AND D.AC_BUSI_TC       = #{AC_BUSI_TC}
+          GROUP BY C.AC_BUSI_TC
+                 , B.ACCT_C
+                 , C.ACCT_C_NM
+                 , B.FIX_VAR_TC
+                 , B.RATE_VAR_CYCL
+                 , B.PRIN_RMBR_METH_C
+                 , B.ALM_BASE_RATE_C
+                 , A.SNRO_SET_METH_C
+                 , A.APLY_TRM_TC
+       ) T1
+     , (
+	    SELECT DTL_CLAS_VAL AS CD
+             , DTL_CLAS_NM  AS NM
+          FROM TSY_CO_MNG T2
+         WHERE USE_YN = 'Y'
+           AND CO_C   = 'AC_BUSI_TC' /*회계구분*/
+       ) T2
+     , (
+        SELECT DTL_CLAS_VAL AS CD
+             , DTL_CLAS_NM  AS NM
+          FROM TSY_CO_MNG T3
+         WHERE USE_YN = 'Y'
+           AND CO_C   = 'FIX_VAR_TC' /*금리변동분*/
+       ) T3
+     , (
+        SELECT DTL_CLAS_VAL AS CD
+             , DTL_CLAS_NM  AS NM
+          FROM TSY_CO_MNG T4
+         WHERE USE_YN = 'Y'
+           AND CO_C = 'PRIN_RMBR_METH_C' /*상환방법*/
+       ) T4
+     , (
+        SELECT ALM_BASE_RATE_C    AS CD
+             , ALM_BASE_RATE_NM   AS NM
+          FROM TSY_ALM_BASE_RATE_MNG  T5
+         WHERE USE_YN = 'Y'
+         GROUP BY ALM_BASE_RATE_C, ALM_BASE_RATE_NM   /*ALM기준금리코드*/
+       ) T5
+     , (
+        SELECT DTL_CLAS_VAL AS CD
+             , DTL_CLAS_NM  AS NM
+          FROM TSY_CO_MNG T6
+         WHERE USE_YN = 'Y'
+           AND CO_C = 'SPRD_SNRO_SET_METH_C' /*설정방법*/
+       ) T6
+ WHERE T1.AC_BUSI_TC       = T2.CD(+)
+   AND T1.FIX_VAR_TC       = T3.CD(+)
+   AND T1.PRIN_RMBR_METH_C = T4.CD(+)
+   AND T1.ALM_BASE_RATE_C  = T5.CD(+)
+   AND T1.SNRO_SET_METH_C  = T6.CD(+)
+ ORDER BY T1.ACCT_C 
+    </select>
+	
+
+</mapper>

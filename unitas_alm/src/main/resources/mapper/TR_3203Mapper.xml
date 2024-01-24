@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_3203Mapper">
+
+	
+	<select id="LCR_Ratio_Cho2_List" parameterType='java.util.Map' resultType="java.util.HashMap">
+
+		
+		WITH LCR_RATIO_CHU2 AS(
+
+		    SELECT 
+		           BASE_DATE
+		         , ORG_CLAS_C
+		         , AC_BUSI_TC
+		         , BR_C
+		         , BSL3_LQDT_RPRT_C
+		         , BSL3_LQDT_RPRT_ITEM_VAL
+		         , CASE WHEN BASE_DATE = #{BASE_DATE} THEN RPRT_SECT_1_APLY_AMT ELSE 0 END    															  AS B_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 1  ),'YYYYMMDD') THEN RPRT_SECT_1_APLY_AMT ELSE 0 END    AS P_M1_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 2  ),'YYYYMMDD') THEN RPRT_SECT_1_APLY_AMT ELSE 0 END    AS P_M2_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 3  ),'YYYYMMDD') THEN RPRT_SECT_1_APLY_AMT ELSE 0 END    AS P_M3_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 4  ),'YYYYMMDD') THEN RPRT_SECT_1_APLY_AMT ELSE 0 END    AS P_M4_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 5  ),'YYYYMMDD') THEN RPRT_SECT_1_APLY_AMT ELSE 0 END    AS P_M5_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 6  ),'YYYYMMDD') THEN RPRT_SECT_1_APLY_AMT ELSE 0 END    AS P_M6_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 7  ),'YYYYMMDD') THEN RPRT_SECT_1_APLY_AMT ELSE 0 END    AS P_M7_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 8  ),'YYYYMMDD') THEN RPRT_SECT_1_APLY_AMT ELSE 0 END    AS P_M8_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 9  ),'YYYYMMDD') THEN RPRT_SECT_1_APLY_AMT ELSE 0 END    AS P_M9_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 10 ),'YYYYMMDD') THEN RPRT_SECT_1_APLY_AMT ELSE 0 END    AS P_M10_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 11 ),'YYYYMMDD') THEN RPRT_SECT_1_APLY_AMT ELSE 0 END    AS P_M11_RATIO
+		      FROM TBI_LQDT_RSLT_TOT
+		     WHERE BSL3_LQDT_RPRT_C        = '10' 
+		       AND BSL3_LQDT_RPRT_ITEM_VAL = 'D3' 
+		       AND ORG_CLAS_C              = #{ORG_CLAS_C}
+		       AND AC_BUSI_TC              = #{AC_BUSI_TC}
+		       AND BASE_DATE        IN ( 
+		                                #{BASE_DATE}
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 1  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 2  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 3  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 4  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 5  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 6  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 7  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 8  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 9  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 10 ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 11 ),'YYYYMMDD')
+		                                )
+		
+		
+		)
+		SELECT  
+		       'LCR'                AS TITLE1
+		      <if test="ORG_CLAS_C == '30'" >
+		      , '조합'               AS TITLE2
+		      </if> 
+		      <if test="ORG_CLAS_C == '10'" >
+		      , '중앙회'              AS TITLE2
+		      </if> 
+		      , SUM(B_RATIO    )   AS B_RATIO    
+		      , SUM(P_M1_RATIO )   AS P_M1_RATIO 
+		      , SUM(P_M2_RATIO )   AS P_M2_RATIO 
+		      , SUM(P_M3_RATIO )   AS P_M3_RATIO 
+		      , SUM(P_M4_RATIO )   AS P_M4_RATIO 
+		      , SUM(P_M5_RATIO )   AS P_M5_RATIO 
+		      , SUM(P_M6_RATIO )   AS P_M6_RATIO 
+		      , SUM(P_M7_RATIO )   AS P_M7_RATIO 
+		      , SUM(P_M8_RATIO )   AS P_M8_RATIO 
+		      , SUM(P_M9_RATIO )   AS P_M9_RATIO 
+		      , SUM(P_M10_RATIO)   AS P_M10_RATIO
+		      , SUM(P_M11_RATIO)   AS P_M11_RATIO
+		  FROM  LCR_RATIO_CHU2
+		 WHERE  BR_C = #{BR_C}
+		  
+ 	  <if test="ORG_CLAS_C == '30'" >
+		UNION ALL
+		
+		SELECT  
+		       '평균'
+		      , '도지회'
+		      , ROUND(AVG(B_RATIO    ))  AS B_RATIO    
+		      , ROUND(AVG(P_M1_RATIO ))  AS P_M1_RATIO 
+		      , ROUND(AVG(P_M2_RATIO ))  AS P_M2_RATIO 
+		      , ROUND(AVG(P_M3_RATIO ))  AS P_M3_RATIO 
+		      , ROUND(AVG(P_M4_RATIO ))  AS P_M4_RATIO 
+		      , ROUND(AVG(P_M5_RATIO ))  AS P_M5_RATIO 
+		      , ROUND(AVG(P_M6_RATIO ))  AS P_M6_RATIO 
+		      , ROUND(AVG(P_M7_RATIO ))  AS P_M7_RATIO 
+		      , ROUND(AVG(P_M8_RATIO ))  AS P_M8_RATIO 
+		      , ROUND(AVG(P_M9_RATIO ))  AS P_M9_RATIO 
+		      , ROUND(AVG(P_M10_RATIO))  AS P_M10_RATIO
+		      , ROUND(AVG(P_M11_RATIO))  AS P_M11_RATIO
+		  FROM  LCR_RATIO_CHU2
+		 WHERE  BR_C IN ( SELECT MO_BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BLNG_HQ_BR_C} )
+		         
+		UNION ALL
+		
+		SELECT  
+		       '평균'
+		      , '동일권역'
+		      , ROUND(AVG(B_RATIO    ))  AS B_RATIO    
+		      , ROUND(AVG(P_M1_RATIO ))  AS P_M1_RATIO 
+		      , ROUND(AVG(P_M2_RATIO ))  AS P_M2_RATIO 
+		      , ROUND(AVG(P_M3_RATIO ))  AS P_M3_RATIO 
+		      , ROUND(AVG(P_M4_RATIO ))  AS P_M4_RATIO 
+		      , ROUND(AVG(P_M5_RATIO ))  AS P_M5_RATIO 
+		      , ROUND(AVG(P_M6_RATIO ))  AS P_M6_RATIO 
+		      , ROUND(AVG(P_M7_RATIO ))  AS P_M7_RATIO 
+		      , ROUND(AVG(P_M8_RATIO ))  AS P_M8_RATIO 
+		      , ROUND(AVG(P_M9_RATIO ))  AS P_M9_RATIO 
+		      , ROUND(AVG(P_M10_RATIO))  AS P_M10_RATIO
+		      , ROUND(AVG(P_M11_RATIO))  AS P_M11_RATIO
+		  FROM  LCR_RATIO_CHU2
+		 WHERE  BR_C IN ( SELECT MO_BR_C FROM TTL_BR_C_INFO WHERE ZONE_TC = #{ZONE_TC} ) -- ← 수정바람.
+		 
+		 UNION ALL
+		
+		SELECT  
+		       '평균'
+		      , '전국'
+		      , ROUND(AVG(B_RATIO    ))  AS B_RATIO    
+		      , ROUND(AVG(P_M1_RATIO ))  AS P_M1_RATIO 
+		      , ROUND(AVG(P_M2_RATIO ))  AS P_M2_RATIO 
+		      , ROUND(AVG(P_M3_RATIO ))  AS P_M3_RATIO 
+		      , ROUND(AVG(P_M4_RATIO ))  AS P_M4_RATIO 
+		      , ROUND(AVG(P_M5_RATIO ))  AS P_M5_RATIO 
+		      , ROUND(AVG(P_M6_RATIO ))  AS P_M6_RATIO 
+		      , ROUND(AVG(P_M7_RATIO ))  AS P_M7_RATIO 
+		      , ROUND(AVG(P_M8_RATIO ))  AS P_M8_RATIO 
+		      , ROUND(AVG(P_M9_RATIO ))  AS P_M9_RATIO 
+		      , ROUND(AVG(P_M10_RATIO))  AS P_M10_RATIO
+		      , ROUND(AVG(P_M11_RATIO))  AS P_M11_RATIO
+		  FROM  LCR_RATIO_CHU2
+	
+       </if> 	
+
+	</select>
+
+
+	<select id="NSFR_Ratio_Cho2_List" parameterType='java.util.Map' resultType="java.util.HashMap">
+
+		
+		WITH NSFR_RATIO_CHU2 AS(
+
+		    SELECT 
+		           BASE_DATE
+		         , ORG_CLAS_C
+		         , AC_BUSI_TC
+		         , BR_C
+		         , BSL3_LQDT_RPRT_C
+		         , BSL3_LQDT_RPRT_ITEM_VAL
+		         , CASE WHEN BASE_DATE = #{BASE_DATE} THEN RPRT_SECT_4_APLY_AMT ELSE 0 END                                                                AS B_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 1  ),'YYYYMMDD') THEN RPRT_SECT_4_APLY_AMT ELSE 0 END    AS P_M1_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 2  ),'YYYYMMDD') THEN RPRT_SECT_4_APLY_AMT ELSE 0 END    AS P_M2_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 3  ),'YYYYMMDD') THEN RPRT_SECT_4_APLY_AMT ELSE 0 END    AS P_M3_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 4  ),'YYYYMMDD') THEN RPRT_SECT_4_APLY_AMT ELSE 0 END    AS P_M4_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 5  ),'YYYYMMDD') THEN RPRT_SECT_4_APLY_AMT ELSE 0 END    AS P_M5_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 6  ),'YYYYMMDD') THEN RPRT_SECT_4_APLY_AMT ELSE 0 END    AS P_M6_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 7  ),'YYYYMMDD') THEN RPRT_SECT_4_APLY_AMT ELSE 0 END    AS P_M7_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 8  ),'YYYYMMDD') THEN RPRT_SECT_4_APLY_AMT ELSE 0 END    AS P_M8_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 9  ),'YYYYMMDD') THEN RPRT_SECT_4_APLY_AMT ELSE 0 END    AS P_M9_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 10 ),'YYYYMMDD') THEN RPRT_SECT_4_APLY_AMT ELSE 0 END    AS P_M10_RATIO
+		         , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 11 ),'YYYYMMDD') THEN RPRT_SECT_4_APLY_AMT ELSE 0 END    AS P_M11_RATIO
+		      FROM TBI_LQDT_RSLT_TOT
+		     WHERE BSL3_LQDT_RPRT_C        = '20' 
+		       AND BSL3_LQDT_RPRT_ITEM_VAL = 'C3' 
+		       AND ORG_CLAS_C              = #{ORG_CLAS_C}
+		       AND AC_BUSI_TC              = #{AC_BUSI_TC}
+		       AND BASE_DATE        IN ( 
+		                                #{BASE_DATE}
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 1  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 2  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 3  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 4  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 5  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 6  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 7  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 8  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 9  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 10 ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 11 ),'YYYYMMDD')
+		                                )
+		
+		
+		)
+		SELECT  
+		       'NSFR'               AS TITLE1
+		      <if test="ORG_CLAS_C == '30'" >
+		      , '조합'                AS TITLE2
+		      </if> 
+		      <if test="ORG_CLAS_C == '10'" >
+		      , '중앙회'                AS TITLE2
+		      </if> 
+		      , ROUND(B_RATIO    )  AS B_RATIO    
+		      , ROUND(P_M1_RATIO )  AS P_M1_RATIO 
+		      , ROUND(P_M2_RATIO )  AS P_M2_RATIO 
+		      , ROUND(P_M3_RATIO )  AS P_M3_RATIO 
+		      , ROUND(P_M4_RATIO )  AS P_M4_RATIO 
+		      , ROUND(P_M5_RATIO )  AS P_M5_RATIO 
+		      , ROUND(P_M6_RATIO )  AS P_M6_RATIO 
+		      , ROUND(P_M7_RATIO )  AS P_M7_RATIO 
+		      , ROUND(P_M8_RATIO )  AS P_M8_RATIO 
+		      , ROUND(P_M9_RATIO )  AS P_M9_RATIO 
+		      , ROUND(P_M10_RATIO)  AS P_M10_RATIO
+		      , ROUND(P_M11_RATIO)  AS P_M11_RATIO
+		  FROM  NSFR_RATIO_CHU2
+		 WHERE  BR_C = #{BR_C}
+		  
+ 	  <if test="ORG_CLAS_C == '30'" >
+		UNION ALL
+		
+		SELECT  
+		       '평균'
+		      , '도지회'
+		      , ROUND(AVG(B_RATIO    ))  AS B_RATIO    
+		      , ROUND(AVG(P_M1_RATIO ))  AS P_M1_RATIO 
+		      , ROUND(AVG(P_M2_RATIO ))  AS P_M2_RATIO 
+		      , ROUND(AVG(P_M3_RATIO ))  AS P_M3_RATIO 
+		      , ROUND(AVG(P_M4_RATIO ))  AS P_M4_RATIO 
+		      , ROUND(AVG(P_M5_RATIO ))  AS P_M5_RATIO 
+		      , ROUND(AVG(P_M6_RATIO ))  AS P_M6_RATIO 
+		      , ROUND(AVG(P_M7_RATIO ))  AS P_M7_RATIO 
+		      , ROUND(AVG(P_M8_RATIO ))  AS P_M8_RATIO 
+		      , ROUND(AVG(P_M9_RATIO ))  AS P_M9_RATIO 
+		      , ROUND(AVG(P_M10_RATIO))  AS P_M10_RATIO
+		      , ROUND(AVG(P_M11_RATIO))  AS P_M11_RATIO
+		  FROM  NSFR_RATIO_CHU2
+		 WHERE  BR_C IN ( SELECT MO_BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BLNG_HQ_BR_C} )
+		         
+		UNION ALL
+		
+		SELECT  
+		       '평균'
+		      , '동일권역'
+		      , ROUND(AVG(B_RATIO    ))  AS B_RATIO    
+		      , ROUND(AVG(P_M1_RATIO ))  AS P_M1_RATIO 
+		      , ROUND(AVG(P_M2_RATIO ))  AS P_M2_RATIO 
+		      , ROUND(AVG(P_M3_RATIO ))  AS P_M3_RATIO 
+		      , ROUND(AVG(P_M4_RATIO ))  AS P_M4_RATIO 
+		      , ROUND(AVG(P_M5_RATIO ))  AS P_M5_RATIO 
+		      , ROUND(AVG(P_M6_RATIO ))  AS P_M6_RATIO 
+		      , ROUND(AVG(P_M7_RATIO ))  AS P_M7_RATIO 
+		      , ROUND(AVG(P_M8_RATIO ))  AS P_M8_RATIO 
+		      , ROUND(AVG(P_M9_RATIO ))  AS P_M9_RATIO 
+		      , ROUND(AVG(P_M10_RATIO))  AS P_M10_RATIO
+		      , ROUND(AVG(P_M11_RATIO))  AS P_M11_RATIO
+		  FROM  NSFR_RATIO_CHU2
+		 WHERE  BR_C IN ( SELECT MO_BR_C FROM TTL_BR_C_INFO WHERE ZONE_TC = #{ZONE_TC} )
+		 
+		 UNION ALL
+		
+		SELECT  
+		       '평균'
+		      , '전국'
+		      , ROUND(AVG(B_RATIO    ))  AS B_RATIO    
+		      , ROUND(AVG(P_M1_RATIO ))  AS P_M1_RATIO 
+		      , ROUND(AVG(P_M2_RATIO ))  AS P_M2_RATIO 
+		      , ROUND(AVG(P_M3_RATIO ))  AS P_M3_RATIO 
+		      , ROUND(AVG(P_M4_RATIO ))  AS P_M4_RATIO 
+		      , ROUND(AVG(P_M5_RATIO ))  AS P_M5_RATIO 
+		      , ROUND(AVG(P_M6_RATIO ))  AS P_M6_RATIO 
+		      , ROUND(AVG(P_M7_RATIO ))  AS P_M7_RATIO 
+		      , ROUND(AVG(P_M8_RATIO ))  AS P_M8_RATIO 
+		      , ROUND(AVG(P_M9_RATIO ))  AS P_M9_RATIO 
+		      , ROUND(AVG(P_M10_RATIO))  AS P_M10_RATIO
+		      , ROUND(AVG(P_M11_RATIO))  AS P_M11_RATIO
+		  FROM  NSFR_RATIO_CHU2
+	
+       </if> 	
+ 
+	</select>
+	
+	
+	<select id="chart_LCR_chu2" parameterType="java.util.Map" resultType="java.util.HashMap">
+	
+			
+		-- [ LCR ] 12개월 비율 추이 조회
+		WITH CHART_CHU2_LCR AS
+		(
+		    SELECT 
+		           BASE_DATE
+		         , ORG_CLAS_C
+		         , AC_BUSI_TC
+		         , BR_C
+		         , BSL3_LQDT_RPRT_C
+		         , BSL3_LQDT_RPRT_ITEM_VAL
+		         , CASE WHEN BR_C = #{BR_C} THEN RPRT_SECT_1_APLY_AMT END                                                         		  AS B_APLY_AMT
+		         , CASE WHEN BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BLNG_HQ_BR_C}) THEN RPRT_SECT_1_APLY_AMT END  AS DOZI_APLY_AMT
+		         , CASE WHEN BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE ZONE_TC      = #{ZONE_TC}     ) THEN RPRT_SECT_1_APLY_AMT END  AS SAME_ZONE_APLY_AMT
+		         , RPRT_SECT_1_APLY_AMT                                                                                         		  AS ALL_APLY_AMT
+		      FROM TBI_LQDT_RSLT_TOT
+		     WHERE BSL3_LQDT_RPRT_C        = '10' 
+		       AND BSL3_LQDT_RPRT_ITEM_VAL = 'D3' 
+		       AND ORG_CLAS_C              = #{ORG_CLAS_C}
+		       AND AC_BUSI_TC              = #{AC_BUSI_TC}
+		       AND BASE_DATE        IN (
+		                                #{BASE_DATE}
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 1  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 2  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 3  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 4  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 5  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 6  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 7  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 8  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 9  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 10 ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 11 ),'YYYYMMDD')
+		                                )
+		
+		)	
+		
+		
+		SELECT 
+		       SUBSTR(BASE_DATE,1,6)           AS BASE_DATE
+		     , ROUND(AVG(B_APLY_AMT        ))  AS B_APLY_AMT      
+		     <if test="ORG_CLAS_C == '30'">
+		     , ROUND(AVG(DOZI_APLY_AMT     ))  AS DOZI_APLY_AMT     
+		     , ROUND(AVG(SAME_ZONE_APLY_AMT))  AS SAME_ZONE_APLY_AMT
+		     , ROUND(AVG(ALL_APLY_AMT      ))  AS ALL_APLY_AMT   
+		     </if>     
+		  FROM CHART_CHU2_LCR
+		 GROUP BY
+		       BASE_DATE
+		 ORDER BY      
+		       BASE_DATE
+		  
+	</select>
+	
+		
+	<select id="chart_NSFR_chu2" parameterType="java.util.Map" resultType="java.util.HashMap">
+	
+			
+		-- [ NSFR ] 12개월 비율 추이 조회
+		WITH CHART_CHU2_NSFR AS
+		(
+		    SELECT 
+		           BASE_DATE
+		         , ORG_CLAS_C
+		         , AC_BUSI_TC
+		         , BR_C
+		         , BSL3_LQDT_RPRT_C
+		         , BSL3_LQDT_RPRT_ITEM_VAL
+		         , CASE WHEN BR_C = #{BR_C} THEN RPRT_SECT_4_APLY_AMT END                                                        		  AS B_APLY_AMT
+		         , CASE WHEN BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BLNG_HQ_BR_C}) THEN RPRT_SECT_4_APLY_AMT END  AS DOZI_APLY_AMT
+		         , CASE WHEN BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE ZONE_TC      = #{ZONE_TC}     ) THEN RPRT_SECT_4_APLY_AMT END  AS SAME_ZONE_APLY_AMT
+		         , RPRT_SECT_4_APLY_AMT                                                                                        			  AS ALL_APLY_AMT
+		      FROM TBI_LQDT_RSLT_TOT
+		     WHERE BSL3_LQDT_RPRT_C        = '20' 
+		       AND BSL3_LQDT_RPRT_ITEM_VAL = 'C3' 
+		       AND ORG_CLAS_C              = #{ORG_CLAS_C}
+		       AND AC_BUSI_TC              = #{AC_BUSI_TC}
+		       AND BASE_DATE        IN (
+		                                #{BASE_DATE}
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 1  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 2  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 3  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 4  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 5  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 6  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 7  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 8  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 9  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 10 ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), - 11 ),'YYYYMMDD')
+		                                )
+		
+		)	
+		
+		
+		SELECT 
+		       SUBSTR(BASE_DATE,1,6)           AS BASE_DATE
+		     , ROUND(AVG(B_APLY_AMT        ))  AS B_APLY_AMT      
+		     <if test="ORG_CLAS_C == '30'">
+		     , ROUND(AVG(DOZI_APLY_AMT     ))  AS DOZI_APLY_AMT     
+		     , ROUND(AVG(SAME_ZONE_APLY_AMT))  AS SAME_ZONE_APLY_AMT
+		     , ROUND(AVG(ALL_APLY_AMT      ))  AS ALL_APLY_AMT   
+		     </if>     
+		  FROM CHART_CHU2_NSFR
+		 GROUP BY
+		       BASE_DATE
+		 ORDER BY      
+		       BASE_DATE
+		  
+	
+	</select>
+	
+
+</mapper>

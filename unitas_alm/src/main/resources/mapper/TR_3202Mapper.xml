@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_3202Mapper">
+
+	
+	<select id="selectTR_3202List" parameterType='java.util.Map' resultType="java.util.HashMap">
+	
+		-- NSFR 항목 리스트 조회
+		WITH NSFR_RPRT AS(
+		
+		    SELECT 
+		           A.BSL3_LQDT_RPRT_C
+		         , A.BSL3_LQDT_RPRT_ITEM_VAL
+		         , A.BSL3_LQDT_RPRT_ITEM_NM
+		         , A.BSL3_RPRT_ITEM_LVL
+		         , A.UP_BSL3_LQDT_RPRT_ITEM_VAL
+		         , A.SECT_WVAL_0
+		         , A.SECT_WVAL_1
+		         , A.SECT_WVAL_2
+		         , A.SECT_WVAL_3
+		         , A.SECT_WVAL_4
+		         , B.RPRT_SECT_1_AMT
+		         , B.RPRT_SECT_1_APLY_AMT
+		         , B.RPRT_SECT_2_AMT
+		         , B.RPRT_SECT_2_APLY_AMT
+		         , B.RPRT_SECT_3_AMT
+		         , B.RPRT_SECT_3_APLY_AMT
+		         , B.RPRT_SECT_4_AMT
+		         , B.RPRT_SECT_4_APLY_AMT
+		      FROM 
+		    (
+		        SELECT
+		               BSL3_LQDT_RPRT_C
+		             , BSL3_LQDT_RPRT_ITEM_VAL
+		             , BSL3_LQDT_RPRT_ITEM_NM
+		             , BSL3_RPRT_ITEM_LVL
+		             , UP_BSL3_LQDT_RPRT_ITEM_VAL
+		             , SUM(CASE WHEN RPRT_SECT_VAL = 0 THEN RPRT_SECT_WVAL_VAL ELSE 0 END)  AS SECT_WVAL_0
+		             , SUM(CASE WHEN RPRT_SECT_VAL = 1 THEN RPRT_SECT_WVAL_VAL ELSE 0 END)  AS SECT_WVAL_1
+		             , SUM(CASE WHEN RPRT_SECT_VAL = 2 THEN RPRT_SECT_WVAL_VAL ELSE 0 END)  AS SECT_WVAL_2
+		             , SUM(CASE WHEN RPRT_SECT_VAL = 3 THEN RPRT_SECT_WVAL_VAL ELSE 0 END)  AS SECT_WVAL_3
+		             , SUM(CASE WHEN RPRT_SECT_VAL = 4 THEN RPRT_SECT_WVAL_VAL ELSE 0 END)  AS SECT_WVAL_4
+		          FROM TII_BSL3_RPRT_ITEM_INFO
+		         WHERE BSL3_LQDT_RPRT_C   = '20' 
+		         GROUP BY 
+		               BSL3_LQDT_RPRT_C
+		             , BSL3_LQDT_RPRT_ITEM_VAL
+		             , BSL3_LQDT_RPRT_ITEM_NM
+		             , BSL3_RPRT_ITEM_LVL
+		             , UP_BSL3_LQDT_RPRT_ITEM_VAL
+		         ORDER BY
+		               BSL3_LQDT_RPRT_C
+		             , BSL3_LQDT_RPRT_ITEM_VAL
+		             
+		    )A 
+		    ,
+		    (
+		        SELECT 
+		               BASE_DATE
+		             , ORG_CLAS_C
+		             , AC_BUSI_TC
+		             , BSL3_LQDT_RPRT_C
+		             , BSL3_LQDT_RPRT_ITEM_VAL
+		             , SUM(RPRT_SECT_1_AMT     ) AS RPRT_SECT_1_AMT     
+		             , SUM(RPRT_SECT_1_APLY_AMT) AS RPRT_SECT_1_APLY_AMT
+		             , SUM(RPRT_SECT_2_AMT     ) AS RPRT_SECT_2_AMT     
+		             , SUM(RPRT_SECT_2_APLY_AMT) AS RPRT_SECT_2_APLY_AMT
+		             , SUM(RPRT_SECT_3_AMT     ) AS RPRT_SECT_3_AMT     
+		             , SUM(RPRT_SECT_3_APLY_AMT) AS RPRT_SECT_3_APLY_AMT
+		             , SUM(RPRT_SECT_4_AMT     ) AS RPRT_SECT_4_AMT     
+		             , SUM(RPRT_SECT_4_APLY_AMT) AS RPRT_SECT_4_APLY_AMT
+		          FROM TBI_LQDT_RSLT_TOT
+		         WHERE BSL3_LQDT_RPRT_C = '20'
+		           AND BASE_DATE  		= #{BASE_DATE}
+		           AND ORG_CLAS_C 		= #{ORG_CLAS_C}
+	 			   AND AC_BUSI_TC 		= #{AC_BUSI_TC} 
+		           
+				 ----------------------------------------
+				 -- ( 점소코드  )
+				 ----------------------------------------
+				 -- 전체조합 조회 시 
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'">
+				 	-- 모든 점소코드 나오기
+				 </if>
+				 
+				 -- 단위조합별 조회 시 (지소포함여부  yes/no)
+				 <if test="JISO_INCLUDE == 'yes' and BLNG_HQ_BR_C != ''">   
+				 	AND BR_C 			IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{BR_C} ) 
+				 </if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+				 	AND BR_C     		= #{BR_C}
+				 </if>
+				 
+				 -- 도지회별 조회 시 
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+				 	AND BR_C 			IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} )
+				 </if>
+				 
+				 -- 중앙회 조회 시  
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == '001'">
+					AND BR_C     		= #{BR_C}
+				 </if>
+				 ----------------------------------------
+	 			 GROUP BY
+		               BASE_DATE
+		             , ORG_CLAS_C
+		             , AC_BUSI_TC
+		             , BSL3_LQDT_RPRT_C
+		             , BSL3_LQDT_RPRT_ITEM_VAL 
+		    )B
+		    WHERE 1 = 1
+		      AND A.BSL3_LQDT_RPRT_C        = B.BSL3_LQDT_RPRT_C(+)  
+		      AND A.BSL3_LQDT_RPRT_ITEM_VAL = B.BSL3_LQDT_RPRT_ITEM_VAL(+)  
+		)
+		
+		
+		SELECT
+		       NVL(BSL3_LQDT_RPRT_ITEM_VAL,0) AS BSL3_LQDT_RPRT_ITEM_VAL
+		     , NVL(BSL3_LQDT_RPRT_ITEM_NM ,0) AS BSL3_LQDT_RPRT_ITEM_NM 
+		     , NVL(RPRT_SECT_1_AMT        ,0) AS RPRT_SECT_1_AMT        
+		     , NVL(RPRT_SECT_2_AMT		  ,0) AS RPRT_SECT_2_AMT		  
+		     , NVL(RPRT_SECT_3_AMT 		  ,0) AS RPRT_SECT_3_AMT 		  
+		     , NVL(RPRT_SECT_4_AMT	      ,0) AS RPRT_SECT_4_AMT	      
+		     , NVL(SECT_WVAL_1            ,0) AS SECT_WVAL_1                                                                                                   
+		     , NVL(SECT_WVAL_2            ,0) AS SECT_WVAL_2                                                                                                   
+		     , NVL(SECT_WVAL_3        	  ,0) AS SECT_WVAL_3        	                                                                                             
+		     , NVL(SECT_WVAL_4        	  ,0) AS SECT_WVAL_4        	                                                                                             
+		     , NVL(RPRT_SECT_1_APLY_AMT	  ,0) AS RPRT_SECT_1_APLY_AMT	  
+		     , NVL(RPRT_SECT_2_APLY_AMT   ,0) AS RPRT_SECT_2_APLY_AMT   
+		     , NVL(RPRT_SECT_3_APLY_AMT   ,0) AS RPRT_SECT_3_APLY_AMT   
+		     , NVL(RPRT_SECT_4_APLY_AMT   ,0) AS RPRT_SECT_4_APLY_AMT   
+		     , NVL(TOT_AMT				  ,0) AS TOT_AMT		
+		  FROM 
+		(
+		    SELECT
+		           A.BSL3_LQDT_RPRT_C
+		         , A.BSL3_LQDT_RPRT_ITEM_VAL
+		         , LPAD( ' ' , A.BSL3_RPRT_ITEM_LVL * 5 ,' ' ) || A.BSL3_LQDT_RPRT_ITEM_NM	                                             AS BSL3_LQDT_RPRT_ITEM_NM  
+		         , A.BSL3_RPRT_ITEM_LVL
+		         , A.UP_BSL3_LQDT_RPRT_ITEM_VAL
+		         , NVL(ROUND(A.RPRT_SECT_1_AMT      / #{AMT_UNIT} ),0)                                                                   AS RPRT_SECT_1_AMT
+		         , NVL(ROUND(A.RPRT_SECT_2_AMT      / #{AMT_UNIT} ),0)                                                                   AS RPRT_SECT_2_AMT
+		         , NVL(ROUND(A.RPRT_SECT_3_AMT      / #{AMT_UNIT} ),0)                                                                   AS RPRT_SECT_3_AMT
+		         , NVL(ROUND(A.RPRT_SECT_4_AMT      / #{AMT_UNIT} ),0)                                                                   AS RPRT_SECT_4_AMT
+		         , NVL(A.SECT_WVAL_1,0)                                                                                                  AS SECT_WVAL_1
+		         , NVL(A.SECT_WVAL_2,0)                                                                                                  AS SECT_WVAL_2
+		         , NVL(A.SECT_WVAL_3,0)                                                                                                  AS SECT_WVAL_3
+		         , NVL(A.SECT_WVAL_4,0)                                                                                                  AS SECT_WVAL_4
+		         , NVL(ROUND(A.RPRT_SECT_1_APLY_AMT / #{AMT_UNIT} ),0)                                                                   AS RPRT_SECT_1_APLY_AMT
+		         , NVL(ROUND(A.RPRT_SECT_2_APLY_AMT / #{AMT_UNIT} ),0)                                                                   AS RPRT_SECT_2_APLY_AMT
+		         , NVL(ROUND(A.RPRT_SECT_3_APLY_AMT / #{AMT_UNIT} ),0)                                                                   AS RPRT_SECT_3_APLY_AMT
+		         , NVL(ROUND(A.RPRT_SECT_4_APLY_AMT / #{AMT_UNIT} ),0) 																     AS RPRT_SECT_4_APLY_AMT
+		         , NVL(ROUND(B.TOT_AMT,2),0)              													                           	 AS TOT_AMT
+		      FROM NSFR_RPRT A
+		      ,(
+		        SELECT
+		               BSL3_LQDT_RPRT_C
+		             , BSL3_LQDT_RPRT_ITEM_VAL
+		             , CASE 
+                        WHEN BSL3_LQDT_RPRT_ITEM_VAL IN('C1','C2') 
+                        THEN ROUND(RPRT_SECT_4_APLY_AMT / #{AMT_UNIT})
+                        WHEN BSL3_LQDT_RPRT_ITEM_VAL = 'C3'
+                        THEN RPRT_SECT_4_APLY_AMT
+                        ELSE ROUND( SUM( RPRT_SECT_1_APLY_AMT + RPRT_SECT_2_APLY_AMT + RPRT_SECT_3_APLY_AMT + RPRT_SECT_4_APLY_AMT ) 
+                                   OVER( PARTITION BY BSL3_LQDT_RPRT_C,BSL3_LQDT_RPRT_ITEM_VAL )  / #{AMT_UNIT} )
+		               END 																												 AS TOT_AMT
+		          FROM NSFR_RPRT
+		       ) B
+		        WHERE 1 = 1
+		          AND A.BSL3_LQDT_RPRT_C        = B.BSL3_LQDT_RPRT_C
+		          AND A.BSL3_LQDT_RPRT_ITEM_VAL = B.BSL3_LQDT_RPRT_ITEM_VAL
+		)
+		          
+	
+	</select>
+
+</mapper>

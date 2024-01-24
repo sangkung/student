@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_9107Mapper">
+
+	<select id="selectTr9107List" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT ALM_BASE_RATE_C            AS ALM_BASE_RATE_C
+		     , ALM_BASE_RATE_TRM_CNT      AS ALM_BASE_RATE_TRM_CNT
+		     , ALM_BASE_RATE_NM           AS ALM_BASE_RATE_NM
+		     , NVL(ALM_REP_RATE_YN, 'N')  AS ALM_REP_RATE_YN
+		     , USE_YN                     AS USE_YN
+		     , LAST_CHNG_ID               AS LAST_CHNG_ID
+		     , LAST_CHNG_DT               AS LAST_CHNG_DT
+		  FROM TSY_ALM_BASE_RATE_MNG
+		<if test="searchparam != null and searchparam != ''">
+		 WHERE ALM_BASE_RATE_C LIKE '%' || #{searchparam} || '%' OR ALM_BASE_RATE_NM LIKE '%' || #{searchparam} || '%'
+		</if>
+		 ORDER BY ALM_BASE_RATE_C
+		        , ALM_BASE_RATE_TRM_CNT
+	</select>
+	
+	<insert id="insertTr9107" parameterType="java.util.Map">
+	INSERT INTO TSY_ALM_BASE_RATE_MNG
+		(
+		   ALM_BASE_RATE_C
+	     , ALM_BASE_RATE_TRM_CNT
+	     , ALM_BASE_RATE_NM
+	     , ALM_REP_RATE_YN
+	     , USE_YN
+	     , LAST_CHNG_ID
+	     , LAST_CHNG_DT
+		) VALUES (
+			  #{ALM_BASE_RATE_C}
+		    , TO_NUMBER(#{ALM_BASE_RATE_TRM_CNT})
+		    , #{ALM_BASE_RATE_NM}
+		    , (CASE WHEN #{ALM_REP_RATE_YN} = 'N' THEN '' ELSE #{ALM_REP_RATE_YN} END)
+		    , 'Y' 
+		    , #{LAST_CHNG_ID}
+		    , SYSDATE
+		)
+	</insert>
+	
+	<update id="updateTr9107" parameterType="java.util.Map">
+		UPDATE TSY_ALM_BASE_RATE_MNG
+		   SET ALM_BASE_RATE_NM    = #{ALM_BASE_RATE_NM}
+			 , ALM_REP_RATE_YN     = (CASE WHEN #{ALM_REP_RATE_YN} = 'N' THEN '' ELSE #{ALM_REP_RATE_YN} END)
+			 , USE_YN              = #{USE_YN}
+		     , LAST_CHNG_ID        = #{LAST_CHNG_ID}
+		     , LAST_CHNG_DT        = SYSDATE
+		 WHERE ALM_BASE_RATE_C       = #{ALM_BASE_RATE_C}
+		   AND ALM_BASE_RATE_TRM_CNT = TO_NUMBER(#{ALM_BASE_RATE_TRM_CNT})
+	</update>
+
+	<update id="deleteTr9107" parameterType="java.util.Map">
+		UPDATE TSY_ALM_BASE_RATE_MNG
+		   SET USE_YN              = #{USE_YN}
+		     , LAST_CHNG_ID        = #{LAST_CHNG_ID}
+		     , LAST_CHNG_DT        = SYSDATE
+		 WHERE ALM_BASE_RATE_C       = #{ALM_BASE_RATE_C}
+		   AND ALM_BASE_RATE_TRM_CNT = TO_NUMBER(#{ALM_BASE_RATE_TRM_CNT})
+	</update>
+
+</mapper>

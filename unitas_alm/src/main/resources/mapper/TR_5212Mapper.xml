@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_5212Mapper">
+
+	<!-- 배치실행 -->
+	<select id="execTr5212Procedure" statementType="CALLABLE" resultType="java.util.HashMap">
+        <!-- 시뮬레이션_특판시나리오적용관리 -->
+		CALL ALMADM.SPSI_SSAL_SNRO_APLY_MNG (
+			 #{BASE_DATE,      mode=IN,  jdbcType=VARCHAR}
+			,#{ORG_CLAS_C,     mode=IN,  jdbcType=VARCHAR}
+			,#{BR_C,           mode=IN,  jdbcType=VARCHAR}
+			,#{NULL,           mode=IN,  jdbcType=VARCHAR}
+			,#{SNRO_NO,        mode=IN,  jdbcType=VARCHAR}
+			,#{USER_ID,        mode=IN,  jdbcType=VARCHAR}
+			,#{RESULT_CODE,    mode=OUT, jdbcType=VARCHAR}
+			,#{RESULT_MSG,     mode=OUT, jdbcType=VARCHAR}
+		)
+	</select>
+	
+    <select id="selectTr5212Main" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+SELECT D.AC_BUSI_TC_NM                                                                                               AS AC_BUSI_TC_NM
+     , C.ACCT_C                                                                                                      AS ACCT_C       
+     , E.ACCT_C_NM                                                                                                   AS ACCT_C_NM    
+     , C.FIX_VAR_TC                                                                                                  AS FIX_VAR_TC   
+     , F.FIX_VAR_TC_NM                                                                                               AS FIX_VAR_TC_NM
+     , DECODE(C.RATE_VAR_CYCL, NULL, TO_CHAR(C.RATE_VAR_CYCL), C.RATE_VAR_CYCL||'개월')                              AS RATE_VAR_CYCL
+     , C.PRIN_RMBR_METH_C                                                                                            AS PRIN_RMBR_METH_C   
+     , G.PRIN_RMBR_METH_C_NM                                                                                         AS PRIN_RMBR_METH_C_NM
+     , C.ALM_BASE_RATE_C                                                                                             AS ALM_BASE_RATE_C    
+     , H.ALM_BASE_RATE_NM                                                                                            AS ALM_BASE_RATE_NM   
+     , C.SSAL_OBJ_AMT                                                                                                AS SSAL_OBJ_AMT       
+     , DECODE(C.SSAL_APLY_MMS, NULL, TO_CHAR(C.SSAL_APLY_MMS), C.SSAL_APLY_MMS||'개월')                              AS SSAL_APLY_MMS 
+     , DECODE(C.MRGN_RATE,     NULL, TO_CHAR(C.MRGN_RATE),     RTRIM(TO_CHAR(C.MRGN_RATE, 'FM990.99999'),'.')||'%')  AS MRGN_RATE
+     , C.M1_AMT                                                                                                      AS M1_AMT  
+     , DECODE(C.M1_RATE,       NULL, TO_CHAR(C.M1_RATE),       RTRIM(TO_CHAR(C.M1_RATE, 'FM990.99999'),'.')||'%')    AS M1_RATE 
+     , C.M2_AMT                                                                                                      AS M2_AMT  
+     , DECODE(C.M2_RATE,       NULL, TO_CHAR(C.M2_RATE),       RTRIM(TO_CHAR(C.M2_RATE, 'FM990.99999'),'.')||'%')    AS M2_RATE
+     , C.M3_AMT                                                                                                      AS M3_AMT  
+     , DECODE(C.M3_RATE,       NULL, TO_CHAR(C.M3_RATE),       RTRIM(TO_CHAR(C.M3_RATE, 'FM990.99999'),'.')||'%')    AS M3_RATE
+     , C.M4_AMT                                                                                                      AS M4_AMT  
+     , DECODE(C.M4_RATE,       NULL, TO_CHAR(C.M4_RATE),       RTRIM(TO_CHAR(C.M4_RATE, 'FM990.99999'),'.')||'%')    AS M4_RATE
+     , C.M5_AMT                                                                                                      AS M5_AMT  
+     , DECODE(C.M5_RATE,       NULL, TO_CHAR(C.M5_RATE),       RTRIM(TO_CHAR(C.M5_RATE, 'FM990.99999'),'.')||'%')    AS M5_RATE
+     , C.M6_AMT                                                                                                      AS M6_AMT  
+     , DECODE(C.M6_RATE,       NULL, TO_CHAR(C.M6_RATE),       RTRIM(TO_CHAR(C.M6_RATE, 'FM990.99999'),'.')||'%')    AS M6_RATE
+     , C.M7_AMT                                                                                                      AS M7_AMT  
+     , DECODE(C.M7_RATE,       NULL, TO_CHAR(C.M7_RATE),       RTRIM(TO_CHAR(C.M7_RATE, 'FM990.99999'),'.')||'%')    AS M7_RATE
+     , C.M8_AMT                                                                                                      AS M8_AMT  
+     , DECODE(C.M8_RATE,       NULL, TO_CHAR(C.M8_RATE),       RTRIM(TO_CHAR(C.M8_RATE, 'FM990.99999'),'.')||'%')    AS M8_RATE
+     , C.M9_AMT                                                                                                      AS M9_AMT  
+     , DECODE(C.M9_RATE,       NULL, TO_CHAR(C.M9_RATE),       RTRIM(TO_CHAR(C.M9_RATE, 'FM990.99999'),'.')||'%')    AS M9_RATE
+     , C.M10_AMT                                                                                                     AS M10_AMT  
+     , DECODE(C.M10_RATE,      NULL, TO_CHAR(C.M10_RATE),      RTRIM(TO_CHAR(C.M10_RATE, 'FM990.99999'),'.')||'%')   AS M10_RATE
+     , C.M11_AMT                                                                                                     AS M11_AMT  
+     , DECODE(C.M11_RATE,      NULL, TO_CHAR(C.M11_RATE),      RTRIM(TO_CHAR(C.M11_RATE, 'FM990.99999'),'.')||'%')   AS M11_RATE
+     , C.M12_AMT                                                                                                     AS M12_AMT  
+     , DECODE(C.M12_RATE,      NULL, TO_CHAR(C.M12_RATE),      RTRIM(TO_CHAR(C.M12_RATE, 'FM990.99999'),'.')||'%')   AS M12_RATE
+  FROM (
+          SELECT A.ORG_CLAS_C
+               , A.AC_BUSI_TC
+		       , A.ACCT_C
+               , A.FIX_VAR_TC
+               , A.RATE_VAR_CYCL
+               , A.PRIN_RMBR_METH_C
+               , A.ALM_BASE_RATE_C
+               , A.SSAL_OBJ_AMT
+               , A.SSAL_APLY_MMS
+               , A.MRGN_RATE
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   1), 'YYYYMMDD') THEN B.APLY_AMT  END) AS  M1_AMT
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   1), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M1_RATE
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   2), 'YYYYMMDD') THEN B.APLY_AMT  END) AS  M2_AMT
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   2), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M2_RATE
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   3), 'YYYYMMDD') THEN B.APLY_AMT  END) AS  M3_AMT
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   3), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M3_RATE
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   4), 'YYYYMMDD') THEN B.APLY_AMT  END) AS  M4_AMT
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   4), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M4_RATE
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   5), 'YYYYMMDD') THEN B.APLY_AMT  END) AS  M5_AMT
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   5), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M5_RATE
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   6), 'YYYYMMDD') THEN B.APLY_AMT  END) AS  M6_AMT
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   6), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M6_RATE
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   7), 'YYYYMMDD') THEN B.APLY_AMT  END) AS  M7_AMT
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   7), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M7_RATE
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   8), 'YYYYMMDD') THEN B.APLY_AMT  END) AS  M8_AMT
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   8), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M8_RATE
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   9), 'YYYYMMDD') THEN B.APLY_AMT  END) AS  M9_AMT
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),   9), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M9_RATE
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  10), 'YYYYMMDD') THEN B.APLY_AMT  END) AS  M10_AMT
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  10), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M10_RATE
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  11), 'YYYYMMDD') THEN B.APLY_AMT  END) AS  M11_AMT
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  11), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M11_RATE
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  12), 'YYYYMMDD') THEN B.APLY_AMT  END) AS  M12_AMT
+               , MAX(CASE WHEN APLY_END_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(B.BASE_DATE, 'YYYYMMDD'),  12), 'YYYYMMDD') THEN B.APLY_RATE END) AS  M12_RATE
+            FROM TSI_SSAL_SNRO_PEST_MNG  A
+               , TSI_SSAL_SNRO_APLY_MNG  B
+           WHERE A.ORG_CLAS_C       = B.ORG_CLAS_C
+             AND A.BR_C             = B.BR_C
+             AND A.AC_BUSI_TC       = B.AC_BUSI_TC
+             AND A.SNRO_NO          = B.SNRO_NO
+             AND A.ACCT_C           = B.ACCT_C
+             AND A.FIX_VAR_TC       = B.FIX_VAR_TC
+             AND A.RATE_VAR_CYCL    = B.RATE_VAR_CYCL
+             AND A.PRIN_RMBR_METH_C = B.PRIN_RMBR_METH_C
+             AND A.ALM_BASE_RATE_C  = B.ALM_BASE_RATE_C
+             AND A.ORG_CLAS_C       = #{ORG_CLAS_C}
+             AND A.BR_C             = #{BR_C}
+             AND A.AC_BUSI_TC       = #{AC_BUSI_TC}
+             AND A.SNRO_NO          = #{SNRO_NO}
+             AND B.BASE_DATE(+)     = #{BASE_DATE}
+          GROUP BY A.ORG_CLAS_C
+                 , A.AC_BUSI_TC
+		         , A.ACCT_C
+                 , A.FIX_VAR_TC
+                 , A.RATE_VAR_CYCL
+                 , A.PRIN_RMBR_METH_C
+                 , A.ALM_BASE_RATE_C
+                 , A.SSAL_OBJ_AMT
+                 , A.SSAL_APLY_MMS
+                 , A.MRGN_RATE
+       ) C
+     , (
+         SELECT DTL_CLAS_VAL AS AC_BUSI_TC
+              , DTL_CLAS_NM  AS AC_BUSI_TC_NM
+           FROM TSY_CO_MNG
+          WHERE USE_YN = 'Y'
+            AND CO_C   = 'AC_BUSI_TC'
+       ) D /*회계구분*/
+     , (
+         SELECT ORG_CLAS_C
+              , AC_BUSI_TC
+              , ACCT_C
+              , TRIM(ACCT_C_NM) AS ACCT_C_NM
+           FROM TSY_ACCT_MSTR_MNG
+          WHERE BASE_DATE  = (SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE &lt;= TO_CHAR(LAST_DAY(TO_DATE(#{BASE_DATE}, 'YYYYMMDD')), 'YYYYMMDD'))
+            AND ORG_CLAS_C = #{ORG_CLAS_C}
+            AND AC_BUSI_TC = #{AC_BUSI_TC}
+            AND USE_YN     = 'Y'
+       ) E  /*계정명*/
+     , (
+         SELECT DTL_CLAS_VAL AS FIX_VAR_TC
+              , DTL_CLAS_NM  AS FIX_VAR_TC_NM
+           FROM TSY_CO_MNG 
+          WHERE USE_YN = 'Y'
+            AND CO_C   = 'FIX_VAR_TC'
+       ) F  /*금리변동구분*/     
+     , (
+         SELECT DTL_CLAS_VAL AS PRIN_RMBR_METH_C
+              , DTL_CLAS_NM  AS PRIN_RMBR_METH_C_NM
+           FROM TSY_CO_MNG 
+          WHERE USE_YN = 'Y'
+            AND CO_C   = 'PRIN_RMBR_METH_C'
+       ) G    /*상환방법코드*/
+     , ( 
+        SELECT ALM_BASE_RATE_C
+             , ALM_BASE_RATE_NM
+          FROM TSY_ALM_BASE_RATE_MNG 
+         WHERE USE_YN = 'Y'
+         GROUP BY ALM_BASE_RATE_C
+                , ALM_BASE_RATE_NM
+       ) H    /*ALM기준금리*/
+WHERE C.AC_BUSI_TC       = D.AC_BUSI_TC(+)
+  AND C.ORG_CLAS_C       = E.ORG_CLAS_C(+)
+  AND C.AC_BUSI_TC       = E.AC_BUSI_TC(+)
+  AND C.ACCT_C           = E.ACCT_C(+)
+  AND C.FIX_VAR_TC       = F.FIX_VAR_TC(+)
+  AND C.PRIN_RMBR_METH_C = G.PRIN_RMBR_METH_C(+)
+  AND C.ALM_BASE_RATE_C  = H.ALM_BASE_RATE_C(+)
+ORDER BY C.ACCT_C
+    </select>
+	
+
+</mapper>

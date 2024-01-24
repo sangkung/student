@@ -1,0 +1,851 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_5105Mapper">
+
+	<!-- 추정 수익비용율 조회  -->
+	<select id="selectTR_5105List" parameterType="java.util.Map" resultType="java.util.HashMap">
+	
+		WITH TEMP AS
+		(
+			
+			
+		 SELECT /*+ USE_NL(B A) FULL(B) */   
+		         B.BASE_DATE
+		       , B.ORG_CLAS_C
+		       , B.BR_C
+		       , B.ACCT_C
+			   <if test="AC_BUSI_TC == '0000'">
+			   , '1105' 			AS AC_BUSI_TC
+		       </if>
+		       <if test="AC_BUSI_TC != '0000'">
+			   , B.AC_BUSI_TC
+			  </if>
+			   /* 데이터 컬럼 */
+			   --------------
+			   , B.BASE_AVG_AMT   AS  BASE_AVG_AMT
+			   , B.BASE_INT_AMT   AS  BASE_INT_AMT
+			   --------------
+			   , A.ABAL_AMT_1     AS  AVG_AMT1
+			   , A.ABAL_AMT_2     AS  AVG_AMT2
+			   , A.ABAL_AMT_3     AS  AVG_AMT3
+			   , A.ABAL_AMT_4     AS  AVG_AMT4
+			   , A.ABAL_AMT_5     AS  AVG_AMT5
+			   , A.ABAL_AMT_6     AS  AVG_AMT6
+			   , A.ABAL_AMT_7     AS  AVG_AMT7
+			   , A.ABAL_AMT_8     AS  AVG_AMT8
+			   , A.ABAL_AMT_9     AS  AVG_AMT9
+			   , A.ABAL_AMT_10    AS  AVG_AMT10
+			   , A.ABAL_AMT_11    AS  AVG_AMT11
+			   , A.ABAL_AMT_12    AS  AVG_AMT12
+			   , A.ABAL_AMT_13    AS  AVG_AMT13
+			   , A.ABAL_AMT_14    AS  AVG_AMT14
+			   , A.ABAL_AMT_15    AS  AVG_AMT15
+			   , A.ABAL_AMT_16    AS  AVG_AMT16
+			   , A.ABAL_AMT_17    AS  AVG_AMT17
+			   , A.ABAL_AMT_18    AS  AVG_AMT18
+			   , A.ABAL_AMT_24    AS  AVG_AMT24
+			   , A.INT_AMT_RT_1   AS  INT_AMT_1 
+			   , A.INT_AMT_RT_2   AS  INT_AMT_2 
+			   , A.INT_AMT_RT_3   AS  INT_AMT_3 
+			   , A.INT_AMT_RT_4   AS  INT_AMT_4 
+			   , A.INT_AMT_RT_5   AS  INT_AMT_5 
+			   , A.INT_AMT_RT_6   AS  INT_AMT_6 
+			   , A.INT_AMT_RT_7   AS  INT_AMT_7 
+			   , A.INT_AMT_RT_8   AS  INT_AMT_8 
+			   , A.INT_AMT_RT_9   AS  INT_AMT_9 
+			   , A.INT_AMT_RT_10  AS  INT_AMT_10
+			   , A.INT_AMT_RT_11  AS  INT_AMT_11
+			   , A.INT_AMT_RT_12  AS  INT_AMT_12
+			   , A.INT_AMT_RT_13  AS  INT_AMT_13
+		       , A.INT_AMT_RT_14  AS  INT_AMT_14
+			   , A.INT_AMT_RT_15  AS  INT_AMT_15
+			   , A.INT_AMT_RT_16  AS  INT_AMT_16
+			   , A.INT_AMT_RT_17  AS  INT_AMT_17
+			   , A.INT_AMT_RT_18  AS  INT_AMT_18
+			   , A.INT_AMT_RT_24  AS  INT_AMT_24
+		   FROM 
+		    (
+			    SELECT /*+ FULL(A) */
+			           BASE_DATE
+			         , ORG_CLAS_C  
+			         , ALM_WORK_TC
+			         , BR_C
+			         , ACCT_C
+			         , CUR_C
+			         
+					 /* 중앙회 조회 시 에만 발생  */
+				 	<if test="AC_BUSI_TC == '0000'">
+				     , '1105'	AS AC_BUSI_TC
+				 	</if>
+				 	<if test="AC_BUSI_TC != '0000'">
+				     , AC_BUSI_TC
+				 	</if>
+			         ------------------------------------------------------------------------------
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 1  THEN ABAL_AMT ELSE 0 END)                            	  AS ABAL_AMT_1
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 2  THEN ABAL_AMT ELSE 0 END)                            	  AS ABAL_AMT_2
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 3  THEN ABAL_AMT ELSE 0 END)                            	  AS ABAL_AMT_3
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 4  THEN ABAL_AMT ELSE 0 END)                            	  AS ABAL_AMT_4
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 5  THEN ABAL_AMT ELSE 0 END)                           	  AS ABAL_AMT_5
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 6  THEN ABAL_AMT ELSE 0 END)                            	  AS ABAL_AMT_6
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 7  THEN ABAL_AMT ELSE 0 END)                            	  AS ABAL_AMT_7
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 8  THEN ABAL_AMT ELSE 0 END)                            	  AS ABAL_AMT_8
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 9  THEN ABAL_AMT ELSE 0 END)                            	  AS ABAL_AMT_9
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 10 THEN ABAL_AMT ELSE 0 END)                            	  AS ABAL_AMT_10
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 11 THEN ABAL_AMT ELSE 0 END)                            	  AS ABAL_AMT_11
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 12 THEN ABAL_AMT ELSE 0 END)                            	  AS ABAL_AMT_12
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 13 THEN ABAL_AMT ELSE 0 END)                            	  AS ABAL_AMT_13
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 14 THEN ABAL_AMT ELSE 0 END)                            	  AS ABAL_AMT_14
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 15 THEN ABAL_AMT ELSE 0 END)                            	  AS ABAL_AMT_15
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 16 THEN ABAL_AMT ELSE 0 END)                            	  AS ABAL_AMT_16
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 17 THEN ABAL_AMT ELSE 0 END)                            	  AS ABAL_AMT_17
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 18 THEN ABAL_AMT ELSE 0 END)                            	  AS ABAL_AMT_18
+			         , SUM(CASE WHEN MTRT_SECT_SEQ > 18 AND MTRT_SECT_SEQ &lt;= 24 THEN ABAL_AMT ELSE 0 END) / 6  AS ABAL_AMT_24
+			         ------------------------------------------------------------------------------
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 1  THEN TRM_INT_AMT ELSE 0 END)                         	  AS INT_AMT_RT_1
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 2  THEN TRM_INT_AMT ELSE 0 END)                         	  AS INT_AMT_RT_2
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 3  THEN TRM_INT_AMT ELSE 0 END)                         	  AS INT_AMT_RT_3 
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 4  THEN TRM_INT_AMT ELSE 0 END)                         	  AS INT_AMT_RT_4
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 5  THEN TRM_INT_AMT ELSE 0 END)                         	  AS INT_AMT_RT_5
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 6  THEN TRM_INT_AMT ELSE 0 END)                         	  AS INT_AMT_RT_6
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 7  THEN TRM_INT_AMT ELSE 0 END)                         	  AS INT_AMT_RT_7
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 8  THEN TRM_INT_AMT ELSE 0 END)                         	  AS INT_AMT_RT_8
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 9  THEN TRM_INT_AMT ELSE 0 END)                         	  AS INT_AMT_RT_9
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 10 THEN TRM_INT_AMT ELSE 0 END)                         	  AS INT_AMT_RT_10
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 11 THEN TRM_INT_AMT ELSE 0 END)                         	  AS INT_AMT_RT_11
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 12 THEN TRM_INT_AMT ELSE 0 END)                         	  AS INT_AMT_RT_12
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 13 THEN TRM_INT_AMT ELSE 0 END)                         	  AS INT_AMT_RT_13
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 14 THEN TRM_INT_AMT ELSE 0 END)                         	  AS INT_AMT_RT_14
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 15 THEN TRM_INT_AMT ELSE 0 END)                         	  AS INT_AMT_RT_15
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 16 THEN TRM_INT_AMT ELSE 0 END)                         	  AS INT_AMT_RT_16
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 17 THEN TRM_INT_AMT ELSE 0 END)                         	  AS INT_AMT_RT_17
+			         , SUM(CASE WHEN MTRT_SECT_SEQ = 18 THEN TRM_INT_AMT ELSE 0 END)                         	  AS INT_AMT_RT_18
+			         , SUM(CASE WHEN MTRT_SECT_SEQ > 18 AND MTRT_SECT_SEQ &lt;= 24 THEN TRM_INT_AMT ELSE 0 END)   AS INT_AMT_RT_24
+			         ------------------------------------------------------------------------------ TRM_PRRT  얘는 필요없을 듯.
+		<choose>
+			<when test='BR_C != "ALL"'>
+				<choose>
+					<when test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+						FROM TRT_LQDT_GAP_SUM /*도지회별합산*/
+					</when>	
+					<otherwise>
+						FROM TRT_LQDT_GAP_TOT
+					</otherwise>
+				</choose>
+			</when>
+			<otherwise>
+				FROM TRT_LQDT_GAP_SUM /*전체조합*/
+			</otherwise>
+		</choose>
+		        
+		     WHERE ALM_WORK_TC       = 'M'
+		       AND CUR_C             = 'KRW'
+		       AND ALM_MTRT_SECT_C   = '10'				 -- ALM만기구간코드
+		       AND FUTU_POT_SECT_CNT = '0' 				 -- FUTU_POT_SECT_CNT(미래시점구간수)에 현재 값이 없다.
+		       -------------------------------/*▲고정*/
+		       AND BASE_DATE         = #{BASE_DATE} 
+		       AND CS_BHOR_REFL_YN   = #{C_BHOR_YN}      -- 고객행동포함   
+		       AND RATE_SNRO_NO      = #{RATE_SNRO}      -- 금리 시나리오
+		       <if test="EXST_NEW_TC == 0">           
+		       AND NEW_CAP_QTY_TC    = '0'				 -- 신규자금량(미포함)
+		       AND CAP_QTY_SNRO_NO   = '1'
+		       </if>
+		       <if test ="EXST_NEW_TC == 1">			 
+		       AND NEW_CAP_QTY_TC    = '1'               -- 신규자금량(포함)
+		       AND CAP_QTY_SNRO_NO   = #{FUNDS_SNRO}
+		       </if>
+			  
+		 	<if test="AC_BUSI_TC == '0000'">
+		 		AND AC_BUSI_TC IN('1105','1106','1107')
+		 	</if>
+		 	<if test="AC_BUSI_TC != '0000'">
+		 		AND AC_BUSI_TC = #{AC_BUSI_TC}
+		 	</if>
+			 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'">
+			 	AND BR_C = 'ALL' /*전체*/
+			 </if>
+			 <if test="JISO_INCLUDE == 'yes' and BLNG_HQ_BR_C != ''">   
+			 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{BR_C} ) /*점소포함*/ 
+			 </if>
+			 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+			 	AND BR_C     = #{BR_C} /*점소*/
+			 </if>
+			 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+<!-- 			 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} ) /*도지회별*/ -->
+				AND BR_C = #{BR_C}
+			 </if>
+			 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == '001'">
+				AND BR_C     = #{BR_C} /*중앙회*/
+			 </if>
+			GROUP BY
+			      BASE_DATE
+			    , ORG_CLAS_C  
+			    , ALM_WORK_TC
+			    , BR_C
+			    , ACCT_C
+			    , CUR_C
+			    , AC_BUSI_TC
+	    	)A
+	    	,
+	    	(
+		        SELECT S.BASE_DATE
+		             , S.ORG_CLAS_C
+		             , S.BR_C
+					 /* 중앙회 조회 시 에만 발생  */
+				 	<if test="AC_BUSI_TC == '0000'">
+				     , '1105'	AS AC_BUSI_TC
+				 	</if>
+				 	<if test="AC_BUSI_TC != '0000'">
+				     , S.AC_BUSI_TC
+				 	</if>
+		             , S.ACCT_C
+		             , NVL(SUM(S.MMW_AVG_BAL)     ,0) AS BASE_AVG_AMT  -- 월중평잔
+		             , NVL(SUM(T.MMW_PRFT_CST_AMT),0) AS BASE_INT_AMT  -- 이자금액
+		             -- 이자금액 / 평잔 / 일수 * 365
+		             -------------------------------------------------------------
+		             , NVL(CASE WHEN SUM(S.MMW_AVG_BAL) = 0 
+		                        THEN 0
+		                        ELSE ROUND( ( SUM(T.MMW_PRFT_CST_AMT) / SUM(S.MMW_AVG_BAL) / TO_NUMBER(SUBSTR(S.BASE_DATE, 6, 2)) ) * 365 * 100,2)
+		                   END
+		                    ,0)                       AS BASE_RT       -- 수익률
+		             -------------------------------------------------------------
+		          FROM TII_BS_RSLT_INFO_M S -- 기초_BS실적정보_월
+		             , (
+		                SELECT A.BASE_DATE
+		                     , A.ORG_CLAS_C
+		                     , A.BR_C
+		                     , A.AC_BUSI_TC
+		                     , B.ACCT_C -- BS계정코드
+		                   --, .ACCT_C  -- PL계정코드
+		                     , SUM(CASE WHEN B.BNC_EXCH_YN = '1' -- 금액부호 여부 
+		                                THEN (-1)
+		                                ELSE 1
+		                           END * A.MMW_PRFT_CST_AMT)    AS MMW_PRFT_CST_AMT -- 이자금액
+		                  FROM TII_PL_RSLT_INFO_M A -- 기초_PL실적정보_월
+		                     , TII_BSPL_MAP_INFO  B -- 기초_BSPL매핑정보
+		                 WHERE A.ORG_CLAS_C = B.ORG_CLAS_C
+		                   AND A.ACCT_C     = B.PL_ACCT_C
+		                   AND A.BASE_DATE  = #{BASE_DATE}
+		                   AND A.ORG_CLAS_C = #{ORG_CLAS_C}
+					 	<if test="AC_BUSI_TC == '0000'">
+					 		AND A.AC_BUSI_TC IN('1105','1106','1107')
+					 	</if>
+					 	<if test="AC_BUSI_TC != '0000'">
+					 		AND A.AC_BUSI_TC = #{AC_BUSI_TC}
+					 	</if>
+						 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'">
+						 </if>
+						 <if test="JISO_INCLUDE == 'yes' and BLNG_HQ_BR_C != ''">   
+						 	AND A.BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{BR_C} ) 
+						 </if>
+						 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+						 	AND A.BR_C     = #{BR_C}
+						 </if>
+						 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+						 	AND A.BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} )
+						 </if> 
+						 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == '001'">
+							AND A.BR_C     = #{BR_C}
+						 </if>
+		                 GROUP BY A.BASE_DATE
+		                        , A.ORG_CLAS_C
+		                        , A.BR_C
+		                        , A.AC_BUSI_TC
+		                        , B.ACCT_C -- BS계정코드
+		                      						 -- A.ACCT_C >> PL계정코드 같이 그룹바이 노놉 BS계정으로만 해야함.
+		               ) T
+		         WHERE S.BASE_DATE  = #{BASE_DATE}
+		           AND S.ORG_CLAS_C = #{ORG_CLAS_C}
+		           AND S.BASE_DATE  = T.BASE_DATE (+)
+		           AND S.ORG_CLAS_C = T.ORG_CLAS_C(+)
+		           AND S.BR_C       = T.BR_C      (+)
+		           AND S.AC_BUSI_TC = T.AC_BUSI_TC(+)
+		           AND S.ACCT_C     = T.ACCT_C    (+)
+		           
+			 	<if test="AC_BUSI_TC == '0000'">
+			 		AND S.AC_BUSI_TC IN('1105','1106','1107')
+			 	</if>
+			 	<if test="AC_BUSI_TC != '0000'">
+			 		AND S.AC_BUSI_TC = #{AC_BUSI_TC}
+			 	</if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'">
+				 </if>
+				 <if test="JISO_INCLUDE == 'yes' and BLNG_HQ_BR_C != ''">   
+				 	AND S.BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{BR_C} ) 
+				 </if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+				 	AND S.BR_C     = #{BR_C}
+				 </if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+				 	AND S.BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} )
+				 </if>
+				 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == '001'">
+					AND S.BR_C     = #{BR_C}
+				 </if>
+		         GROUP BY S.BASE_DATE
+		                , S.ORG_CLAS_C
+		                , S.BR_C
+		                , S.AC_BUSI_TC
+		                , S.ACCT_C
+	    	)B   
+		    WHERE 1 = 1
+		      AND A.BASE_DATE (+) = B.BASE_DATE 
+		      AND A.ORG_CLAS_C(+) = B.ORG_CLAS_C
+		      AND A.AC_BUSI_TC(+) = B.AC_BUSI_TC
+		      AND A.BR_C      (+) = B.BR_C      
+		      AND A.ACCT_C    (+) = B.ACCT_C    
+	    
+		    
+		    
+	)-- with 문 끝블록  
+		    
+		
+	
+		
+		SELECT
+			<if test="LVL == 1">
+		        CASE 
+                    WHEN LVL1 = '자산'
+		            THEN LVL1||'(A)' 
+		            WHEN LVL1 = '부채' 
+		            THEN LVL1||'(B)'
+		            ELSE LVL1
+		        END    																								AS ACCT_NM1
+        	</if> 																		  						   
+		     <if test="LVL == 2"> 
+		     	   LVL1																								AS ACCT_NM1
+			     , DECODE( GROUPING_ID( LVL2 ) , 1,
+			        CASE 
+                        WHEN LVL1 = '자산'
+			            THEN '['||LVL1||'합계](A)' 
+			            WHEN LVL1 = '부채' 
+			            THEN '['||LVL1||'합계](B)'
+			            ELSE LVL1 || ' 소계' 
+			        END
+			       , LVL2 ) 	         																		 	AS ACCT_NM2
+			     , GROUPING_ID( LVL2 )   																			AS GRP_ID
+		     </if>    																 
+		     <if test="LVL == 3"> 
+		     	   LVL1																								  AS ACCT_NM1
+			     , DECODE( GROUPING_ID( LVL2,LVL3 ) , 3,
+			        CASE 
+                        WHEN LVL1 = '자산'
+			            THEN '['||LVL1||'합계](A)' 
+			            WHEN LVL1 = '부채' 
+			            THEN '['||LVL1||'합계](B)'
+			            ELSE LVL1 || ' 소계' 
+			        END
+			       , LVL2 ) 	         																			  AS ACCT_NM2
+			     , DECODE( GROUPING_ID( LVL2,LVL3 ) , 1, LVL2 || ' 소계', LVL3 )               						  AS ACCT_NM3
+			     , GROUPING_ID( LVL2,LVL3 )   																		  AS GRP_ID
+		     </if>  																 
+		     <if test="LVL == 4"> 
+		     	   LVL1																									   AS ACCT_NM1
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4 ) , 7,
+			        CASE 
+                        WHEN LVL1 = '자산'
+			            THEN '['||LVL1||'합계](A)' 
+			            WHEN LVL1 = '부채' 
+			            THEN '['||LVL1||'합계](B)'
+			            ELSE LVL1 || ' 소계' 
+			        END
+			       , LVL2 ) 	         																				   AS ACCT_NM2
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4 ) , 3, LVL2 || ' 소계', LVL3 )               						   AS ACCT_NM3
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4 ) , 1, LVL3 || ' 소계', LVL4 )               						   AS ACCT_NM4
+			     , GROUPING_ID( LVL2,LVL3,LVL4 )   																		   AS GRP_ID
+		     </if>  																 
+		     <if test="LVL == 5"> 
+		     	   LVL1																											AS ACCT_NM1
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ) , 15,
+			        CASE 
+                        WHEN LVL1 = '자산'
+			            THEN '['||LVL1||'합계](A)' 
+			            WHEN LVL1 = '부채' 
+			            THEN '['||LVL1||'합계](B)'
+			            ELSE LVL1 || ' 소계' 
+			        END
+			       , LVL2 ) 	         																						AS ACCT_NM2
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ) , 7 , LVL2 || ' 소계', LVL3 )              				    		AS ACCT_NM3
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ) , 3 , LVL3 || ' 소계', LVL4 )               					    AS ACCT_NM4
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ) , 1 , LVL4 || ' 소계', LVL5 )               					    AS ACCT_NM5
+			     , GROUPING_ID( LVL2,LVL3,LVL4,LVL5 )   																		AS GRP_ID
+		     </if>  																  
+		     <if test="LVL == 6"> 
+		     	   LVL1																												  AS ACCT_NM1
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ) , 31,
+			        CASE 
+                        WHEN LVL1 = '자산'
+			            THEN '['||LVL1||'합계](A)' 
+			            WHEN LVL1 = '부채' 
+			            THEN '['||LVL1||'합계](B)'
+			            ELSE LVL1 || ' 소계' 
+			        END
+			       , LVL2 ) 	         																						      AS ACCT_NM2
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ) , 15, LVL2 || ' 소계', LVL3 )               					      AS ACCT_NM3
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ) , 7 , LVL3 || ' 소계', LVL4 )               					      AS ACCT_NM4
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ) , 3 , LVL4 || ' 소계', LVL5 )               					      AS ACCT_NM5
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ) , 1 , LVL5 || ' 소계', LVL6 )              					      AS ACCT_NM6
+			     , GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 )   																		  AS GRP_ID
+		     </if>  																 
+		     <if test="LVL == 7"> 
+		     	   LVL1																													AS ACCT_NM1
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ) , 63,
+			        CASE 
+                        WHEN LVL1 = '자산'
+			            THEN '['||LVL1||'합계](A)' 
+			            WHEN LVL1 = '부채' 
+			            THEN '['||LVL1||'합계](B)'
+			            ELSE LVL1 || ' 소계' 
+			        END
+			       , LVL2 ) 	         																						         AS ACCT_NM2
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ) , 31, LVL2 || ' 소계', LVL3 )               						 AS ACCT_NM3
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ) , 15, LVL3 || ' 소계', LVL4 )              						 AS ACCT_NM4
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ) , 7 , LVL4 || ' 소계', LVL5 )               						 AS ACCT_NM5
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ) , 3 , LVL5 || ' 소계', LVL6 )               						 AS ACCT_NM6
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ) , 1 , LVL6 || ' 소계', LVL7 )               						 AS ACCT_NM7
+			     , GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 )   																		 AS GRP_ID
+		     </if>   
+		     /* 데이터 처리 */
+		     ----------------------------------------------------------------------------------------------------------------------------------
+		     , SUM(VIEW_BASE_AVG_AMT)                                                                                                AS BASE_AVG_AMT
+		     , SUM(VIEW_BASE_INT_AMT)                                                                                                AS BASE_INT_AMT
+		     , CASE 
+		        WHEN NVL(SUM(BASE_AVG_AMT),0) = 0 THEN 0 
+		        ELSE ROUND(( SUM(BASE_INT_AMT) / SUM(BASE_AVG_AMT) ) * 365 / TO_NUMBER(TO_CHAR(TO_DATE(#{BASE_DATE},'YYYYMMDD'),'DD')) * 100, 2)  
+		       END                                   
+		                                                                                                                        	 AS BASE_PROF_RT
+		     ----------------------------------------------------------------------------------------------------------------------------------
+		     , SUM(VIEW_AVG_AMT1)                                                                                                    AS AVG_AMT1
+		     , SUM(VIEW_INT_AMT_1)                                                                                                   AS INT_AMT1
+		     , CASE 
+		        WHEN NVL(SUM(AVG_AMT1),0) = 0 THEN 0 
+		        ELSE ROUND(( SUM(INT_AMT_1) / SUM(AVG_AMT1) ) * 365 / TO_NUMBER(TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),1),'DD')) * 100, 2)  
+		       END                                                                                                              	 AS PROF_RT1
+		     ----------------------------------------------------------------------------------------------------------------------------------
+		     , SUM(VIEW_AVG_AMT2)                                                                                                    AS AVG_AMT2
+		     , SUM(VIEW_INT_AMT_2)                                                                                                   AS INT_AMT2
+		     , CASE 
+		        WHEN NVL(SUM(AVG_AMT2),0) = 0 THEN 0 
+		        ELSE ROUND(( SUM(INT_AMT_2) / SUM(AVG_AMT2) ) * 365 / TO_NUMBER(TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),2),'DD')) * 100, 2)
+		       END                                                                                                              	 AS PROF_RT2
+		     ----------------------------------------------------------------------------------------------------------------------------------
+		     , SUM(VIEW_AVG_AMT3)                                                                                                    AS AVG_AMT3
+		     , SUM(VIEW_INT_AMT_3)                                                                                                   AS INT_AMT3
+		     , CASE 
+		        WHEN NVL(SUM(AVG_AMT3),0) = 0 THEN 0 
+		        ELSE ROUND(( SUM(INT_AMT_3) / SUM(AVG_AMT3) ) * 365 / TO_NUMBER(TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),3),'DD')) * 100, 2)
+		       END                                                                                                              	 AS PROF_RT3
+		     ----------------------------------------------------------------------------------------------------------------------------------
+		     , SUM(VIEW_AVG_AMT4)                                                                                                    AS AVG_AMT4
+		     , SUM(VIEW_INT_AMT_4)                                                                                                   AS INT_AMT4
+		     , CASE 
+		        WHEN NVL(SUM(AVG_AMT4),0) = 0 THEN 0 
+		        ELSE ROUND(( SUM(INT_AMT_4) / SUM(AVG_AMT4) ) * 365 / TO_NUMBER(TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),4),'DD')) * 100, 2)
+		       END                                                                                                              	 AS PROF_RT4
+		     ----------------------------------------------------------------------------------------------------------------------------------
+		     , SUM(VIEW_AVG_AMT5)                                                                                                    AS AVG_AMT5
+		     , SUM(VIEW_INT_AMT_5)                                                                                                   AS INT_AMT5
+		     , CASE 
+		        WHEN NVL(SUM(AVG_AMT5),0) = 0 THEN 0 
+		        ELSE ROUND(( SUM(INT_AMT_5) / SUM(AVG_AMT5) ) * 365 / TO_NUMBER(TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),5),'DD')) * 100, 2)
+		       END                                                                                                              	 AS PROF_RT5
+		     ----------------------------------------------------------------------------------------------------------------------------------
+		     , SUM(VIEW_AVG_AMT6)                                                                                                    AS AVG_AMT6
+		     , SUM(VIEW_INT_AMT_6)                                                                                                   AS INT_AMT6
+		     , CASE 
+		        WHEN NVL(SUM(AVG_AMT6),0) = 0 THEN 0 
+		        ELSE ROUND(( SUM(INT_AMT_6) / SUM(AVG_AMT6) ) * 365 / TO_NUMBER(TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),6),'DD')) * 100, 2)
+		       END                                                                                                              	 AS PROF_RT6
+		     ----------------------------------------------------------------------------------------------------------------------------------
+		     , SUM(VIEW_AVG_AMT7)                                                                                                    AS AVG_AMT7
+		     , SUM(VIEW_INT_AMT_7)                                                                                                   AS INT_AMT7
+		     , CASE 
+		        WHEN NVL(SUM(AVG_AMT7),0) = 0 THEN 0 
+		        ELSE ROUND(( SUM(INT_AMT_7) / SUM(AVG_AMT7) ) * 365 / TO_NUMBER(TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),7),'DD')) * 100, 2)
+		       END                                                                                                             		 AS PROF_RT7
+		     ----------------------------------------------------------------------------------------------------------------------------------
+		     , SUM(VIEW_AVG_AMT8)                                                                                                    AS AVG_AMT8
+		     , SUM(VIEW_INT_AMT_8)                                                                                                   AS INT_AMT8
+		     , CASE 
+		        WHEN NVL(SUM(AVG_AMT8),0) = 0 THEN 0 
+		        ELSE ROUND(( SUM(INT_AMT_8) / SUM(AVG_AMT8) ) * 365 / TO_NUMBER(TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),8),'DD')) * 100, 2)
+		       END                                                                                                             		 AS PROF_RT8
+		     ----------------------------------------------------------------------------------------------------------------------------------
+		     , SUM(VIEW_AVG_AMT9)                                                                                                    AS AVG_AMT9
+		     , SUM(VIEW_INT_AMT_9)                                                                                                   AS INT_AMT9
+		     , CASE 
+		        WHEN NVL(SUM(AVG_AMT9),0) = 0 THEN 0 
+		        ELSE ROUND(( SUM(INT_AMT_9) / SUM(AVG_AMT9) ) * 365 / TO_NUMBER(TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),9),'DD')) * 100, 2)
+		       END                                                                                                              	 AS PROF_RT9
+		     ----------------------------------------------------------------------------------------------------------------------------------
+		     , SUM(VIEW_AVG_AMT10)                                                                                                   AS AVG_AMT10
+		     , SUM(VIEW_INT_AMT_10)                                                                                                  AS INT_AMT10
+		     , CASE 
+		        WHEN NVL(SUM(AVG_AMT10),0) = 0 THEN 0 
+		        ELSE ROUND(( SUM(INT_AMT_10) / SUM(AVG_AMT10) ) * 365 / TO_NUMBER(TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),10),'DD')) * 100, 2)
+		       END                                                                                                              	 AS PROF_RT10
+		     ----------------------------------------------------------------------------------------------------------------------------------
+		     , SUM(VIEW_AVG_AMT11)                                                                                                   AS AVG_AMT11
+		     , SUM(VIEW_INT_AMT_11)                                                                                                  AS INT_AMT11
+		     , CASE 
+		        WHEN NVL(SUM(AVG_AMT11),0) = 0 THEN 0 
+		        ELSE ROUND(( SUM(INT_AMT_11) / SUM(AVG_AMT11) ) * 365 / TO_NUMBER(TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),11),'DD')) * 100, 2)
+		       END                                                                                                              	 AS PROF_RT11
+		     ----------------------------------------------------------------------------------------------------------------------------------
+		     , SUM(VIEW_AVG_AMT12)                                                                                                   AS AVG_AMT12
+		     , SUM(VIEW_INT_AMT_12)                                                                                                  AS INT_AMT12
+		     , CASE 
+		        WHEN NVL(SUM(AVG_AMT12),0) = 0 THEN 0 
+		        ELSE ROUND(( SUM(INT_AMT_12) / SUM(AVG_AMT12) ) * 365 / TO_NUMBER(TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),12),'DD')) * 100, 2)
+		       END                                                                                                              	 AS PROF_RT12
+		     ----------------------------------------------------------------------------------------------------------------------------------
+		     , SUM(VIEW_AVG_AMT13)                                                                                                   AS AVG_AMT13
+		     , SUM(VIEW_INT_AMT_13)                                                                                                  AS INT_AMT13
+		     , CASE 
+		        WHEN NVL(SUM(AVG_AMT13),0) = 0 THEN 0 
+		        ELSE ROUND(( SUM(INT_AMT_13) / SUM(AVG_AMT13) ) * 365 / TO_NUMBER(TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),13),'DD')) * 100, 2)
+		       END                                                                                                              	 AS PROF_RT13
+		     ----------------------------------------------------------------------------------------------------------------------------------
+		     , SUM(VIEW_AVG_AMT14)                                                                                                   AS AVG_AMT14
+		     , SUM(VIEW_INT_AMT_14)                                                                                                  AS INT_AMT14
+		     , CASE 
+		        WHEN NVL(SUM(AVG_AMT14),0) = 0 THEN 0 
+		        ELSE ROUND(( SUM(INT_AMT_14) / SUM(AVG_AMT14) ) * 365 / TO_NUMBER(TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),14),'DD')) * 100, 2)
+		       END                                                                                                              	 AS PROF_RT14
+		     ----------------------------------------------------------------------------------------------------------------------------------
+		     , SUM(VIEW_AVG_AMT15)                                                                                                   AS AVG_AMT15
+		     , SUM(VIEW_INT_AMT_15)                                                                                                  AS INT_AMT15
+		     , CASE 
+		        WHEN NVL(SUM(AVG_AMT15),0) = 0 THEN 0 
+		        ELSE ROUND(( SUM(INT_AMT_15) / SUM(AVG_AMT15) ) * 365 / TO_NUMBER(TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),15),'DD')) * 100, 2)
+		       END                                                                                                              	 AS PROF_RT15
+		     ----------------------------------------------------------------------------------------------------------------------------------
+		     , SUM(VIEW_AVG_AMT16)                                                                                                   AS AVG_AMT16
+		     , SUM(VIEW_INT_AMT_16)                                                                                                  AS INT_AMT16
+		     , CASE 
+		        WHEN NVL(SUM(AVG_AMT16),0) = 0 THEN 0 
+		        ELSE ROUND(( SUM(INT_AMT_16) / SUM(AVG_AMT16) ) * 365 / TO_NUMBER(TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),16),'DD')) * 100, 2)
+		       END                                                                                                              	 AS PROF_RT16
+		     ----------------------------------------------------------------------------------------------------------------------------------
+		     , SUM(VIEW_AVG_AMT17)                                                                                                   AS AVG_AMT17
+		     , SUM(VIEW_INT_AMT_17)                                                                                                  AS INT_AMT17
+		     , CASE 
+		        WHEN NVL(SUM(AVG_AMT17),0) = 0 THEN 0 
+		        ELSE ROUND(( SUM(INT_AMT_17) / SUM(AVG_AMT17) ) * 365 / TO_NUMBER(TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),17),'DD')) * 100, 2)
+		       END                                                                                                              	 AS PROF_RT17
+		     ----------------------------------------------------------------------------------------------------------------------------------
+		     , SUM(VIEW_AVG_AMT18)                                                                                                   AS AVG_AMT18
+		     , SUM(VIEW_INT_AMT_18)                                                                                                  AS INT_AMT18
+		     , CASE 
+		        WHEN NVL(SUM(AVG_AMT18),0) = 0 THEN 0 
+		        ELSE ROUND(( SUM(INT_AMT_18) / SUM(AVG_AMT18) ) * 365 / TO_NUMBER(TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),18),'DD')) * 100, 2)
+		       END                                                                                                              	 AS PROF_RT18
+		     ----------------------------------------------------------------------------------------------------------------------------------
+		     , SUM(VIEW_AVG_AMT24)                                                                                                   AS AVG_AMT24
+		     , SUM(VIEW_INT_AMT_24)                                                                                                  AS INT_AMT24
+		     , CASE 
+		        WHEN NVL(SUM(AVG_AMT24),0) = 0 THEN 0 
+		        ELSE ROUND(( SUM(INT_AMT_24) / SUM(AVG_AMT24) ) * 365 / ( ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),25) - ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),19) + 1 ) * 100, 2)
+		       END                                                                                                              	 AS PROF_RT24
+		     ----------------------------------------------------------------------------------------------------------------------------------
+		FROM
+			(
+		    SELECT
+		          B.LVL1 
+		        <if test="LVL == 2">
+		        , B.LVL2
+		        </if>
+		        <if test="LVL == 3">
+		        , B.LVL2
+		        , B.LVL3
+		        </if>
+		        <if test="LVL == 4">
+		        , B.LVL2
+		        , B.LVL3
+		        , B.LVL4
+		        </if>
+		        <if test="LVL == 5">
+		        , B.LVL2
+		        , B.LVL3
+		        , B.LVL4
+		        , B.LVL5
+		        </if>
+		        <if test="LVL == 6">
+		        , B.LVL2
+		        , B.LVL3
+		        , B.LVL4
+		        , B.LVL5
+		        , B.LVL6
+		        </if>
+		        <if test="LVL == 7">
+		        , B.LVL2
+		        , B.LVL3
+		        , B.LVL4
+		        , B.LVL5
+		        , B.LVL6
+		        , B.LVL7
+		     	</if>
+			    /* 데이터 컬럼 */
+			    -------------------------------------------
+			    , SUM(A.BASE_AVG_AMT )    AS  BASE_AVG_AMT
+			    , SUM(A.BASE_INT_AMT )    AS  BASE_INT_AMT
+			    , SUM(A.AVG_AMT1)         AS  AVG_AMT1
+			    , SUM(A.AVG_AMT2)         AS  AVG_AMT2
+			    , SUM(A.AVG_AMT3)         AS  AVG_AMT3
+			    , SUM(A.AVG_AMT4)         AS  AVG_AMT4
+			    , SUM(A.AVG_AMT5)         AS  AVG_AMT5
+			    , SUM(A.AVG_AMT6)         AS  AVG_AMT6
+			    , SUM(A.AVG_AMT7)         AS  AVG_AMT7
+			    , SUM(A.AVG_AMT8)         AS  AVG_AMT8
+			    , SUM(A.AVG_AMT9)         AS  AVG_AMT9
+			    , SUM(A.AVG_AMT10)        AS  AVG_AMT10
+			    , SUM(A.AVG_AMT11)        AS  AVG_AMT11
+			    , SUM(A.AVG_AMT12)        AS  AVG_AMT12
+			    , SUM(A.AVG_AMT13)        AS  AVG_AMT13
+			    , SUM(A.AVG_AMT14)        AS  AVG_AMT14
+			    , SUM(A.AVG_AMT15)        AS  AVG_AMT15
+			    , SUM(A.AVG_AMT16)        AS  AVG_AMT16
+			    , SUM(A.AVG_AMT17)        AS  AVG_AMT17
+			    , SUM(A.AVG_AMT18)        AS  AVG_AMT18
+			    , SUM(A.AVG_AMT24)        AS  AVG_AMT24
+			    , SUM(A.INT_AMT_1 )       AS  INT_AMT_1 
+			    , SUM(A.INT_AMT_2 )       AS  INT_AMT_2 
+			    , SUM(A.INT_AMT_3 )       AS  INT_AMT_3 
+			    , SUM(A.INT_AMT_4 )       AS  INT_AMT_4 
+			    , SUM(A.INT_AMT_5 )       AS  INT_AMT_5 
+			    , SUM(A.INT_AMT_6 )       AS  INT_AMT_6 
+			    , SUM(A.INT_AMT_7 )       AS  INT_AMT_7 
+			    , SUM(A.INT_AMT_8 )       AS  INT_AMT_8 
+			    , SUM(A.INT_AMT_9 )       AS  INT_AMT_9 
+			    , SUM(A.INT_AMT_10)       AS  INT_AMT_10
+			    , SUM(A.INT_AMT_11)       AS  INT_AMT_11
+			    , SUM(A.INT_AMT_12)       AS  INT_AMT_12
+			    , SUM(A.INT_AMT_13)       AS  INT_AMT_13
+		        , SUM(A.INT_AMT_14)       AS  INT_AMT_14
+			    , SUM(A.INT_AMT_15)       AS  INT_AMT_15
+			    , SUM(A.INT_AMT_16)       AS  INT_AMT_16
+			    , SUM(A.INT_AMT_17)       AS  INT_AMT_17
+			    , SUM(A.INT_AMT_18)       AS  INT_AMT_18
+			    , SUM(A.INT_AMT_24)       AS  INT_AMT_24
+		        -----------------------------------------화면뷰데이터
+		        , CASE WHEN NVL(SUM(A.BASE_AVG_AMT),0) = 0 THEN 0 ELSE ROUND( SUM(A.BASE_AVG_AMT) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_BASE_AVG_AMT
+		        , CASE WHEN NVL(SUM(A.BASE_INT_AMT),0) = 0 THEN 0 ELSE ROUND( SUM(A.BASE_INT_AMT) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_BASE_INT_AMT
+		        , CASE WHEN NVL(SUM(A.AVG_AMT1    ),0) = 0 THEN 0 ELSE ROUND( SUM(A.AVG_AMT1    ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_AVG_AMT1    
+		        , CASE WHEN NVL(SUM(A.AVG_AMT2    ),0) = 0 THEN 0 ELSE ROUND( SUM(A.AVG_AMT2    ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_AVG_AMT2    
+		        , CASE WHEN NVL(SUM(A.AVG_AMT3    ),0) = 0 THEN 0 ELSE ROUND( SUM(A.AVG_AMT3    ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_AVG_AMT3    
+		        , CASE WHEN NVL(SUM(A.AVG_AMT4    ),0) = 0 THEN 0 ELSE ROUND( SUM(A.AVG_AMT4    ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_AVG_AMT4    
+		        , CASE WHEN NVL(SUM(A.AVG_AMT5    ),0) = 0 THEN 0 ELSE ROUND( SUM(A.AVG_AMT5    ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_AVG_AMT5    
+		        , CASE WHEN NVL(SUM(A.AVG_AMT6    ),0) = 0 THEN 0 ELSE ROUND( SUM(A.AVG_AMT6    ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_AVG_AMT6    
+		        , CASE WHEN NVL(SUM(A.AVG_AMT7    ),0) = 0 THEN 0 ELSE ROUND( SUM(A.AVG_AMT7    ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_AVG_AMT7    
+		        , CASE WHEN NVL(SUM(A.AVG_AMT8    ),0) = 0 THEN 0 ELSE ROUND( SUM(A.AVG_AMT8    ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_AVG_AMT8    
+		        , CASE WHEN NVL(SUM(A.AVG_AMT9    ),0) = 0 THEN 0 ELSE ROUND( SUM(A.AVG_AMT9    ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_AVG_AMT9    
+		        , CASE WHEN NVL(SUM(A.AVG_AMT10   ),0) = 0 THEN 0 ELSE ROUND( SUM(A.AVG_AMT10   ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_AVG_AMT10   
+		        , CASE WHEN NVL(SUM(A.AVG_AMT11   ),0) = 0 THEN 0 ELSE ROUND( SUM(A.AVG_AMT11   ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_AVG_AMT11   
+		        , CASE WHEN NVL(SUM(A.AVG_AMT12   ),0) = 0 THEN 0 ELSE ROUND( SUM(A.AVG_AMT12   ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_AVG_AMT12   
+		        , CASE WHEN NVL(SUM(A.AVG_AMT13   ),0) = 0 THEN 0 ELSE ROUND( SUM(A.AVG_AMT13   ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_AVG_AMT13   
+		        , CASE WHEN NVL(SUM(A.AVG_AMT14   ),0) = 0 THEN 0 ELSE ROUND( SUM(A.AVG_AMT14   ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_AVG_AMT14   
+		        , CASE WHEN NVL(SUM(A.AVG_AMT15   ),0) = 0 THEN 0 ELSE ROUND( SUM(A.AVG_AMT15   ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_AVG_AMT15   
+		        , CASE WHEN NVL(SUM(A.AVG_AMT16   ),0) = 0 THEN 0 ELSE ROUND( SUM(A.AVG_AMT16   ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_AVG_AMT16   
+		        , CASE WHEN NVL(SUM(A.AVG_AMT17   ),0) = 0 THEN 0 ELSE ROUND( SUM(A.AVG_AMT17   ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_AVG_AMT17   
+		        , CASE WHEN NVL(SUM(A.AVG_AMT18   ),0) = 0 THEN 0 ELSE ROUND( SUM(A.AVG_AMT18   ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_AVG_AMT18   
+		        , CASE WHEN NVL(SUM(A.AVG_AMT24   ),0) = 0 THEN 0 ELSE ROUND( SUM(A.AVG_AMT24   ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_AVG_AMT24   
+		        , CASE WHEN NVL(SUM(A.INT_AMT_1   ),0) = 0 THEN 0 ELSE ROUND( SUM(A.INT_AMT_1   ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_INT_AMT_1   
+		        , CASE WHEN NVL(SUM(A.INT_AMT_2   ),0) = 0 THEN 0 ELSE ROUND( SUM(A.INT_AMT_2   ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_INT_AMT_2   
+		        , CASE WHEN NVL(SUM(A.INT_AMT_3   ),0) = 0 THEN 0 ELSE ROUND( SUM(A.INT_AMT_3   ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_INT_AMT_3   
+		        , CASE WHEN NVL(SUM(A.INT_AMT_4   ),0) = 0 THEN 0 ELSE ROUND( SUM(A.INT_AMT_4   ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_INT_AMT_4   
+		        , CASE WHEN NVL(SUM(A.INT_AMT_5   ),0) = 0 THEN 0 ELSE ROUND( SUM(A.INT_AMT_5   ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_INT_AMT_5   
+		        , CASE WHEN NVL(SUM(A.INT_AMT_6   ),0) = 0 THEN 0 ELSE ROUND( SUM(A.INT_AMT_6   ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_INT_AMT_6   
+		        , CASE WHEN NVL(SUM(A.INT_AMT_7   ),0) = 0 THEN 0 ELSE ROUND( SUM(A.INT_AMT_7   ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_INT_AMT_7   
+		        , CASE WHEN NVL(SUM(A.INT_AMT_8   ),0) = 0 THEN 0 ELSE ROUND( SUM(A.INT_AMT_8   ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_INT_AMT_8   
+		        , CASE WHEN NVL(SUM(A.INT_AMT_9   ),0) = 0 THEN 0 ELSE ROUND( SUM(A.INT_AMT_9   ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_INT_AMT_9   
+		        , CASE WHEN NVL(SUM(A.INT_AMT_10  ),0) = 0 THEN 0 ELSE ROUND( SUM(A.INT_AMT_10  ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_INT_AMT_10  
+		        , CASE WHEN NVL(SUM(A.INT_AMT_11  ),0) = 0 THEN 0 ELSE ROUND( SUM(A.INT_AMT_11  ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_INT_AMT_11  
+		        , CASE WHEN NVL(SUM(A.INT_AMT_12  ),0) = 0 THEN 0 ELSE ROUND( SUM(A.INT_AMT_12  ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_INT_AMT_12  
+		        , CASE WHEN NVL(SUM(A.INT_AMT_13  ),0) = 0 THEN 0 ELSE ROUND( SUM(A.INT_AMT_13  ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_INT_AMT_13  
+		        , CASE WHEN NVL(SUM(A.INT_AMT_14  ),0) = 0 THEN 0 ELSE ROUND( SUM(A.INT_AMT_14  ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_INT_AMT_14  
+		        , CASE WHEN NVL(SUM(A.INT_AMT_15  ),0) = 0 THEN 0 ELSE ROUND( SUM(A.INT_AMT_15  ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_INT_AMT_15  
+		        , CASE WHEN NVL(SUM(A.INT_AMT_16  ),0) = 0 THEN 0 ELSE ROUND( SUM(A.INT_AMT_16  ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_INT_AMT_16  
+		        , CASE WHEN NVL(SUM(A.INT_AMT_17  ),0) = 0 THEN 0 ELSE ROUND( SUM(A.INT_AMT_17  ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_INT_AMT_17  
+		        , CASE WHEN NVL(SUM(A.INT_AMT_18  ),0) = 0 THEN 0 ELSE ROUND( SUM(A.INT_AMT_18  ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_INT_AMT_18  
+		        , CASE WHEN NVL(SUM(A.INT_AMT_24  ),0) = 0 THEN 0 ELSE ROUND( SUM(A.INT_AMT_24  ) / TO_NUMBER(#{AMT_UNIT}) ) END  AS VIEW_INT_AMT_24 
+			    -------------------------------------------
+		        , MAX(B.PRNT_ORD1)        AS PRNT_ORD1
+		        <if test="LVL == 2">
+		        , MAX(B.PRNT_ORD2)        AS PRNT_ORD2
+		        </if>
+		        <if test="LVL == 3">
+		        , MAX(B.PRNT_ORD2)        AS PRNT_ORD2
+		        , MAX(B.PRNT_ORD3)        AS PRNT_ORD3
+		        </if>
+		        <if test="LVL == 4">
+		        , MAX(B.PRNT_ORD2)        AS PRNT_ORD2
+		        , MAX(B.PRNT_ORD3)        AS PRNT_ORD3
+		        , MAX(B.PRNT_ORD4)        AS PRNT_ORD4
+		        </if>
+		        <if test="LVL == 5">
+		        , MAX(B.PRNT_ORD2)        AS PRNT_ORD2
+		        , MAX(B.PRNT_ORD3)        AS PRNT_ORD3
+		        , MAX(B.PRNT_ORD4)        AS PRNT_ORD4
+		        , MAX(B.PRNT_ORD5)        AS PRNT_ORD5
+		        </if>
+		        <if test="LVL == 6">
+		        , MAX(B.PRNT_ORD2)        AS PRNT_ORD2
+		        , MAX(B.PRNT_ORD3)        AS PRNT_ORD3
+		        , MAX(B.PRNT_ORD4)        AS PRNT_ORD4
+		        , MAX(B.PRNT_ORD5)        AS PRNT_ORD5
+		        , MAX(B.PRNT_ORD6)        AS PRNT_ORD6
+		        </if>
+		        <if test="LVL == 7">
+		        , MAX(B.PRNT_ORD2)        AS PRNT_ORD2
+		        , MAX(B.PRNT_ORD3)        AS PRNT_ORD3
+		        , MAX(B.PRNT_ORD4)        AS PRNT_ORD4
+		        , MAX(B.PRNT_ORD5)        AS PRNT_ORD5
+		        , MAX(B.PRNT_ORD6)        AS PRNT_ORD6
+		        , MAX(B.PRNT_ORD7)        AS PRNT_ORD7
+		     	</if>
+		    	FROM TEMP A,
+		    	(
+			        SELECT 
+			              LEVEL AS LVL
+			            , SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%') AS ACCT_C_NM_PATH
+			            , REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 1 )                      AS LVL1
+			            , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 2 ),TRIM(ACCT_C_NM)) AS LVL2
+			            , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 3 ),TRIM(ACCT_C_NM)) AS LVL3
+			            , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 4 ),TRIM(ACCT_C_NM)) AS LVL4
+			            , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 5 ),TRIM(ACCT_C_NM)) AS LVL5
+			            , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 6 ),TRIM(ACCT_C_NM)) AS LVL6
+			            , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 7 ),TRIM(ACCT_C_NM)) AS LVL7
+			            , TRIM(ACCT_C_NM)
+			            , ORG_CLAS_C
+			            , ACCT_C
+			            , UP_ACCT_C
+			            , AC_BUSI_TC
+			            , TO_NUMBER(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 1 ) )                           AS PRNT_ORD1
+			            , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 2 ),TRIM(PRNT_ORD)))        AS PRNT_ORD2
+			            , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 3 ),TRIM(PRNT_ORD)))        AS PRNT_ORD3
+			            , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 4 ),TRIM(PRNT_ORD)))        AS PRNT_ORD4
+			            , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 5 ),TRIM(PRNT_ORD)))        AS PRNT_ORD5
+			            , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 6 ),TRIM(PRNT_ORD)))        AS PRNT_ORD6
+			            , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 7 ),TRIM(PRNT_ORD)))        AS PRNT_ORD7
+			        FROM TSY_ACCT_MSTR_MNG
+			        WHERE BASE_DATE = (SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE &lt;= #{BASE_DATE})
+			       <if test="AC_BUSI_TC != null and AC_BUSI_TC != '' and AC_BUSI_TC != '0000'">
+			          AND ORG_CLAS_C = #{ORG_CLAS_C}
+			       	  AND AC_BUSI_TC = #{AC_BUSI_TC} /*회계구분*/
+			       </if>
+			       <if test="AC_BUSI_TC == '0000'">
+			       	  AND AC_BUSI_TC = '1105'        /*전체합산인 경우 '1105'로 보기 */
+			       </if>
+			        START WITH UP_ACCT_C = '0000000'
+			        CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+		    	) B
+			    WHERE 1 = 1
+			      AND A.ACCT_C     = B.ACCT_C
+			      AND A.ORG_CLAS_C = B.ORG_CLAS_C
+			      AND A.AC_BUSI_TC = B.AC_BUSI_TC
+			    GROUP BY
+			          B.LVL1 
+			        <if test="LVL == 2">
+			        , B.LVL2
+			        </if>
+			        <if test="LVL == 3">
+			        , B.LVL2
+			        , B.LVL3
+			        </if>
+			        <if test="LVL == 4">
+			        , B.LVL2
+			        , B.LVL3
+			        , B.LVL4
+			        </if>
+			        <if test="LVL == 5">
+			        , B.LVL2
+			        , B.LVL3
+			        , B.LVL4
+			        , B.LVL5
+			        </if>
+			        <if test="LVL == 6">
+			        , B.LVL2
+			        , B.LVL3
+			        , B.LVL4
+			        , B.LVL5
+			        , B.LVL6
+			        </if>
+			        <if test="LVL == 7">
+			        , B.LVL2
+			        , B.LVL3
+			        , B.LVL4
+			        , B.LVL5
+			        , B.LVL6
+			        , B.LVL7
+			     </if>
+				)
+			
+					GROUP BY
+						  LVL1
+					<if test="LVL == 1">     		 
+					ORDER BY
+					      MAX(PRNT_ORD1)
+					</if> 
+					<if test="LVL == 2"> 
+				     	, ROLLUP( LVL2 ) 
+					ORDER BY
+					      MAX(PRNT_ORD1)
+					    , MAX(PRNT_ORD2)
+					    , GRP_ID
+					</if> 
+					<if test="LVL == 3"> 
+				     	, ROLLUP( LVL2, LVL3 ) 
+					ORDER BY
+					      MAX(PRNT_ORD1)
+					    , MAX(PRNT_ORD2)
+					    , MAX(PRNT_ORD3)
+					    , GRP_ID
+					</if> 
+					<if test="LVL == 4"> 
+				     	, ROLLUP( LVL2, LVL3, LVL4 ) 
+					ORDER BY
+					      MAX(PRNT_ORD1)
+					    , MAX(PRNT_ORD2)
+					    , MAX(PRNT_ORD3)
+					    , MAX(PRNT_ORD4)
+					    , GRP_ID
+					</if> 
+					<if test="LVL == 5"> 
+				     	, ROLLUP( LVL2, LVL3, LVL4, LVL5 ) 
+					ORDER BY
+					      MAX(PRNT_ORD1)
+					    , MAX(PRNT_ORD2)
+					    , MAX(PRNT_ORD3)
+					    , MAX(PRNT_ORD4)
+					    , MAX(PRNT_ORD5)
+					    , GRP_ID
+					</if> 
+					<if test="LVL == 6"> 
+				        , ROLLUP( LVL2, LVL3, LVL4, LVL5, LVL6 ) 
+					ORDER BY
+					      MAX(PRNT_ORD1)
+					    , MAX(PRNT_ORD2)
+					    , MAX(PRNT_ORD3)
+					    , MAX(PRNT_ORD4)
+					    , MAX(PRNT_ORD5)
+					    , MAX(PRNT_ORD6)
+					    , GRP_ID
+					</if> 
+					<if test="LVL == 7"> 
+				     	, ROLLUP( LVL2, LVL3, LVL4, LVL5, LVL6, LVL7 ) 
+					ORDER BY
+					      MAX(PRNT_ORD1)
+					    , MAX(PRNT_ORD2)
+					    , MAX(PRNT_ORD3)
+					    , MAX(PRNT_ORD4)
+					    , MAX(PRNT_ORD5)
+					    , MAX(PRNT_ORD6)
+					    , MAX(PRNT_ORD7)
+					    , GRP_ID
+					</if> 
+						
+	
+    </select>
+    
+
+
+</mapper>

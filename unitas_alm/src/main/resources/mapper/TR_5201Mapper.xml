@@ -1,0 +1,653 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_5201Mapper">
+
+    <select id="getSnroNo" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+    SELECT NVL((SELECT SIMU_KIND_TC||LPAD(TO_CHAR(TO_NUMBER(SUBSTR( MAX(SIMU_NO), 2,3)) + 1), 3, '0')
+                  FROM TSI_USER_SIMU_MNG
+                 WHERE ORG_CLAS_C    = #{ORG_CLAS_C}
+                   AND BR_C          = #{BR_C}
+                   AND AC_BUSI_TC    = #{AC_BUSI_TC}
+                   AND SIMU_KIND_TC  = #{SIMU_KIND_TC}
+              GROUP BY SIMU_KIND_TC ),   #{SIMU_KIND_TC}||'001') AS SIMU_NO
+      FROM DUAL
+	</select>
+
+	<select id="selectMaxDate" parameterType="java.util.Map" resultType="String">
+		SELECT MAX(SIMU_ANAL_BASE_DATE) AS MAX_DATE FROM TSI_USER_SIMU_MNG
+	</select>
+
+	<select id="selectTr5201Main" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+SELECT A.DELETE_STATUS            /* 그리드 삭제 상태값      */            
+     , A.SIMU_NO                  /* 시뮬레이션번호 DISPLAY용*/
+     , A.SIMU_NO_ORG              /* 시뮬레이션번호          */    
+     , A.SIMU_NM                  /* 시뮬레이션명            */                
+     , A.SIMU_DESC                /* 시뮬레이션설명          */                 
+     , A.AC_BUSI_TC               /* 회계사업구분코드        */                  
+     , A.MA_BR_OF_TOT_YN          /* 본지소합산여부          */                 
+     , A.SIMU_KIND_TC             /* 시뮬레이션유형구분코드  */                     
+     , A.SIMU_EXEC_TC             /* 시뮬레이션실행구분코드  */                     
+     , A.SIMU_EXEC_ID             /* 시뮬레이션실행ID        */                 
+     , TO_CHAR(A.EXEC_ANAL_BASE_DATE, 'YYYY-MM-DD HH24:MI:SS') AS EXEC_ANAL_BASE_DATE      /* 실행분석기준일자        */
+     , A.SIMU_WORK_STAT_C         /* 시뮬레이션작업상태코드  */                     
+     , A.GRID_STATUS              /* 그리드 제어 상태값      */                  
+     , A.ORG_CLAS_C               /* 기관분류코드            */                
+     , A.BR_C                     /* 점소코드                */              
+     , A.RATE_SNRO_NO             /* 금리시나리오번호        */                  
+     , A.CAP_QTY_SNRO_NO          /* 자금량시나리오번호      */                   
+     , A.MTRT_CONS_SNRO_NO        /* 만기구조시나리오번호    */                    
+     , A.SPRD_SNRO_NO             /* Spread시나리오번호      */                
+     , A.CS_BHOR_SNRO_NO          /* 고객행동시나리오번호    */                    
+     , A.NEW_GD_SNRO_NO           /* 신상품시나리오번호      */                   
+     , A.SSAL_SNRO_NO             /* 특판시나리오번호        */                  
+     , A.NON_INT_PL_SNRO_NO       /* 비이자손익시나리오번호  */                     
+     , A.SIMU_ANAL_BASE_DATE      /* 시뮬레이션분석기준일자  */                     
+     , A.REG_BR_C                 /* 등록점소코드            */                
+     , A.LAST_CHNG_ID             /* 최종수정자ID            */
+     , B.BR_NM                    /* 점소명                  */
+     , B.MO_BR_C                  /* 모점소코드              */
+     , B.BLNG_HQ_BR_C             /* 소속본부점소코드        */
+     , C.LAST_CHNG_ID_NM          /* 최종수정자ID 명         */
+     , D.SIMU_EXEC_ID_NM          /* 시뮬레이션실행ID 명     */
+  FROM (
+       SELECT '0'   AS DELETE_STATUS   /*그리드 삭제 상태값       */
+            , CASE WHEN SIMU_NO LIKE 'U%' THEN  '사용자_'||SUBSTR(SIMU_NO,-3)
+                   ELSE '표준_'||SUBSTR(SIMU_NO,-3)
+              END   AS SIMU_NO         /* 시뮬레이션번호 DISPLAY용*/
+            , SIMU_NO   AS SIMU_NO_ORG  
+            , SIMU_NM                  /* 시뮬레이션명            */
+            , SIMU_DESC                /* 시뮬레이션설명          */
+            , AC_BUSI_TC               /* 회계사업구분코드        */
+            , MA_BR_OF_TOT_YN          /* 본지소합산여부          */
+            , SIMU_KIND_TC             /* 시뮬레이션유형구분코드  */
+            , SIMU_EXEC_TC             /* 시뮬레이션실행구분코드  */
+            , SIMU_EXEC_ID             /* 시뮬레이션실행ID        */
+            , EXEC_ANAL_BASE_DATE      /* 실행분석기준일자        */
+            , SIMU_WORK_STAT_C         /* 시뮬레이션작업상태코드  */
+            , '1'   AS GRID_STATUS     /* 그리드 제어 상태값      */
+            , ORG_CLAS_C               /* 기관분류코드            */
+            , BR_C                     /* 점소코드                */
+            , RATE_SNRO_NO             /* 금리시나리오번호        */
+            , CAP_QTY_SNRO_NO          /* 자금량시나리오번호      */
+            , MTRT_CONS_SNRO_NO        /* 만기구조시나리오번호    */
+            , SPRD_SNRO_NO             /* Spread시나리오번호      */
+            , CS_BHOR_SNRO_NO          /* 고객행동시나리오번호    */
+            , NEW_GD_SNRO_NO           /* 신상품시나리오번호      */
+            , SSAL_SNRO_NO             /* 특판시나리오번호        */
+            , NON_INT_PL_SNRO_NO       /* 비이자손익시나리오번호  */
+            , SIMU_ANAL_BASE_DATE      /* 시뮬레이션분석기준일자  */
+            , REG_BR_C                 /* 등록점소코드            */
+            , LAST_CHNG_ID
+         FROM TSI_USER_SIMU_MNG
+        WHERE AC_BUSI_TC          = #{AC_BUSI_TC}
+          AND ORG_CLAS_C          = #{ORG_CLAS_C}
+          <choose>
+              <when test="MO_BR_C == 'ALL'">
+                  AND (BR_C = '000' OR SIMU_KIND_TC = 'S') /*전체조합*/
+              </when>
+              <when test="MO_BR_C == '001'">
+                  AND (BR_C = #{BR_C} OR SIMU_KIND_TC = 'S') /*도지회별 합산, 중앙회*/
+              </when>
+              <otherwise>
+                  AND (BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{MO_BR_C}) OR SIMU_KIND_TC = 'S') /*단위조합별 조회*/
+              </otherwise>
+          </choose>          
+     )  A     
+     , (
+        SELECT '000'      AS MO_BR_C
+             , '000'      AS BR_C
+             , '전체조합' AS BR_NM
+             , '000'      AS BLNG_HQ_BR_C
+          FROM DUAL
+        UNION ALL
+        SELECT MO_BR_C
+             , BR_C
+		     , BR_NM
+		     , BLNG_HQ_BR_C
+		  FROM TTL_BR_C_INFO
+         GROUP BY MO_BR_C
+                , BR_C
+                , BR_NM
+                , BLNG_HQ_BR_C
+       ) B
+     , (
+        SELECT USID     AS LAST_CHNG_ID
+             , USER_NM  AS LAST_CHNG_ID_NM
+          FROM TSY_USER_MNG 
+         WHERE USE_YN = 'Y'
+       ) C
+     , (
+        SELECT USID     AS SIMU_EXEC_ID
+             , USER_NM  AS SIMU_EXEC_ID_NM
+          FROM TSY_USER_MNG 
+         WHERE USE_YN = 'Y'
+       ) D
+ WHERE A.BR_C         = B.BR_C(+)
+   AND A.LAST_CHNG_ID = C.LAST_CHNG_ID(+)
+   AND A.SIMU_EXEC_ID = D.SIMU_EXEC_ID(+)
+ ORDER BY A.SIMU_NO_ORG          
+	</select>
+	
+	
+	<select id="selectUserSnroDisplay" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+        SELECT ORG_CLAS_C          /* 기관분류코드          */
+             , BR_C                /* 점소코드              */
+             , SNRO_KIND_C         /* 시나리오유형코드      */
+             , SNRO_NO             /* 시나리오번호          */
+             , SNRO_KIND_TC        /* 시나리오유형구분코드  */
+             , SNRO_NM             /* 시나리오명            */
+             , SNRO_CNTN           /* 시나리오내용          */
+             , APLY_AMT_TC         /* 적용금액구분코드      */
+          FROM TSI_USER_SNRO_MNG
+         WHERE BR_C         = #{BR_C}
+           AND ORG_CLAS_C   = #{ORG_CLAS_C}
+         ORDER BY ORG_CLAS_C
+                , BR_C 
+                , SNRO_KIND_C
+                , SNRO_NO
+                , SNRO_KIND_TC
+	</select>
+	
+	
+	<insert id="insertTr5201" parameterType="java.util.Map">
+        INSERT INTO TSI_USER_SIMU_MNG
+        (
+              ORG_CLAS_C
+            , BR_C
+            , AC_BUSI_TC
+            , SIMU_NO
+            , SIMU_KIND_TC
+            , SIMU_NM
+            , SIMU_DESC
+            , MA_BR_OF_TOT_YN
+            , RATE_SNRO_NO
+            , CAP_QTY_SNRO_NO
+            , MTRT_CONS_SNRO_NO
+            , SPRD_SNRO_NO
+            , CS_BHOR_SNRO_NO
+            , NEW_GD_SNRO_NO
+            , SSAL_SNRO_NO
+            , NON_INT_PL_SNRO_NO
+            , REG_BR_C
+            , SIMU_EXEC_TC
+            , SIMU_ANAL_BASE_DATE
+            , SIMU_EXEC_ID
+            , EXEC_ANAL_BASE_DATE
+            , SIMU_WORK_STAT_C
+            , LAST_CHNG_ID
+            , LAST_CHNG_DT
+		) VALUES (
+              #{ORG_CLAS_C}
+            , #{BR_C}
+            , #{AC_BUSI_TC}
+            , #{SIMU_NO}
+            , #{SIMU_KIND_TC}
+            , #{SIMU_NM}
+            , #{SIMU_DESC}
+            , #{MA_BR_OF_TOT_YN}
+            , #{RATE_SNRO_NO}
+            , #{CAP_QTY_SNRO_NO}
+            , #{MTRT_CONS_SNRO_NO}
+            , #{SPRD_SNRO_NO}
+            , #{CS_BHOR_SNRO_NO}
+            , #{NEW_GD_SNRO_NO}
+            , #{SSAL_SNRO_NO}
+            , #{NON_INT_PL_SNRO_NO}
+            , #{REG_BR_C}
+            , #{SIMU_EXEC_TC}
+            , TO_CHAR(LAST_DAY(TO_DATE(#{SIMU_ANAL_BASE_DATE}, 'YYYYMMDD')), 'YYYYMMDD')
+            , NULL
+            , NULL
+            , NULL
+            , #{LAST_CHNG_ID}
+            , SYSDATE
+		)
+	</insert>
+	
+	
+	<update id="updateTr5201" parameterType="java.util.Map">
+        UPDATE TSI_USER_SIMU_MNG
+           SET <!--  
+               SIMU_KIND_TC        = #{SIMU_KIND_TC}
+               -->
+               SIMU_NM             = #{SIMU_NM}
+             , SIMU_DESC           = #{SIMU_DESC}
+             , MA_BR_OF_TOT_YN     = #{MA_BR_OF_TOT_YN}
+             , RATE_SNRO_NO        = #{RATE_SNRO_NO}
+             , CAP_QTY_SNRO_NO     = #{CAP_QTY_SNRO_NO}
+             , MTRT_CONS_SNRO_NO   = #{MTRT_CONS_SNRO_NO}
+             , SPRD_SNRO_NO        = #{SPRD_SNRO_NO}
+             , CS_BHOR_SNRO_NO     = #{CS_BHOR_SNRO_NO}
+             , NEW_GD_SNRO_NO      = #{NEW_GD_SNRO_NO}
+             , SSAL_SNRO_NO        = #{SSAL_SNRO_NO}
+             , NON_INT_PL_SNRO_NO  = #{NON_INT_PL_SNRO_NO}
+             <!-- 
+             , REG_BR_C            = #{REG_BR_C}
+             , SIMU_EXEC_TC        = #{SIMU_EXEC_TC}
+             , SIMU_ANAL_BASE_DATE = #{SIMU_ANAL_BASE_DATE}
+             , SIMU_EXEC_ID        = #{SIMU_EXEC_ID}
+             , EXEC_ANAL_BASE_DATE = #{EXEC_ANAL_BASE_DATE}
+             , SIMU_WORK_STAT_C    = #{SIMU_WORK_STAT_C}
+             -->
+             , LAST_CHNG_ID        = #{LAST_CHNG_ID}
+             , LAST_CHNG_DT        = SYSDATE
+         WHERE ORG_CLAS_C = #{ORG_CLAS_C}
+           AND BR_C       = #{BR_C}
+           AND AC_BUSI_TC = #{AC_BUSI_TC}
+           AND SIMU_NO    = #{SIMU_NO}
+	</update>
+	
+	
+	<delete id="deleteTr5201" parameterType="java.util.Map">
+        DELETE FROM TSI_USER_SIMU_MNG
+         WHERE ORG_CLAS_C = #{ORG_CLAS_C}
+           AND BR_C       = #{BR_C}
+           AND AC_BUSI_TC = #{AC_BUSI_TC}
+           AND SIMU_NO    = #{SIMU_NO}
+	</delete>
+
+
+	<select id="selectTr5201SimulLog" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT BASE_DATE
+		     , PROC_NM
+		     , EXEC_STAG_NO
+		     , ALM_BTCH_LOG_CNTN
+		     , TO_CHAR(ALM_BTCH_LOG_DT, 'YYYY-MM-DD HH24:MI:SS') AS ALM_BTCH_LOG_DT
+		  FROM TSY_BATCH_LOG
+		 WHERE BASE_DATE  = #{BASE_DATE}
+		   AND PROC_NM    = 'SPSI_ALL_SNRO_APLY_MNG'
+		   AND ALM_BTCH_LOG_CNTN LIKE #{ORG_CLAS_C} || #{BR_C} || #{SIMU_NO} || '%'
+		   AND ALM_BTCH_LOG_DT >= (SELECT EXEC_ANAL_BASE_DATE
+		                             FROM TSI_USER_SIMU_MNG
+		                            WHERE ORG_CLAS_C  = #{ORG_CLAS_C}
+		                              AND BR_C        = #{BR_C}
+		                              AND SIMU_NO     = #{SIMU_NO} )
+		 ORDER BY EXEC_STAG_NO
+		        , ALM_BTCH_LOG_DT
+		        , PROC_NM 
+	</select>
+	
+		<!-- 배치실행 -->
+	<select id="execProcedures" statementType="CALLABLE" parameterType="java.util.Map">
+		CALL ALMADM.SPSI_ALL_SNRO_APLY_MNG (
+			#{BASE_DATE,   mode=IN, jdbcType=VARCHAR}
+			,#{ORG_CLAS_C, mode=IN, jdbcType=VARCHAR}
+			,#{BR_C,       mode=IN, jdbcType=VARCHAR}
+			,#{SIMU_NO,    mode=IN, jdbcType=VARCHAR}
+			,#{USER_ID,    mode=IN, jdbcType=VARCHAR}
+		)
+	</select>
+	
+	
+	<update id="updateExecProceduresInfo" parameterType="java.util.Map">
+		UPDATE TSI_USER_SIMU_MNG
+		   SET SIMU_EXEC_ID        = #{USER_ID}
+		     , SIMU_ANAL_BASE_DATE = #{BASE_DATE}
+		     , EXEC_ANAL_BASE_DATE = SYSDATE
+		     , SIMU_WORK_STAT_C    = 'P'     /*실행중*/
+		     , LAST_CHNG_ID        = #{USER_ID}
+		     , LAST_CHNG_DT        = SYSDATE
+		 WHERE ORG_CLAS_C = #{ORG_CLAS_C}
+		   AND BR_C       = #{BR_C}
+		   AND AC_BUSI_TC = #{AC_BUSI_TC}
+		   AND SIMU_NO    = #{SIMU_NO}
+	</update>
+		
+	<insert id="insertCopySimulData" parameterType="java.util.Map">
+INSERT INTO TSI_USER_SIMU_MNG /*시뮬레이션_사용자시뮬레이션관리*/
+WITH COPY_SNRO AS
+(
+SELECT MAX(CASE WHEN SNRO_KIND_C = '01' THEN SNRO_NO END) AS RATE_SNRO_NO
+     , MAX(CASE WHEN SNRO_KIND_C = '02' THEN SNRO_NO END) AS CAP_QTY_SNRO_NO
+     , MAX(CASE WHEN SNRO_KIND_C = '03' THEN SNRO_NO END) AS MTRT_CONS_SNRO_NO
+     , MAX(CASE WHEN SNRO_KIND_C = '04' THEN SNRO_NO END) AS SPRD_SNRO_NO
+     , MAX(CASE WHEN SNRO_KIND_C = '05' THEN SNRO_NO END) AS CS_BHOR_SNRO_NO
+     , MAX(CASE WHEN SNRO_KIND_C = '06' THEN SNRO_NO END) AS NEW_GD_SNRO_NO
+     , MAX(CASE WHEN SNRO_KIND_C = '07' THEN SNRO_NO END) AS SSAL_SNRO_NO
+     , MAX(CASE WHEN SNRO_KIND_C = '08' THEN SNRO_NO END) AS NON_INT_PL_SNRO_NO
+  FROM (
+        SELECT A.ORG_CLAS_C
+             , A.AC_BUSI_TC
+             , #{BR_C}        AS BR_C
+             , B.SNRO_KIND_C
+             , CASE WHEN A.SIMU_KIND_TC = 'S' /*표준시뮬레이션인 경우에는 시나리오번호를 채번한다*/
+                    THEN (
+                          SELECT 'U' || NVL(LPAD(MAX(SUBSTR(SNRO_NO, 2,3)) + 1, 3, '000'), '001')
+                            FROM TSI_USER_SNRO_MNG X
+                           WHERE X.ORG_CLAS_C  = #{ORG_CLAS_C}
+                             AND X.BR_C        = #{BR_C}        /* 복사될 사무소코드 */
+                             AND X.SNRO_KIND_C = B.SNRO_KIND_C
+                             AND X.SNRO_NO LIKE 'U%'
+                         )
+                    ELSE B.SNRO_NO            /* 사용자인 경우는 시나리오번호를 유지한다. */
+               END AS SNRO_NO
+          FROM TSI_USER_SIMU_MNG A  /*시뮬레이션_사용자시뮬레이션관리*/
+             , TSI_USER_SNRO_MNG B  /*시뮬레이션_사용자시나리오관리  */
+         WHERE A.ORG_CLAS_C           = #{ORG_CLAS_C}
+           AND A.BR_C                 = #{BR_C_COPY}  -- 복사 대상 사무소코드
+           AND A.SIMU_NO              = #{SIMU_NO_COPY}    -- 복사 대상 시뮬레이션 번호
+           AND A.ORG_CLAS_C           = B.ORG_CLAS_C   
+           AND A.BR_C                 = B.BR_C
+           AND ((A.RATE_SNRO_NO       = B.SNRO_NO AND '01' = B.SNRO_KIND_C)
+            OR  (A.CAP_QTY_SNRO_NO    = B.SNRO_NO AND '02' = B.SNRO_KIND_C)
+            OR  (A.MTRT_CONS_SNRO_NO  = B.SNRO_NO AND '03' = B.SNRO_KIND_C)
+            OR  (A.SPRD_SNRO_NO       = B.SNRO_NO AND '04' = B.SNRO_KIND_C)
+            OR  (A.CS_BHOR_SNRO_NO    = B.SNRO_NO AND '05' = B.SNRO_KIND_C)
+            OR  (A.NEW_GD_SNRO_NO     = B.SNRO_NO AND '06' = B.SNRO_KIND_C)
+            OR  (A.SSAL_SNRO_NO       = B.SNRO_NO AND '07' = B.SNRO_KIND_C)
+            OR  (A.NON_INT_PL_SNRO_NO = B.SNRO_NO AND '08' = B.SNRO_KIND_C))
+       )
+)
+SELECT A.ORG_CLAS_C                                                       AS ORG_CLAS_C 
+     , #{BR_C}                                                            AS BR_C
+     , A.AC_BUSI_TC                                                       AS AC_BUSI_TC
+     , (
+        SELECT 'U' || NVL(LPAD(MAX(SUBSTR(SIMU_NO, 2,3)) + 1, 3, '000'), '001')
+          FROM TSI_USER_SIMU_MNG X       /*시뮬레이션_사용자시뮬레이션관리*/
+         WHERE X.ORG_CLAS_C  = #{ORG_CLAS_C}
+           AND X.BR_C        = #{BR_C}   /*복사될 사무소코드*/
+           AND X.SIMU_NO LIKE 'U%'
+       )                                                                  AS SIMU_NO
+     , 'U'                                                                AS SIMU_KIND_TC
+     , REPLACE(A.SIMU_NM, '표준', '사용자') || '_복사'                    AS SIMU_NM
+     , REPLACE(A.SIMU_DESC, '표준', '사용자') || '_복사'                  AS SIMU_DESC
+     , NVL(A.MA_BR_OF_TOT_YN, 'N')                                        AS MA_BR_OF_TOT_YN
+     , B.RATE_SNRO_NO                                                     AS RATE_SNRO_NO       
+     , B.CAP_QTY_SNRO_NO                                                  AS CAP_QTY_SNRO_NO    
+     , B.MTRT_CONS_SNRO_NO                                                AS MTRT_CONS_SNRO_NO  
+     , B.SPRD_SNRO_NO                                                     AS SPRD_SNRO_NO       
+     , B.CS_BHOR_SNRO_NO                                                  AS CS_BHOR_SNRO_NO    
+     , B.NEW_GD_SNRO_NO                                                   AS NEW_GD_SNRO_NO     
+     , B.SSAL_SNRO_NO                                                     AS SSAL_SNRO_NO       
+     , B.NON_INT_PL_SNRO_NO                                               AS NON_INT_PL_SNRO_NO 
+     , #{REG_BR_C}                                                        AS REG_BR_C
+     , (
+        SELECT CASE WHEN BR_C = '000'
+                    THEN 'BE'
+                    WHEN BR_TC = '04'
+                    THEN 'ZE'
+                    ELSE 'IE'
+               END
+          FROM TTL_BR_C_INFO
+         WHERE BR_C = #{BR_C}
+       )                                                                          AS SIMU_EXEC_TC
+     , TO_CHAR(LAST_DAY(TO_DATE(#{SIMU_ANAL_BASE_DATE}, 'YYYYMMDD')), 'YYYYMMDD') AS SIMU_ANAL_BASE_DATE
+     , NULL                                                                       AS SIMU_EXEC_ID
+     , NULL                                                                       AS EXEC_ANAL_BASE_DATE
+     , NULL                                                                       AS SIMU_WORK_STAT_C
+     , #{LAST_CHNG_ID}                                                            AS LAST_CHNG_ID 
+     , SYSDATE                                                                    AS LAST_CHNG_DT
+  FROM TSI_USER_SIMU_MNG A -- 시뮬레이션_사용자시뮬레이션관리
+     , COPY_SNRO         B
+ WHERE A.ORG_CLAS_C = #{ORG_CLAS_C}
+   AND A.BR_C       = #{BR_C_COPY}       /* 복사 대상 사무소코드 */
+   AND A.SIMU_NO    = #{SIMU_NO_COPY}    /* 복사 대상 시뮬레이션 번호 */
+	</insert>
+	
+	
+	<insert id="insertCopyUserSnroMng" parameterType="java.util.Map">
+INSERT INTO TSI_USER_SNRO_MNG   /*시뮬레이션_사용자시나리오관리*/
+SELECT A.ORG_CLAS_C                                                   AS ORG_CLAS_C
+     , #{BR_C}                                                        AS BR_C
+     , B.SNRO_KIND_C                                                  AS SNRO_KIND_C
+     , CASE WHEN A.SIMU_KIND_TC = 'S' /*표준시뮬레이션인 경우에는 시나리오번호를 채번한다*/
+            THEN (
+                  SELECT 'U' || NVL(LPAD(MAX(SUBSTR(SNRO_NO, 2,3)) + 1, 3, '000'), '001')
+                    FROM TSI_USER_SNRO_MNG X  /*시뮬레이션_사용자시나리오관리*/
+                   WHERE X.ORG_CLAS_C  = #{ORG_CLAS_C}
+                     AND X.BR_C        = #{BR_C}        /*복사될 사무소코드*/
+                     AND X.SNRO_KIND_C = B.SNRO_KIND_C
+                     AND X.SNRO_NO LIKE 'U%'
+                 )
+            ELSE SNRO_NO  /*사용자인 경우는 시나리오번호를 유지한다.*/
+       END                                                            AS SNRO_NO
+     , 'U'                                                            AS SNRO_KIND_TC
+     , REPLACE(B.SNRO_NM, '표준', '사용자') || '_복사'                AS SNRO_NM
+     , REPLACE(B.SNRO_CNTN, '표준', '사용자') || '_복사'              AS SNRO_CNTN
+     , B.APLY_AMT_TC                                                  AS APLY_AMT_TC
+     , #{LAST_CHNG_ID}                                                AS LAST_CHNG_ID
+     , SYSDATE                                                        AS LAST_CHNG_DT
+  FROM TSI_USER_SIMU_MNG A    /*시뮬레이션_사용자시뮬레이션관리*/
+     , TSI_USER_SNRO_MNG B    /*시뮬레이션_사용자시나리오관리*/
+ WHERE A.ORG_CLAS_C           = #{ORG_CLAS_C}
+   AND A.BR_C                 = #{BR_C_COPY}       /*복사 대상 사무소코드*/
+   AND A.SIMU_NO              = #{SIMU_NO_COPY}    /*복사 대상 시뮬레이션 번호*/
+   AND A.ORG_CLAS_C           = B.ORG_CLAS_C   
+   AND A.BR_C                 = B.BR_C
+   AND ((A.RATE_SNRO_NO       = B.SNRO_NO AND '01' = B.SNRO_KIND_C)
+    OR  (A.CAP_QTY_SNRO_NO    = B.SNRO_NO AND '02' = B.SNRO_KIND_C)
+    OR  (A.MTRT_CONS_SNRO_NO  = B.SNRO_NO AND '03' = B.SNRO_KIND_C)
+    OR  (A.SPRD_SNRO_NO       = B.SNRO_NO AND '04' = B.SNRO_KIND_C)
+    OR  (A.CS_BHOR_SNRO_NO    = B.SNRO_NO AND '05' = B.SNRO_KIND_C)
+    OR  (A.NEW_GD_SNRO_NO     = B.SNRO_NO AND '06' = B.SNRO_KIND_C)
+    OR  (A.SSAL_SNRO_NO       = B.SNRO_NO AND '07' = B.SNRO_KIND_C)
+    OR  (A.NON_INT_PL_SNRO_NO = B.SNRO_NO AND '08' = B.SNRO_KIND_C))
+   AND A.SIMU_KIND_TC         = 'S'  /*표준시뮬레이션인 경우에만 등록된 시나리오를 복사하여 적재 한다*/
+	</insert>
+	
+	<insert id="insertCopySnroPestMng" parameterType="java.util.Map">
+INSERT INTO TSI_USER_SNRO_PEST_MNG  /*시뮬레이션_사용자시나리오예측설정*/
+SELECT A.ORG_CLAS_C                                                                       AS ORG_CLAS_C
+     , #{BR_C}                                                                            AS BR_C
+     , A.AC_BUSI_TC                                                                       AS AC_BUSI_TC
+     , B.SNRO_KIND_C                                                                      AS SNRO_KIND_C
+     , CASE WHEN A.SIMU_KIND_TC = 'S' /*표준시뮬레이션인 경우에는 시나리오번호를 채번한다*/
+            THEN (
+                  SELECT 'U' || LPAD(MAX(SUBSTR(SNRO_NO, 2,3)), 3, '000')
+                    FROM TSI_USER_SNRO_MNG X      /*시뮬레이션_사용자시나리오관리*/
+                   WHERE X.ORG_CLAS_C  = #{ORG_CLAS_C}
+                     AND X.BR_C        = #{BR_C}  /*복사될 사무소코드*/
+                     AND X.SNRO_KIND_C = B.SNRO_KIND_C
+                     AND X.SNRO_NO LIKE 'U%'
+                 )
+            ELSE SNRO_NO          /* 사용자인 경우는 시나리오번호를 유지한다.*/
+       END                                                                                AS SNRO_NO
+     , B.ACCT_C                                                                           AS ACCT_C
+     , B.FIX_VAR_TC                                                                       AS FIX_VAR_TC
+     , B.RATE_VAR_CYCL                                                                    AS RATE_VAR_CYCL
+     , B.PRIN_RMBR_METH_C                                                                 AS PRIN_RMBR_METH_C  
+     , B.ALM_BASE_RATE_C                                                                  AS ALM_BASE_RATE_C   
+     , B.SNRO_SET_METH_C                                                                  AS SNRO_SET_METH_C   
+     , B.IPT_EVNT_C                                                                       AS IPT_EVNT_C        
+     , B.SNRO_RATE_IPVL_VAL                                                               AS SNRO_RATE_IPVL_VAL
+     , B.RATE_IND_DIRT_VAL                                                                AS RATE_IND_DIRT_VAL 
+     , B.RSLT_TRM_TC                                                                      AS RSLT_TRM_TC       
+     , B.PAST_TRM_TC                                                                      AS PAST_TRM_TC       
+     , B.CAP_QTY_GWRT                                                                     AS CAP_QTY_GWRT      
+     , B.CS_BHOR_RT                                                                       AS CS_BHOR_RT        
+     , B.APLY_TRM_TC                                                                      AS APLY_TRM_TC       
+     , #{LAST_CHNG_ID}                                                                    AS LAST_CHNG_ID
+     , SYSDATE                                                                            AS LAST_CHNG_DT
+  FROM TSI_USER_SIMU_MNG      A   /*시뮬레이션_사용자시뮬레이션관리*/
+     , TSI_USER_SNRO_PEST_MNG B   /*시뮬레이션_사용자시나리오예측설정*/
+ WHERE A.ORG_CLAS_C           = #{ORG_CLAS_C}
+   AND A.BR_C                 = #{BR_C_COPY}        /*복사 대상 사무소코드*/
+   AND A.SIMU_NO              = #{SIMU_NO_COPY}     /*복사 대상 시뮬레이션 번호*/
+   AND A.ORG_CLAS_C           = B.ORG_CLAS_C   
+   AND A.BR_C                 = B.BR_C
+   AND A.AC_BUSI_TC           = B.AC_BUSI_TC
+   AND ((A.RATE_SNRO_NO       = B.SNRO_NO AND '01' = B.SNRO_KIND_C)
+    OR  (A.CAP_QTY_SNRO_NO    = B.SNRO_NO AND '02' = B.SNRO_KIND_C)
+    OR  (A.MTRT_CONS_SNRO_NO  = B.SNRO_NO AND '03' = B.SNRO_KIND_C)
+    OR  (A.SPRD_SNRO_NO       = B.SNRO_NO AND '04' = B.SNRO_KIND_C)
+    OR  (A.CS_BHOR_SNRO_NO    = B.SNRO_NO AND '05' = B.SNRO_KIND_C)
+    OR  (A.NEW_GD_SNRO_NO     = B.SNRO_NO AND '06' = B.SNRO_KIND_C)
+    OR  (A.SSAL_SNRO_NO       = B.SNRO_NO AND '07' = B.SNRO_KIND_C)
+    OR  (A.NON_INT_PL_SNRO_NO = B.SNRO_NO AND '08' = B.SNRO_KIND_C))
+   AND A.SIMU_KIND_TC         = 'S'   /*표준시뮬레이션인 경우에만 등록된 시나리오를 복사하여 적재 한다*/
+	</insert>
+	
+	
+	
+	
+	
+	
+	
+	<insert id="insertCopySimulDataUser" parameterType="java.util.Map">
+INSERT INTO TSI_USER_SIMU_MNG /*시뮬레이션_사용자시뮬레이션관리*/
+WITH COPY_SNRO AS
+(
+SELECT MAX(CASE WHEN SNRO_KIND_C = '01' THEN SNRO_NO END) AS RATE_SNRO_NO
+     , MAX(CASE WHEN SNRO_KIND_C = '02' THEN SNRO_NO END) AS CAP_QTY_SNRO_NO
+     , MAX(CASE WHEN SNRO_KIND_C = '03' THEN SNRO_NO END) AS MTRT_CONS_SNRO_NO
+     , MAX(CASE WHEN SNRO_KIND_C = '04' THEN SNRO_NO END) AS SPRD_SNRO_NO
+     , MAX(CASE WHEN SNRO_KIND_C = '05' THEN SNRO_NO END) AS CS_BHOR_SNRO_NO
+     , MAX(CASE WHEN SNRO_KIND_C = '06' THEN SNRO_NO END) AS NEW_GD_SNRO_NO
+     , MAX(CASE WHEN SNRO_KIND_C = '07' THEN SNRO_NO END) AS SSAL_SNRO_NO
+     , MAX(CASE WHEN SNRO_KIND_C = '08' THEN SNRO_NO END) AS NON_INT_PL_SNRO_NO
+  FROM (
+        SELECT A.ORG_CLAS_C
+             , A.AC_BUSI_TC
+             , #{BR_C}           AS BR_C
+             , B.SNRO_KIND_C
+             , B.SNRO_NO 
+          FROM TSI_USER_SIMU_MNG A  /*시뮬레이션_사용자시뮬레이션관리*/
+             , TSI_USER_SNRO_MNG B  /*시뮬레이션_사용자시나리오관리  */
+         WHERE A.ORG_CLAS_C           = #{ORG_CLAS_C}
+           AND A.BR_C                 = #{BR_C_COPY}  -- 복사 대상 사무소코드
+           AND A.SIMU_NO              = #{SIMU_NO_COPY}    -- 복사 대상 시뮬레이션 번호
+           AND A.ORG_CLAS_C           = B.ORG_CLAS_C   
+           AND A.BR_C                 = B.BR_C
+           AND ((A.RATE_SNRO_NO       = B.SNRO_NO AND '01' = B.SNRO_KIND_C)
+            OR  (A.CAP_QTY_SNRO_NO    = B.SNRO_NO AND '02' = B.SNRO_KIND_C)
+            OR  (A.MTRT_CONS_SNRO_NO  = B.SNRO_NO AND '03' = B.SNRO_KIND_C)
+            OR  (A.SPRD_SNRO_NO       = B.SNRO_NO AND '04' = B.SNRO_KIND_C)
+            OR  (A.CS_BHOR_SNRO_NO    = B.SNRO_NO AND '05' = B.SNRO_KIND_C)
+            OR  (A.NEW_GD_SNRO_NO     = B.SNRO_NO AND '06' = B.SNRO_KIND_C)
+            OR  (A.SSAL_SNRO_NO       = B.SNRO_NO AND '07' = B.SNRO_KIND_C)
+            OR  (A.NON_INT_PL_SNRO_NO = B.SNRO_NO AND '08' = B.SNRO_KIND_C))
+       )
+)
+SELECT A.ORG_CLAS_C                                                       AS ORG_CLAS_C 
+     , #{BR_C}                                                            AS BR_C
+     , A.AC_BUSI_TC                                                       AS AC_BUSI_TC
+     , (
+        SELECT 'U' || NVL(LPAD(MAX(SUBSTR(SIMU_NO, 2,3)) + 1, 3, '000'), '001')
+          FROM TSI_USER_SIMU_MNG X       /*시뮬레이션_사용자시뮬레이션관리*/
+         WHERE X.ORG_CLAS_C  = #{ORG_CLAS_C}
+           AND X.BR_C        = #{BR_C}   /*복사될 사무소코드*/
+           AND X.SIMU_NO LIKE 'U%'
+       )                                                                  AS SIMU_NO
+     , 'U'                                                                AS SIMU_KIND_TC
+     , REPLACE(A.SIMU_NM, '표준', '사용자') || '_복사'                    AS SIMU_NM
+     , REPLACE(A.SIMU_DESC, '표준', '사용자') || '_복사'                  AS SIMU_DESC
+     , NVL(A.MA_BR_OF_TOT_YN, 'N')                                        AS MA_BR_OF_TOT_YN
+     , B.RATE_SNRO_NO                                                     AS RATE_SNRO_NO       
+     , B.CAP_QTY_SNRO_NO                                                  AS CAP_QTY_SNRO_NO    
+     , B.MTRT_CONS_SNRO_NO                                                AS MTRT_CONS_SNRO_NO  
+     , B.SPRD_SNRO_NO                                                     AS SPRD_SNRO_NO       
+     , B.CS_BHOR_SNRO_NO                                                  AS CS_BHOR_SNRO_NO    
+     , B.NEW_GD_SNRO_NO                                                   AS NEW_GD_SNRO_NO     
+     , B.SSAL_SNRO_NO                                                     AS SSAL_SNRO_NO       
+     , B.NON_INT_PL_SNRO_NO                                               AS NON_INT_PL_SNRO_NO 
+     , #{REG_BR_C}                                                        AS REG_BR_C
+     , (
+        SELECT CASE WHEN BR_C = '000'
+                    THEN 'BE'
+                    WHEN BR_TC = '04'
+                    THEN 'ZE'
+                    ELSE 'IE'
+               END
+          FROM TTL_BR_C_INFO
+         WHERE BR_C = #{BR_C}
+       )                                                                          AS SIMU_EXEC_TC
+     , TO_CHAR(LAST_DAY(TO_DATE(#{SIMU_ANAL_BASE_DATE}, 'YYYYMMDD')), 'YYYYMMDD') AS SIMU_ANAL_BASE_DATE
+     , NULL                                                                       AS SIMU_EXEC_ID
+     , NULL                                                                       AS EXEC_ANAL_BASE_DATE
+     , NULL                                                                       AS SIMU_WORK_STAT_C
+     , #{LAST_CHNG_ID}                                                            AS LAST_CHNG_ID 
+     , SYSDATE                                                                    AS LAST_CHNG_DT
+  FROM TSI_USER_SIMU_MNG A -- 시뮬레이션_사용자시뮬레이션관리
+     , COPY_SNRO         B
+ WHERE A.ORG_CLAS_C = #{ORG_CLAS_C}
+   AND A.BR_C       = #{BR_C_COPY}       /* 복사 대상 사무소코드 */
+   AND A.SIMU_NO    = #{SIMU_NO_COPY}    /* 복사 대상 시뮬레이션 번호 */
+	</insert>
+	
+	
+	
+	
+	<insert id="insertCopyUserSnroMngUser" parameterType="java.util.Map">
+INSERT INTO TSI_USER_SNRO_MNG   /*시뮬레이션_사용자시나리오관리*/
+SELECT A.ORG_CLAS_C                                                   AS ORG_CLAS_C
+     , #{BR_C}                                                        AS BR_C
+     , B.SNRO_KIND_C                                                  AS SNRO_KIND_C
+     , B.SNRO_NO                                                      AS SNRO_NO
+     , 'U'                                                            AS SNRO_KIND_TC
+     , REPLACE(B.SNRO_NM, '표준', '사용자') || '_복사'                AS SNRO_NM
+     , REPLACE(B.SNRO_CNTN, '표준', '사용자') || '_복사'              AS SNRO_CNTN
+     , B.APLY_AMT_TC                                                  AS APLY_AMT_TC
+     , #{LAST_CHNG_ID}                                                AS LAST_CHNG_ID
+     , SYSDATE                                                        AS LAST_CHNG_DT
+  FROM TSI_USER_SIMU_MNG A    /*시뮬레이션_사용자시뮬레이션관리*/
+     , TSI_USER_SNRO_MNG B    /*시뮬레이션_사용자시나리오관리*/
+ WHERE A.ORG_CLAS_C           = #{ORG_CLAS_C}
+   AND A.BR_C                 = #{BR_C_COPY}       /*복사 대상 사무소코드*/
+   AND A.SIMU_NO              = #{SIMU_NO_COPY}    /*복사 대상 시뮬레이션 번호*/
+   AND A.ORG_CLAS_C           = B.ORG_CLAS_C   
+   AND A.BR_C                 = B.BR_C
+   AND ((A.RATE_SNRO_NO       = B.SNRO_NO AND '01' = B.SNRO_KIND_C)
+    OR  (A.CAP_QTY_SNRO_NO    = B.SNRO_NO AND '02' = B.SNRO_KIND_C)
+    OR  (A.MTRT_CONS_SNRO_NO  = B.SNRO_NO AND '03' = B.SNRO_KIND_C)
+    OR  (A.SPRD_SNRO_NO       = B.SNRO_NO AND '04' = B.SNRO_KIND_C)
+    OR  (A.CS_BHOR_SNRO_NO    = B.SNRO_NO AND '05' = B.SNRO_KIND_C)
+    OR  (A.NEW_GD_SNRO_NO     = B.SNRO_NO AND '06' = B.SNRO_KIND_C)
+    OR  (A.SSAL_SNRO_NO       = B.SNRO_NO AND '07' = B.SNRO_KIND_C)
+    OR  (A.NON_INT_PL_SNRO_NO = B.SNRO_NO AND '08' = B.SNRO_KIND_C))
+   AND A.SIMU_KIND_TC         = 'U'
+	</insert>
+	
+	<insert id="insertCopySnroPestMngUser" parameterType="java.util.Map">
+INSERT INTO TSI_USER_SNRO_PEST_MNG  /*시뮬레이션_사용자시나리오예측설정*/
+SELECT A.ORG_CLAS_C                                                                       AS ORG_CLAS_C
+     , #{BR_C}                                                                            AS BR_C
+     , A.AC_BUSI_TC                                                                       AS AC_BUSI_TC
+     , B.SNRO_KIND_C                                                                      AS SNRO_KIND_C
+     , (
+        SELECT 'U' || LPAD(MAX(SUBSTR(SNRO_NO, 2,3)), 3, '000')
+          FROM TSI_USER_SNRO_MNG X      /*시뮬레이션_사용자시나리오관리*/
+         WHERE X.ORG_CLAS_C  = #{ORG_CLAS_C}
+           AND X.BR_C        = #{BR_C}  /*복사될 사무소코드*/
+           AND X.SNRO_KIND_C = B.SNRO_KIND_C
+           AND X.SNRO_NO LIKE 'U%'
+       )                                                                                  AS SNRO_NO
+     , B.ACCT_C                                                                           AS ACCT_C
+     , B.FIX_VAR_TC                                                                       AS FIX_VAR_TC
+     , B.RATE_VAR_CYCL                                                                    AS RATE_VAR_CYCL
+     , B.PRIN_RMBR_METH_C                                                                 AS PRIN_RMBR_METH_C  
+     , B.ALM_BASE_RATE_C                                                                  AS ALM_BASE_RATE_C   
+     , B.SNRO_SET_METH_C                                                                  AS SNRO_SET_METH_C   
+     , B.IPT_EVNT_C                                                                       AS IPT_EVNT_C        
+     , B.SNRO_RATE_IPVL_VAL                                                               AS SNRO_RATE_IPVL_VAL
+     , B.RATE_IND_DIRT_VAL                                                                AS RATE_IND_DIRT_VAL 
+     , B.RSLT_TRM_TC                                                                      AS RSLT_TRM_TC       
+     , B.PAST_TRM_TC                                                                      AS PAST_TRM_TC       
+     , B.CAP_QTY_GWRT                                                                     AS CAP_QTY_GWRT      
+     , B.CS_BHOR_RT                                                                       AS CS_BHOR_RT        
+     , B.APLY_TRM_TC                                                                      AS APLY_TRM_TC       
+     , #{LAST_CHNG_ID}                                                                    AS LAST_CHNG_ID
+     , SYSDATE                                                                            AS LAST_CHNG_DT
+  FROM TSI_USER_SIMU_MNG      A   /*시뮬레이션_사용자시뮬레이션관리*/
+     , TSI_USER_SNRO_PEST_MNG B   /*시뮬레이션_사용자시나리오예측설정*/
+ WHERE A.ORG_CLAS_C           = #{ORG_CLAS_C}
+   AND A.BR_C                 = #{BR_C_COPY}        /*복사 대상 사무소코드*/
+   AND A.SIMU_NO              = #{SIMU_NO_COPY}     /*복사 대상 시뮬레이션 번호*/
+   AND A.ORG_CLAS_C           = B.ORG_CLAS_C   
+   AND A.BR_C                 = B.BR_C
+   AND A.AC_BUSI_TC           = B.AC_BUSI_TC
+   AND ((A.RATE_SNRO_NO       = B.SNRO_NO AND '01' = B.SNRO_KIND_C)
+    OR  (A.CAP_QTY_SNRO_NO    = B.SNRO_NO AND '02' = B.SNRO_KIND_C)
+    OR  (A.MTRT_CONS_SNRO_NO  = B.SNRO_NO AND '03' = B.SNRO_KIND_C)
+    OR  (A.SPRD_SNRO_NO       = B.SNRO_NO AND '04' = B.SNRO_KIND_C)
+    OR  (A.CS_BHOR_SNRO_NO    = B.SNRO_NO AND '05' = B.SNRO_KIND_C)
+    OR  (A.NEW_GD_SNRO_NO     = B.SNRO_NO AND '06' = B.SNRO_KIND_C)
+    OR  (A.SSAL_SNRO_NO       = B.SNRO_NO AND '07' = B.SNRO_KIND_C)
+    OR  (A.NON_INT_PL_SNRO_NO = B.SNRO_NO AND '08' = B.SNRO_KIND_C))
+   AND A.SIMU_KIND_TC         = 'U' 
+	</insert>
+
+	
+	
+	
+
+</mapper>

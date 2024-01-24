@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_9106Mapper">
+
+	<select id="selectTr9106List" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+          SELECT DIMS_ITEM_NO
+               , DIMS_ITEM_NM 
+               , DIMS_ITEM_STRT_VAL
+               , DIMS_ITEM_END_VAL
+               , RPRT_TOT_C_VAL
+               , RPRT_TOT_CDNM
+               , SEQ
+               , DIMS_C_VAL 
+               , DIMS_CDNM
+               , USE_YN
+            FROM TSY_DIMS_ITEM_MNG
+           ORDER BY DIMS_ITEM_NO
+                  , DIMS_ITEM_STRT_VAL
+                  , DIMS_ITEM_END_VAL
+                  , RPRT_TOT_C_VAL
+                  , SEQ
+	</select>
+	
+	<insert id="insertTr9106" parameterType="java.util.Map">
+		INSERT INTO TSY_DIMS_ITEM_MNG
+		(
+		      DIMS_ITEM_NO
+		    , DIMS_ITEM_NM 
+		    , DIMS_ITEM_STRT_VAL
+		    , DIMS_ITEM_END_VAL
+		    , RPRT_TOT_C_VAL
+		    , RPRT_TOT_CDNM
+		    , SEQ
+		    , DIMS_C_VAL 
+		    , DIMS_CDNM
+		    , USE_YN
+		    , LAST_CHNG_ID
+		    , LAST_CHNG_DT
+		) VALUES (
+			TO_NUMBER(#{DIMS_ITEM_NO})
+		    , #{DIMS_ITEM_NM}
+		    , #{DIMS_ITEM_STRT_VAL}
+		    , #{DIMS_ITEM_END_VAL}
+		    , #{RPRT_TOT_C_VAL}
+		    , #{RPRT_TOT_CDNM}
+		    , TO_NUMBER(#{SEQ})
+		    , #{DIMS_C_VAL}
+		    , #{DIMS_CDNM}
+		    , 'Y'
+		    , #{LAST_CHNG_ID}
+		    , SYSDATE
+		)
+	</insert>
+	
+	<update id="updateTr9106" parameterType="java.util.Map">
+		UPDATE TSY_DIMS_ITEM_MNG
+		   SET DIMS_ITEM_NM  = #{DIMS_ITEM_NM}
+		     , RPRT_TOT_CDNM = #{RPRT_TOT_CDNM}
+		     , DIMS_C_VAL    = #{DIMS_C_VAL}
+		     , DIMS_CDNM     = #{DIMS_CDNM}
+		     , USE_YN        = #{USE_YN}
+		     , LAST_CHNG_ID  = #{LAST_CHNG_ID}
+		     , LAST_CHNG_DT  = SYSDATE
+		 WHERE DIMS_ITEM_NO       = TO_NUMBER(#{DIMS_ITEM_NO})
+		   AND DIMS_ITEM_STRT_VAL = #{DIMS_ITEM_STRT_VAL}
+		   AND DIMS_ITEM_END_VAL  = #{DIMS_ITEM_END_VAL}
+		   AND RPRT_TOT_C_VAL     = #{RPRT_TOT_C_VAL}
+		   AND SEQ                = TO_NUMBER(#{SEQ})
+	</update>
+
+	<update id="deleteTr9106" parameterType="java.util.Map">
+		UPDATE TSY_DIMS_ITEM_MNG
+		   SET USE_YN        = #{USE_YN}
+		     , LAST_CHNG_ID  = #{LAST_CHNG_ID}
+		     , LAST_CHNG_DT  = SYSDATE
+		 WHERE DIMS_ITEM_NO       = TO_NUMBER(#{DIMS_ITEM_NO})
+		   AND DIMS_ITEM_STRT_VAL = #{DIMS_ITEM_STRT_VAL}
+		   AND DIMS_ITEM_END_VAL  = #{DIMS_ITEM_END_VAL}
+		   AND RPRT_TOT_C_VAL     = #{RPRT_TOT_C_VAL}
+		   AND SEQ                = TO_NUMBER(#{SEQ})
+	</update>
+
+</mapper>

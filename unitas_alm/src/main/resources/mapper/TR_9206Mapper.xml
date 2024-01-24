@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_9206Mapper">
+
+	
+
+	<!-- 화면로그 내역 조회 -->	
+	<select id="getScrnLogList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT   A.ALM_MENU_C AS "ALM_MENU_C"
+			    ,CASE WHEN A.ALM_MENU_C = 'COMM'   THEN '공통'
+			          WHEN A.ALM_MENU_C = 'LOGIN'  THEN '로그인'
+			          WHEN A.ALM_MENU_C = 'LOGOUT' THEN '로그아웃'
+			          ELSE NVL(B.MENU_NM, '기타')
+			     END         AS "MENU_NM"
+			    ,A.USID		 AS "USID"
+			    ,C.USER_NM	 AS "USER_NM"
+			    ,A.TR_TC	 AS "TR_TC"
+			    ,A.TR_CNTN	 AS "TR_CNTN"
+			    ,TO_CHAR(A.REG_DT,'YYYY-MM-DD HH24:MI:SS')	AS "REG_DT"
+			    ,TO_CHAR(A.CNCT_DT,'YYYY-MM-DD HH24:MI:SS')	AS "CNCT_DT"
+			FROM
+			    ALMADM.TSY_SCRN_LOG A
+			    ,TSY_MENU_MNG B
+			    ,TSY_USER_MNG C
+			WHERE
+			    A.ALM_MENU_C = B.ALM_MENU_C(+)
+			    AND
+			    A.USID = C.USID(+)
+			<if test="keyword != null and keyword.length() > 0">
+				AND
+					(
+					upper(A.ALM_MENU_C) LIKE '%' || upper(#{keyword}) || '%'
+				OR
+					upper(A.USID) LIKE '%' || upper(#{keyword}) || '%'  
+					)
+			</if>
+			<if test="reg_date != null and reg_date.length() > 0">
+				AND
+					A.REG_DT <![CDATA[>=]]> TO_DATE(#{reg_date}, 'YYYY-MM-DD HH24:MI:SS')	
+			</if>
+			<if test="errorCheck != null and errorCheck.length() > 0">
+				AND
+					upper(A.TR_CNTN) LIKE '[ERROR]%'	
+			</if>
+			ORDER BY 
+				A.REG_DT DESC
+	</select>
+	
+  
+
+</mapper>
+
+
+
+
+
+

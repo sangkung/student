@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_9110Mapper">
+
+	<select id="selectTr9110List" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT BASE_DATE
+		     , ORG_CLAS_C
+		     , AC_BUSI_TC
+		     , BR_C
+		     , ACCT_C
+		     , ACNO
+		     , CNO
+		     , CUR_C
+		     , SNB_ISUE_DATE
+		     , SNB_BUY_DATE
+		     , SNB_MTRT_DATE
+		     , SNB_FACE_AMT
+		     , KRW_SNB_FACE_AMT
+		     , BKPR_AMT
+		     , KRW_BKPR_AMT
+		     , MMW_AVG_BAL
+		     , APLY_RATE
+		     , BOND_ISUE_TC
+		     , SNB_GD_TC
+		     , SNB_STND_ITEM_C
+		     , SNB_STND_ITEM_NM
+		     , KOSPI200_ASGN_YN
+		     , BOND_ESTM_RATE_C
+		     , SNB_IJY_YN
+		     , BNCR_KIND_C
+		  FROM TSY_SNB_LDGR_MEMO_MNG  A
+		 WHERE BASE_DATE  = #{BASE_DATE}
+		   AND ORG_CLAS_C = #{ORG_CLAS_C}
+		   AND AC_BUSI_TC = #{AC_BUSI_TC}             
+	</select>
+	
+	<delete id="deleteTr9110" parameterType="java.util.Map">
+		DELETE FROM TSY_SNB_LDGR_MEMO_MNG
+		 WHERE BASE_DATE = #{BASE_DATE}
+		   AND ORG_CLAS_C = #{ORG_CLAS_C}
+           AND AC_BUSI_TC = #{AC_BUSI_TC}
+	</delete>
+	
+	<insert id="insertTr9110" parameterType="java.util.Map">
+			INSERT INTO TSY_SNB_LDGR_MEMO_MNG (
+			    BASE_DATE
+			  , ORG_CLAS_C
+			  , BR_C
+			  , ACCT_C
+			  , ACNO
+			  , CNO
+			  , CUR_C
+			  , AC_BUSI_TC
+			  , SNB_ISUE_DATE
+			  , SNB_BUY_DATE
+			  , SNB_MTRT_DATE
+			  , SNB_FACE_AMT
+			  , KRW_SNB_FACE_AMT
+			  , BKPR_AMT
+			  , KRW_BKPR_AMT
+			  , MMW_AVG_BAL
+			  , APLY_RATE
+			  , BOND_ISUE_TC
+			  , SNB_GD_TC
+			  , SNB_STND_ITEM_C
+			  , SNB_STND_ITEM_NM
+			  , KOSPI200_ASGN_YN
+			  , BOND_ESTM_RATE_C
+			  , SNB_IJY_YN
+			  , BNCR_KIND_C
+			  , LAST_CHNG_ID
+			  , LAST_CHNG_DT
+			) VALUES (
+			    #{BASE_DATE}
+			  , #{ORG_CLAS_C}
+			  , #{BR_C}
+			  , #{ACCT_C}
+			  , #{ACNO}
+			  , NVL(#{CNO}, '00000000')
+			  , #{CUR_C}
+			  , #{AC_BUSI_TC}
+			  , #{SNB_ISUE_DATE}
+			  , #{SNB_BUY_DATE}
+			  , #{SNB_MTRT_DATE}
+			  , TO_NUMBER( #{SNB_FACE_AMT} )
+			  , TO_NUMBER( #{KRW_SNB_FACE_AMT} )
+			  , TO_NUMBER( #{BKPR_AMT} )
+			  , TO_NUMBER( #{KRW_BKPR_AMT} )
+			  , TO_NUMBER( #{MMW_AVG_BAL} )
+			  , TO_NUMBER( #{APLY_RATE} )
+			  , #{BOND_ISUE_TC}
+			  , #{SNB_GD_TC}
+			  , #{SNB_STND_ITEM_C}
+			  , #{SNB_STND_ITEM_NM}
+			  , NVL(#{KOSPI200_ASGN_YN}, 'N')
+			  , #{BOND_ESTM_RATE_C}
+			  , NVL(#{SNB_IJY_YN}, 'N')
+			  , #{BNCR_KIND_C}
+			  , #{LAST_CHNG_ID}
+			  , SYSDATE
+			)
+	</insert>
+	
+	<!-- 저장 데이타 코드 검사 -->
+	<select id="checkCode" parameterType="java.util.Map"  resultType="java.util.LinkedHashMap">
+	   		SELECT COUNT(ACCT_C) AS CNT, 'ACCT_C' AS CD
+			  FROM TSY_ACCT_MSTR_MNG 
+			 WHERE BASE_DATE = (SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG )
+			   AND USE_YN    = 'Y'
+			   AND ACCT_C    = #{ACCT_C}
+			 UNION ALL
+			SELECT COUNT(*) AS CNT , 'BOND_ISUE_TC'
+			  FROM TSY_CO_MNG 
+			 WHERE CO_C         = 'BOND_ISUE_TC' 
+			   AND USE_YN       = 'Y' 
+			   AND DTL_CLAS_VAL != '-'
+			   AND DTL_CLAS_VAL = #{BOND_ISUE_TC}		 
+			 UNION ALL
+			SELECT COUNT(*) AS CNT , 'SNB_GD_TC' AS CD
+			  FROM TSY_CO_MNG 
+			 WHERE CO_C         = 'SNB_GD_TC' 
+			   AND USE_YN       = 'Y' 
+			   AND DTL_CLAS_VAL != '-'
+			   AND DTL_CLAS_VAL = #{SNB_GD_TC}
+			 UNION ALL
+			SELECT COUNT(*) AS CNT , 'BOND_ESTM_RATE_C' AS CD
+			  FROM TSY_CO_MNG 
+			 WHERE CO_C         = 'BOND_ESTM_RATE_C' 
+			   AND USE_YN       = 'Y' 
+			   AND DTL_CLAS_VAL != '-'
+			   AND DTL_CLAS_VAL = #{BOND_ESTM_RATE_C}
+			 UNION ALL
+			SELECT COUNT(*) AS CNT , 'BNCR_KIND_C' AS CD
+			  FROM TSY_CO_MNG 
+			 WHERE CO_C         = 'BNCR_KIND_C' 
+			   AND USE_YN       = 'Y' 
+			   AND DTL_CLAS_VAL != '-'
+			   AND DTL_CLAS_VAL = #{BNCR_KIND_C}
+	</select>
+	
+</mapper>

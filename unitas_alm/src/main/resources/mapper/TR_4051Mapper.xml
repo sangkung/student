@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_4051Mapper">
+
+	<!-- 고객행동 핵심예금 내역 조회  -->
+	<select id="selectCsBhorList" parameterType="java.util.Map" resultType="java.util.HashMap">
+        SELECT
+            A.BASE_DATE, ACCT_C_NM1, ACCT_C_NM2, ACCT_C_NM3, ACCT_C_NM4, ACCT_C_NM5, ACCT_C_NM6, C.BR_NM
+            , D.DTL_CLAS_NM AS AC_BUSI_NM
+            , A.BKPR_AMT, A.MMW_AVG_BAL, A.TRM_WT_AVG_AMT, A.TRM_WT_STND_DVAT_AMT, CORE_DEP_AMT, CORE_DEP_RTO*100 AS CORE_DEP_RTO
+            , B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||B.PRNT_ORD4||B.PRNT_ORD5||B.PRNT_ORD6||B.PRNT_ORD7 AS PRNT_ORD_PATH
+        FROM TST_CS_CORE_DEP_RTO A
+        JOIN (
+            SELECT 
+                LEVEL, BASE_DATE, SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%') AS ACCT_PATH,
+                REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 1 ) AS ACCT_C_NM1,
+                REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 2 ) AS ACCT_C_NM2,
+                REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 3 ) AS ACCT_C_NM3,
+                NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 4 ),TRIM(ACCT_C_NM)) AS ACCT_C_NM4,
+                NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 5 ),TRIM(ACCT_C_NM)) AS ACCT_C_NM5,
+                NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 6 ),TRIM(ACCT_C_NM)) AS ACCT_C_NM6,
+                NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 7 ),TRIM(ACCT_C_NM)) AS ACCT_C_NM7,
+                TRIM(ACCT_C_NM) AS ACCT_C_NM,
+                BS_PL_TC,
+                ORG_CLAS_C,
+                AC_BUSI_TC,
+                ACCT_C,
+                NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 1 ),'9999') AS PRNT_ORD1,
+                NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 2 ),'9999') AS PRNT_ORD2,
+                NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 3 ),'9999') AS PRNT_ORD3,
+                NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 4 ),'9999') AS PRNT_ORD4,
+                NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 5 ),'9999') AS PRNT_ORD5,
+                NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 6 ),'9999') AS PRNT_ORD6,
+                NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 7 ),'9999') AS PRNT_ORD7
+            FROM TSY_ACCT_MSTR_MNG
+            WHERE BASE_DATE = (SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE &lt;= '20230331')
+        <choose>
+			<when test="sch_ac_busi_tc == '0000'">
+			AND AC_BUSI_TC = '1105' /*회계구분*/
+			START WITH UP_ACCT_C = '0000000'
+	        CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+	    ) B ON B.ACCT_C = A.ACCT_C AND B.ORG_CLAS_C = A.ORG_CLAS_C
+		    </when>
+		    <otherwise>
+	    	AND AC_BUSI_TC = #{sch_ac_busi_tc} /*회계구분*/
+	    	START WITH UP_ACCT_C = '0000000'
+	        CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+	    ) B ON B.ACCT_C = A.ACCT_C AND B.ORG_CLAS_C = A.ORG_CLAS_C AND B.AC_BUSI_TC = A.AC_BUSI_TC
+		    </otherwise>
+		</choose>
+        JOIN TTL_BR_C_INFO C ON C.BR_C = A.BR_C
+        JOIN TSY_CO_MNG D ON D.DTL_CLAS_VAL = A.AC_BUSI_TC AND D.CO_C = 'AC_BUSI_TC'
+        WHERE A.BASE_DATE = #{sch_base_date}
+		<if test='sch_br_c == "ALL"'>
+		AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BR_TC = '03') /*전체조합*/
+		</if>
+		<if test="sch_br_c != 'ALL'">
+			<if test="sch_br_c == '001'">
+		AND A.BR_C = '001' /*중앙회*/
+			</if>
+			<if test="sch_br_c != '001' and (sch_blng_hq_br_c == '' or sch_blng_hq_br_c == null)">
+		AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{sch_br_c}) /*도지회별합산*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'Y'.toString()">
+		AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{sch_br_c}) /*단위조합별조회(지소포함)*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'N'.toString()">
+		AND A.BR_C = #{sch_br_c}
+			</if>
+		</if>
+        ORDER BY A.AC_BUSI_TC, PRNT_ORD_PATH, A.BR_C, A.AC_BUSI_TC 
+	</select>
+	
+	<select id="selectBaseDateSchCbList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT 
+			TO_CHAR(TO_DATE(MAX(BASE_DATE), 'YYYYMMDD'), 'YYYY-MM') AS BASE_DATE 
+		FROM TST_CS_CORE_DEP_RTO
+	</select>
+
+</mapper>

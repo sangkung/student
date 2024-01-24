@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_9203Mapper">
+
+	<select id="selectTr9203List" parameterType="java.util.Map" resultType="java.util.HashMap">
+	
+		SELECT
+             A.ALM_MENU_C		AS "A_ALM_MENU_C"
+			,CASE
+				WHEN LENGTH(B.ALM_MENU_C) IS NULL 
+				THEN 'false'
+				WHEN LENGTH(B.ALM_MENU_C) > 0
+				THEN 'true'
+			 END                AS "B_ALM_MENU_C"   <!-- 권한테이블에 해당 ALM_MENU_C 가 없는 애들이 아웃터조인으로 인해 널값으로 나오기 때문에 이용했다. 그리드 체크박스 컬럼에 사용하려고 --> 
+			, A.ALM_UP_MENU_C   AS "ALM_UP_MENU_C"   
+			, A.MENU_NM			AS "MENU_NM"
+			, A.MENU_LVL		AS "MENU_LVL"	
+			, A.MENU_PATH_URL	AS "MENU_PATH_URL"
+			, A.MENU_FILE_NM	AS "MENU_FILE_NM"
+			, A.MENU_PLC_VAL	AS "MENU_PLC_VAL"
+			, A.ALM_MENU_SEQ	AS "ALM_MENU_SEQ"
+			, A.USE_YN			AS "USE_YN"
+			, ''				AS "AUTH_STATUS"    <!-- 그리드 체크박스에 CHNG 이벤트 발생 후 저장 시 흔적을 남겨 체크가 됬는지 풀렸는지를 알려줄 컬럼 -->
+		FROM 
+			TSY_MENU_MNG A
+			,TSY_AUTH_MNG B
+		WHERE 
+			A.ALM_MENU_C = B.ALM_MENU_C(+)
+			AND 
+			B.AUTH_TC(+) = #{nAuth} --화면에서 전달 받는 조건 필수
+		ORDER BY 
+			ALM_MENU_SEQ	
+				 
+	</select>  
+
+	<insert id="insertTr9203" parameterType="java.util.Map">
+	
+		INSERT INTO ALMADM.TSY_MENU_MNG
+		(
+			ALM_MENU_C
+			,ALM_UP_MENU_C
+			,MENU_NM
+			,MENU_LVL
+			,MENU_PATH_URL
+			,MENU_FILE_NM
+			,MENU_PLC_VAL
+			,ALM_MENU_SEQ
+			,USE_YN
+		)
+		VALUES
+		(
+			#{A_ALM_MENU_C}  
+			,NVL(#{ALM_UP_MENU_C,jdbcType=VARCHAR},'-')
+			,#{MENU_NM}
+			,#{MENU_LVL}
+			,NVL(#{MENU_PATH_URL,jdbcType=VARCHAR},'')
+			,NVL(#{MENU_FILE_NM,jdbcType=VARCHAR},'')
+			,NVL(#{MENU_PLC_VAL,jdbcType=VARCHAR},'left')
+			,NVL(#{ALM_MENU_SEQ,jdbcType=VARCHAR},  (SELECT NVL(MAX(ALM_MENU_SEQ),0)+1 FROM ALMADM.TSY_MENU_MNG)  )
+			,NVL(#{USE_YN,jdbcType=VARCHAR},'Y')
+		)	
+	
+		<!-- 
+			해당 메뉴관리 코드는  컬럼에 필수가 아닌  데이터에는 undefined 가 들어가 이곳에는 null 값이 들어오게 된다. 
+			하지만 이 널을 널값으로 인식 못하여 에러를 겁나게 터뜨려줬기 때문에   jdbcType=VARCHAR  를 더해주자.		
+		-->
+	
+	</insert>
+	
+	
+	
+
+	
+
+
+
+	<!-- 권한 조회 -->
+	<select id="getAuthList" resultType="java.util.HashMap">
+	
+		SELECT 
+			DTL_CLAS_VAL AS AUTH_TC
+			, '['||DTL_CLAS_VAL||']'||DTL_CLAS_NM AS AUTH_TC_NM
+		FROM 
+			TSY_CO_MNG
+		WHERE 
+			CO_C = 'AUTH_TC'
+			AND 
+			DTL_CLAS_VAL != '-' 
+
+	</select>
+
+
+
+ 
+	<!-- 권한테이블 데이터 입 -->
+	<insert id="authInTr9203" parameterType="java.util.Map">
+		
+		INSERT 
+			INTO TSY_AUTH_MNG
+			(
+				  ALM_MENU_C
+				, AUTH_TC
+				, LAST_CHNG_ID
+				, LAST_CHNG_DT
+			)
+		VALUES
+			(
+				  #{A_ALM_MENU_C}
+				, #{auth_tc}
+				, #{session.USID}
+				, SYSDATE
+			 )
+				
+	</insert>
+
+
+	<!-- 권한테이블 데이터 삭 -->
+	<delete id="authDelTr9203" parameterType="java.util.Map">
+	
+	   DELETE 
+		 FROM TSY_AUTH_MNG
+		WHERE ALM_MENU_C = #{A_ALM_MENU_C}
+		  AND AUTH_TC    = #{auth_tc}
+	
+	</delete>
+
+
+
+
+
+
+
+
+
+
+</mapper>
+
+
+

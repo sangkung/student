@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_9101Mapper">  
+
+	
+	<!-- 공통코드 리스트 조회 -->
+	<select id="getCoCList" parameterType="java.util.Map"  resultType="java.util.HashMap">
+	
+	
+    	SELECT 
+	    	 CO_C 
+	    	, CO_CDNM
+    		, DTL_CLAS_VAL
+	    	, DTL_CLAS_NM
+	    	, CO_C_1_VAL
+	    	, CO_C_2_VAL
+	    	, CO_C_3_VAL
+	    	, PRNT_ORD
+	    	, USE_YN
+	    	, CASE WHEN USE_YN = 'Y' THEN 1
+	    	       WHEN USE_YN = 'N' THEN 0 
+	    	  END  AS USE_STAT     
+	    	, LAST_CHNG_ID
+	    	, TO_CHAR(LAST_CHNG_DT,'YYYY-MM-DD HH24:MI:SS') AS "LAST_CHNG_DT"  
+    	FROM ALMADM.TSY_CO_MNG
+		WHERE PRNT_ORD = 0
+		<if test="KEYWORD != null and KEYWORD.length() > 0">
+			AND 
+			(
+				upper(CO_C) like '%'|| upper(#{KEYWORD}) ||'%'	
+				OR
+				upper(CO_CDNM) like '%'|| upper(#{KEYWORD}) ||'%' 
+			)
+		</if>
+		ORDER BY 1     	
+	
+	</select>
+	
+	
+	<!-- 세분류코드 리스트 조회 -->
+	<select id="getCoCDetailList" parameterType="java.util.Map"  resultType="java.util.HashMap">
+	
+	
+    	SELECT
+    		CO_C 
+	    	, CO_CDNM
+    		,DTL_CLAS_VAL
+	    	, DTL_CLAS_NM
+	    	, CO_C_1_VAL
+	    	, CO_C_2_VAL
+	    	, CO_C_3_VAL
+	    	, PRNT_ORD
+	    	, USE_YN
+	    	, CASE WHEN USE_YN = 'Y' THEN 1
+	    	       WHEN USE_YN = 'N' THEN 0 
+	    	  END  AS USE_STAT 
+	    	, LAST_CHNG_ID
+	    	, TO_CHAR(LAST_CHNG_DT,'YYYY-MM-DD HH24:MI:SS')AS "LAST_CHNG_DT"     
+    	FROM ALMADM.TSY_CO_MNG
+		WHERE PRNT_ORD != 0 AND CO_C = #{CONNECTKEY}
+		<if test="keyword != null and keyword.length() > 0">
+			AND 
+			(
+				upper(DTL_CLAS_VAL) like '%'|| upper(#{keyword}) ||'%'	
+				OR
+				upper(DTL_CLAS_NM) like '%'|| upper(#{keyword}) ||'%'
+			)
+		</if>
+			ORDER BY PRNT_ORD ASC    
+	
+	</select>
+	
+
+	
+	<!-- 공통코드  입력,수정 -->
+	<update id="getCoCUpdate" parameterType="java.util.Map">
+	
+		MERGE INTO ALMADM.TSY_CO_MNG 
+		USING DUAL
+		ON (    CO_C           = #{CO_C}
+		    	AND
+		    	DTL_CLAS_VAL   = #{DTL_CLAS_VAL,jdbcType=VARCHAR}
+		   )
+       	WHEN MATCHED THEN 
+	   		UPDATE SET CO_CDNM = NVL(#{CO_CDNM,jdbcType=VARCHAR},'-')
+		    	, DTL_CLAS_NM  = NVL(#{DTL_CLAS_NM,jdbcType=VARCHAR},'-')
+		        , USE_YN       = #{USE_YN}
+		        , LAST_CHNG_ID = #{session.USID}  <!--  #{LAST_CHNG_ID}    -->
+		        , LAST_CHNG_DT = SYSDATE   
+	   WHEN NOT MATCHED THEN
+	       INSERT ( CO_C
+			      , CO_CDNM
+			      , DTL_CLAS_VAL       
+			      , DTL_CLAS_NM
+			      , CO_C_1_VAL
+			      , CO_C_2_VAL
+			      , CO_C_3_VAL
+			      , PRNT_ORD
+			      , USE_YN
+			      , LAST_CHNG_ID
+			      , LAST_CHNG_DT
+			      )
+	       VALUES ( #{CO_C}
+	              , NVL(#{CO_CDNM,jdbcType=VARCHAR},'-')
+			      , NVL(#{DTL_CLAS_VAL,jdbcType=VARCHAR},'-')       
+			      , NVL(#{DTL_CLAS_NM,jdbcType=VARCHAR},'-')
+			      , '-'
+			      , '-'
+			      , '-'
+			      , 0
+			      , NVL(#{USE_YN,jdbcType=VARCHAR},'Y')
+			      , #{session.USID}   <!--  #{LAST_CHNG_ID}    -->
+			      , SYSDATE
+			      )
+	</update>
+
+	    
+	<!-- 공통코드 입력,수정,삭제 -->    
+	<update id="getCoCDetailUpdate" parameterType="java.util.Map">
+		
+ 		MERGE INTO ALMADM.TSY_CO_MNG  
+   	 	USING DUAL
+   	 	ON ( CO_C = #{CO_C} AND DTL_CLAS_VAL = #{DTL_CLAS_VAL} )
+		    WHEN MATCHED THEN 
+		UPDATE SET DTL_CLAS_NM   = NVL(#{DTL_CLAS_NM,jdbcType=VARCHAR},'-')
+		           ,CO_C_1_VAL   = NVL(#{CO_C_1_VAL,jdbcType=VARCHAR},'-')
+		           ,CO_C_2_VAL   = NVL(#{CO_C_2_VAL,jdbcType=VARCHAR},'-') 
+		           ,CO_C_3_VAL   = NVL(#{CO_C_3_VAL,jdbcType=VARCHAR},'-')
+		           ,PRNT_ORD     = NVL(#{PRNT_ORD,jdbcType=VARCHAR},(SELECT NVL( MAX(PRNT_ORD),0)+1  FROM TSY_CO_MNG WHERE CO_C = #{CO_C} ) )	  
+		           ,USE_YN 		 = #{USE_YN}
+		           ,LAST_CHNG_ID = #{session.USID}
+		           ,LAST_CHNG_DT = SYSDATE   
+		<!-- DELETE WHERE( CO_C = #{CO_C} AND DTL_CLAS_VAL = #{DTL_CLAS_VAL} AND NVL(#{delete,jdbcType=VARCHAR},'') = 'YES' ) -->             
+		    WHEN NOT MATCHED THEN
+	    INSERT(   
+		        CO_C  
+		        ,DTL_CLAS_VAL
+		        ,DTL_CLAS_NM
+		        ,CO_C_1_VAL 
+		        ,CO_C_2_VAL 
+		        ,CO_C_3_VAL  
+		        ,PRNT_ORD   <!-- PRNT_ORD.length() > 0  얘는 왜 길이를 구할 수 없다고 하는겨 넥사에서 분명 String 으로 던져줬느데  그리고 위에 값들도 숫자문잔데 얘만.. -->
+		        ,USE_YN 
+		        ,LAST_CHNG_ID  
+		        ,LAST_CHNG_DT 
+		      )  
+	    VALUES(
+		        #{CO_C}
+		        ,#{DTL_CLAS_VAL}
+		        , NVL(#{DTL_CLAS_NM,jdbcType=VARCHAR},'-')
+		        , NVL(#{CO_C_1_VAL,jdbcType=VARCHAR},'-')
+		        , NVL(#{CO_C_2_VAL,jdbcType=VARCHAR},'-')
+		        , NVL(#{CO_C_3_VAL,jdbcType=VARCHAR},'-')
+		        , NVL(#{PRNT_ORD,jdbcType=VARCHAR},( SELECT NVL( MAX(PRNT_ORD),0)+1  FROM TSY_CO_MNG WHERE CO_C = #{CO_C} ))
+		        , NVL(#{USE_YN,jdbcType=VARCHAR},'Y')
+		        ,#{session.USID}
+		        ,SYSDATE
+		      )
+		
+	</update>
+	
+	
+  
+
+</mapper>
+
+
+
+
+
+

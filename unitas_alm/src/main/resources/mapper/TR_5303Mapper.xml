@@ -1,0 +1,497 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_5303Mapper">
+
+    <!-- 시나리오 코드 조회 -->
+    <select id="selectSimuNo" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+SELECT ORG_CLAS_C                    AS ORG_CLAS_C
+     , BR_C                          AS BR_C
+     , AC_BUSI_TC                    AS AC_BUSI_TC
+     , SIMU_NO                       AS SIMU_NO
+     , '('||SIMU_NO||') '||SIMU_NM   AS SIMU_NM
+  FROM TSI_USER_SIMU_MNG
+ GROUP BY ORG_CLAS_C
+        , BR_C
+        , AC_BUSI_TC
+        , SIMU_NO
+        , SIMU_NM
+ ORDER BY ORG_CLAS_C
+        , BR_C
+        , AC_BUSI_TC
+        , SIMU_NO
+    </select>
+
+	<!-- 규제유동성비율 조회  -->
+	<select id="selectLqdtGapList" parameterType="java.util.Map" resultType="java.util.HashMap">
+WITH DATA_TB AS (
+        SELECT ORG_CLAS_C              AS ORG_CLAS_C      
+             , AC_BUSI_TC              AS AC_BUSI_TC      
+             , ACCT_C                  AS ACCT_C
+             , ASTS_SDTP_CLAS_C        AS ASTS_SDTP_CLAS_C          
+             , RGLT_LQDT_ITEM_C        AS RGLT_LQDT_ITEM_C
+             , SUM(M0_PRIN_AMT_SIMU )  AS M0_PRIN_AMT_SIMU
+             , SUM(M1_PRIN_AMT_SIMU )  AS M1_PRIN_AMT_SIMU
+             , SUM(M2_PRIN_AMT_SIMU )  AS M2_PRIN_AMT_SIMU
+             , SUM(M0_PRIN_AMT      )  AS M0_PRIN_AMT     
+             , SUM(M1_PRIN_AMT      )  AS M1_PRIN_AMT     
+             , SUM(M2_PRIN_AMT      )  AS M2_PRIN_AMT     
+          FROM (
+                 /*--------------------------------------*/
+                 /*         사용자 시뮬레이션            */
+                 /*--------------------------------------*/
+                  SELECT BASE_DATE                                                                                                     AS BASE_DATE
+                       , ORG_CLAS_C                                                                                                    AS ORG_CLAS_C
+                       , AC_BUSI_TC                                                                                                    AS AC_BUSI_TC
+                       , ACCT_C                                                                                                        AS ACCT_C
+                       , ASTS_SDTP_CLAS_C                                                                                              AS ASTS_SDTP_CLAS_C
+                       , CASE WHEN RGLT_LQDT_ITEM_C IN ('A41', 'A42') THEN RGLT_LQDT_ITEM_C ELSE '' END                                AS RGLT_LQDT_ITEM_C
+                       , CASE WHEN BASE_DATE = #{sch_base_date}       THEN KRW_PRIN_AMT     ELSE 0  END                                AS M0_PRIN_AMT_SIMU /*기준월(기준일)*/
+                       , CASE WHEN BASE_DATE = TO_CHAR(LAST_DAY(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -1)), 'YYYYMMDD')
+                              THEN KRW_PRIN_AMT
+                              ELSE 0
+                         END                                                                                                           AS M1_PRIN_AMT_SIMU /*전월(전월마지막일)*/
+                       , CASE WHEN BASE_DATE = TO_CHAR(TRUNC(TO_DATE(#{sch_base_date},'YYYYMMDD'),'Q')-1  ,'YYYYMMDD')
+                              THEN KRW_PRIN_AMT
+                              ELSE 0
+                         END                                                                                                           AS M2_PRIN_AMT_SIMU /*전분기마지막월(전분기마지막일)*/
+                       , NULL                                                                                                          AS M0_PRIN_AMT
+                       , NULL                                                                                                          AS M1_PRIN_AMT
+                       , NULL                                                                                                          AS M2_PRIN_AMT
+                    FROM TSI_USER_RGLT_LQDT_TOT   /*시뮬레이션_사용자규제유동성집계*/
+                   WHERE BASE_DATE   IN (#{sch_base_date}, TO_CHAR(LAST_DAY(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -1)), 'YYYYMMDD'),  TO_CHAR(TRUNC(TO_DATE(#{sch_base_date},'YYYYMMDD'),'Q')-1  ,'YYYYMMDD'))
+                     AND ALM_WORK_TC = 'M'
+                     AND MTRT_SECT_SEQ BETWEEN '1' AND '3' --만기구간 일련번호 1,2,3
+		             <if test='sch_br_c == "ALL"'>
+		             	AND BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BR_TC = '03') /*전체조합*/
+		             	AND MNBR_TOT_YN = 'Y'
+		             </if>
+		             <if test="sch_br_c != 'ALL'">
+		             	<if test="sch_br_c == '001'">
+		             	AND BR_C = '001' /*중앙회*/
+		             	AND MNBR_TOT_YN = 'N'
+		             	</if>
+		             	<if test="sch_br_c != '001' and (sch_blng_hq_br_c == '' or sch_blng_hq_br_c == null)">
+		             	AND BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{sch_br_c}) /*도지회별합산*/
+		             	AND MNBR_TOT_YN = 'Y'
+		             	</if>
+		             	<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'Y'.toString()">
+		             	AND BR_C = #{sch_br_c} /*단위조합별조회(지소포함)*/
+		             	AND MNBR_TOT_YN = 'Y'
+		             	</if>
+		             	<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'N'.toString()">
+		             	AND BR_C = #{sch_br_c}
+		             	AND MNBR_TOT_YN = 'N'
+		             	</if>
+		             </if>
+                     <choose>
+                         <when test="sch_ac_busi_tc == '0000'">
+                         AND AC_BUSI_TC IN ('1105', '1106', '1107') /*회계구분*/
+                         </when>
+                         <otherwise>
+                         AND AC_BUSI_TC = #{sch_ac_busi_tc} /*회계구분*/
+                         </otherwise>
+                     </choose>
+                     AND FUTU_POT_SECT_CNT = #{sch_futu_pot} /*분석시점구분 0:현시점*/
+                     AND NEW_CAP_QTY_TC    = #{sch_new_capq} /*신규자금량 0:미포함  */
+                     AND SIMU_NO           = #{sch_simu_no}  /*회계사업구분코드     */
+                     AND RGLT_LQDT_ITEM_C NOT IN ('A5', 'B3')
+                 /*--------------------------------------*/
+                 /*            정형작업                  */
+                 /*--------------------------------------*/
+                 UNION ALL
+                  SELECT BASE_DATE                                                                                                     AS BASE_DATE
+                       , ORG_CLAS_C                                                                                                    AS ORG_CLAS_C
+                       , AC_BUSI_TC                                                                                                    AS AC_BUSI_TC
+                       , ACCT_C                                                                                                        AS ACCT_C
+                       , ASTS_SDTP_CLAS_C                                                                                              AS ASTS_SDTP_CLAS_C 
+                       , CASE WHEN RGLT_LQDT_ITEM_C IN ('A41', 'A42') THEN RGLT_LQDT_ITEM_C ELSE '' END                                AS RGLT_LQDT_ITEM_C
+                       , NULL                                                                                                          AS M0_PRIN_AMT_SIMU
+                       , NULL                                                                                                          AS M1_PRIN_AMT_SIMU
+                       , NULL                                                                                                          AS M2_PRIN_AMT_SIMU                     
+                       , CASE WHEN BASE_DATE = #{sch_base_date}       THEN KRW_PRIN_AMT     ELSE 0  END                                AS M0_PRIN_AMT --기준월(기준일)
+                       , CASE WHEN BASE_DATE = TO_CHAR(LAST_DAY(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -1)), 'YYYYMMDD')
+                              THEN KRW_PRIN_AMT
+                              ELSE 0
+                         END                                                                                                           AS M1_PRIN_AMT --전월(전월마지막일)
+                       , CASE WHEN BASE_DATE = TO_CHAR(TRUNC(TO_DATE(#{sch_base_date},'YYYYMMDD'),'Q')-1  ,'YYYYMMDD')
+                              THEN KRW_PRIN_AMT
+                              ELSE 0
+                         END                                                                                                           AS M2_PRIN_AMT --전분기마지막월(전분기마지막일)
+                    FROM TRT_RGLT_LQDT_TOT   /*보고서_규제유동성집계*/
+                   WHERE BASE_DATE   IN (#{sch_base_date}, TO_CHAR(LAST_DAY(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -1)), 'YYYYMMDD'),  TO_CHAR(TRUNC(TO_DATE(#{sch_base_date},'YYYYMMDD'),'Q')-1  ,'YYYYMMDD'))
+                     AND ALM_WORK_TC = 'M'
+                     AND MTRT_SECT_SEQ BETWEEN '1' AND '3' --만기구간 일련번호 1,2,3
+		             <if test='sch_br_c == "ALL"'>
+		             	AND BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BR_TC = '03') /*전체조합*/
+		             	AND MNBR_TOT_YN = 'Y'
+		             </if>
+		             <if test="sch_br_c != 'ALL'">
+		             	<if test="sch_br_c == '001'">
+		             	AND BR_C = '001' /*중앙회*/
+		             	AND MNBR_TOT_YN = 'N'
+		             	</if>
+		             	<if test="sch_br_c != '001' and (sch_blng_hq_br_c == '' or sch_blng_hq_br_c == null)">
+		             	AND BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{sch_br_c}) /*도지회별합산*/
+		             	AND MNBR_TOT_YN = 'Y'
+		             	</if>
+		             	<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'Y'.toString()">
+                        AND BR_C = #{sch_br_c} /*단위조합별조회(지소포함)*/
+		             	AND MNBR_TOT_YN = 'Y'
+		             	</if>
+		             	<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'N'.toString()">
+		             	AND BR_C = #{sch_br_c}
+		             	AND MNBR_TOT_YN = 'N'
+		             	</if>
+		             </if>
+                     <choose>
+                         <when test="sch_ac_busi_tc == '0000'">
+                         AND AC_BUSI_TC IN ('1105', '1106', '1107') /*회계구분*/
+                         </when>
+                         <otherwise>
+                         AND AC_BUSI_TC = #{sch_ac_busi_tc} /*회계구분*/
+                         </otherwise>
+                     </choose>
+                     AND FUTU_POT_SECT_CNT = #{sch_futu_pot} /*분석시점구분 0:현시점*/
+                     AND NEW_CAP_QTY_TC    = #{sch_new_capq} /*신규자금량 0:미포함*/
+                     AND RGLT_LQDT_ITEM_C NOT IN ('A5', 'B3')
+                     AND CAP_QTY_SNRO_NO = '1' --자금량시나리오번호
+               )
+         GROUP BY ORG_CLAS_C
+                , AC_BUSI_TC
+                , ACCT_C
+                , ASTS_SDTP_CLAS_C
+                , RGLT_LQDT_ITEM_C
+    )
+       SELECT LVL1 AS ACCT_C_NM1
+              <if test="sch_acc_tc_lvl == 1">
+               , 0 AS GRP_ID
+              </if>
+              <if test="sch_acc_tc_lvl == 2">
+			<choose>
+				<when test="sch_br_c == '001'">
+			, DECODE(GROUPING_ID (LVL2), 1, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), CASE WHEN MAX(RGLT_LQDT_ITEM_C) = 'A42' THEN '요주의 대출채권' WHEN MAX(RGLT_LQDT_ITEM_C) = 'A41' AND LVL2 IS NOT NULL THEN '정상 대출채권' ELSE LVL2 END) AS ACCT_C_NM2 
+				</when>
+				<otherwise>
+               , DECODE(GROUPING_ID (LVL2), 1, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), LVL2) AS ACCT_C_NM2
+				</otherwise>
+			</choose>
+               , GROUPING_ID (LVL2)                                                                      AS GRP_ID
+              </if>
+              <if test="sch_acc_tc_lvl == 3">
+                  <choose>
+                      <when test="sch_br_c == '001'">
+			, DECODE(GROUPING_ID (LVL2, LVL3), 3, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), CASE WHEN MAX(RGLT_LQDT_ITEM_C) = 'A42' THEN '요주의 대출채권' WHEN MAX(RGLT_LQDT_ITEM_C) = 'A41' AND LVL2 IS NOT NULL THEN '정상 대출채권' ELSE LVL2 END) AS ACCT_C_NM2 
+			, DECODE(GROUPING_ID (LVL2, LVL3), 1, CASE WHEN MAX(RGLT_LQDT_ITEM_C) = 'A42' AND LVL2 IS NOT NULL THEN '요주의 대출채권' WHEN MAX(RGLT_LQDT_ITEM_C) = 'A41' AND LVL2 IS NOT NULL THEN '정상 대출채권' ELSE LVL2 END||' 소계', LVL3) AS ACCT_C_NM3 				
+                      </when>
+                      <otherwise>
+                  , DECODE(GROUPING_ID (LVL2, LVL3), 3, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), LVL2) AS ACCT_C_NM2
+			, DECODE(GROUPING_ID (LVL2, LVL3), 1, LVL2||' 소계', CASE WHEN MAX(RGLT_LQDT_ITEM_C) = 'A42' AND LVL2 IS NOT NULL THEN '요주의 대출채권' WHEN MAX(RGLT_LQDT_ITEM_C) = 'A41' AND LVL2 IS NOT NULL THEN '정상 대출채권' ELSE LVL3 END) AS ACCT_C_NM3 
+                      </otherwise>
+                  </choose>
+                  , GROUPING_ID (LVL2, LVL3) AS GRP_ID
+              </if>
+        <if test="sch_acc_tc_lvl == 4">
+            <choose>
+                <when test="sch_br_c == '001'">
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4), 7, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), CASE WHEN MAX(RGLT_LQDT_ITEM_C) = 'A42' THEN '요주의 대출채권' WHEN MAX(RGLT_LQDT_ITEM_C) = 'A41' AND LVL2 IS NOT NULL THEN '정상 대출채권' ELSE LVL2 END) AS ACCT_C_NM2 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4), 3, CASE WHEN MAX(RGLT_LQDT_ITEM_C) = 'A42' AND LVL2 IS NOT NULL THEN '요주의 대출채권' WHEN MAX(RGLT_LQDT_ITEM_C) = 'A41' AND LVL2 IS NOT NULL THEN '정상 대출채권' ELSE LVL2 END||' 소계', LVL3) AS ACCT_C_NM3 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4), 1, LVL3||' 소계', LVL4) AS ACCT_C_NM4
+                </when>
+                <otherwise>
+            , DECODE(GROUPING_ID (LVL2, LVL3, LVL4), 7, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), LVL2) AS ACCT_C_NM2
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4), 3, LVL2||' 소계', CASE WHEN MAX(RGLT_LQDT_ITEM_C) = 'A42' AND LVL2 IS NOT NULL THEN '요주의 대출채권' WHEN MAX(RGLT_LQDT_ITEM_C) = 'A41' AND LVL2 IS NOT NULL THEN '정상 대출채권' ELSE LVL3 END) AS ACCT_C_NM3 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4), 1, CASE WHEN MAX(RGLT_LQDT_ITEM_C) = 'A42' AND LVL3 IS NOT NULL THEN '요주의 대출채권' WHEN MAX(RGLT_LQDT_ITEM_C) = 'A41' AND LVL3 IS NOT NULL THEN '정상 대출채권' ELSE LVL3 END||' 소계', LVL4) AS ACCT_C_NM4 
+                </otherwise>
+            </choose>
+            , GROUPING_ID (LVL2, LVL3, LVL4) AS GRP_ID
+        </if>
+        <if test="sch_acc_tc_lvl == 5">
+            <choose>
+                <when test="sch_br_c == '001'">
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5), 15, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), CASE WHEN MAX(RGLT_LQDT_ITEM_C) = 'A42' THEN '요주의 대출채권' WHEN MAX(RGLT_LQDT_ITEM_C) = 'A41' AND LVL2 IS NOT NULL THEN '정상 대출채권' ELSE LVL2 END) AS ACCT_C_NM2 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5), 7, CASE WHEN MAX(RGLT_LQDT_ITEM_C) = 'A42' AND LVL2 IS NOT NULL THEN '요주의 대출채권' WHEN MAX(RGLT_LQDT_ITEM_C) = 'A41' AND LVL2 IS NOT NULL THEN '정상 대출채권' ELSE LVL2 END||' 소계', LVL3) AS ACCT_C_NM3 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5), 3, LVL3||' 소계', LVL4) AS ACCT_C_NM4 
+            , DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5), 1, LVL4||' 소계', LVL5) AS ACCT_C_NM5
+                </when>
+                <otherwise>
+            , DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5), 15, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), LVL2) AS ACCT_C_NM2
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5), 7, LVL2||' 소계', CASE WHEN MAX(RGLT_LQDT_ITEM_C) = 'A42' AND LVL2 IS NOT NULL THEN '요주의 대출채권' WHEN MAX(RGLT_LQDT_ITEM_C) = 'A41' AND LVL2 IS NOT NULL THEN '정상 대출채권' ELSE LVL3 END) AS ACCT_C_NM3 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5), 3, CASE WHEN MAX(RGLT_LQDT_ITEM_C) = 'A42' AND LVL3 IS NOT NULL THEN '요주의 대출채권' WHEN MAX(RGLT_LQDT_ITEM_C) = 'A41' AND LVL3 IS NOT NULL THEN '정상 대출채권' ELSE LVL3 END||' 소계', LVL4) AS ACCT_C_NM4 
+            , DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5), 1, MAX(REP_LVL)||' 소계', LVL5) AS ACCT_C_NM5
+                </otherwise>
+            </choose>
+            , GROUPING_ID (LVL2, LVL3, LVL4, LVL5) AS GRP_ID
+        </if>
+        <if test="sch_acc_tc_lvl == 6">
+            <choose>
+                <when test="sch_br_c == '001'">
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 31, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), CASE WHEN MAX(RGLT_LQDT_ITEM_C) = 'A42' THEN '요주의 대출채권' WHEN MAX(RGLT_LQDT_ITEM_C) = 'A41' AND LVL2 IS NOT NULL THEN '정상 대출채권' ELSE LVL2 END) AS ACCT_C_NM2 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 15, CASE WHEN MAX(RGLT_LQDT_ITEM_C) = 'A42' AND LVL2 IS NOT NULL THEN '요주의 대출채권' WHEN MAX(RGLT_LQDT_ITEM_C) = 'A41' AND LVL2 IS NOT NULL THEN '정상 대출채권' ELSE LVL2 END||' 소계', LVL3) AS ACCT_C_NM3 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 7, LVL3||' 소계', LVL4) AS ACCT_C_NM4 
+            , DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 3, LVL4||' 소계', LVL5) AS ACCT_C_NM5
+                </when>
+                <otherwise>
+            , DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 31, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), LVL2) AS ACCT_C_NM2
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 15, LVL2||' 소계', CASE WHEN MAX(RGLT_LQDT_ITEM_C) = 'A42' AND LVL2 IS NOT NULL THEN '요주의 대출채권' WHEN MAX(RGLT_LQDT_ITEM_C) = 'A41' AND LVL2 IS NOT NULL THEN '정상 대출채권' ELSE LVL3 END) AS ACCT_C_NM3 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 7, CASE WHEN MAX(RGLT_LQDT_ITEM_C) = 'A42' AND LVL3 IS NOT NULL THEN '요주의 대출채권' WHEN MAX(RGLT_LQDT_ITEM_C) = 'A41' AND LVL3 IS NOT NULL THEN '정상 대출채권' ELSE LVL3 END||' 소계', LVL4) AS ACCT_C_NM4 
+            , DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 3, MAX(REP_LVL)||' 소계', LVL5) AS ACCT_C_NM5
+                </otherwise>
+            </choose>
+            , DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 1, LVL5||' 소계', LVL6) AS ACCT_C_NM6
+            , GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6) AS GRP_ID
+        </if>
+        <if test="sch_acc_tc_lvl == 7">
+            <choose>
+                <when test="sch_br_c == '001'">
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 63, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), CASE WHEN MAX(RGLT_LQDT_ITEM_C) = 'A42' THEN '요주의 대출채권' WHEN MAX(RGLT_LQDT_ITEM_C) = 'A41' AND LVL2 IS NOT NULL THEN '정상 대출채권' ELSE LVL2 END) AS ACCT_C_NM2
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 31, CASE WHEN MAX(RGLT_LQDT_ITEM_C) = 'A42' AND LVL2 IS NOT NULL THEN '요주의 대출채권' WHEN MAX(RGLT_LQDT_ITEM_C) = 'A41' AND LVL2 IS NOT NULL THEN '정상 대출채권' ELSE LVL2 END||' 소계', LVL3) AS ACCT_C_NM3 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 15,LVL3||' 소계', LVL4) AS ACCT_C_NM4 
+            , DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 7, LVL4||' 소계', LVL5) AS ACCT_C_NM5
+                </when>
+                <otherwise>
+            , DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 63, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), LVL2) AS ACCT_C_NM2
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 31, LVL2||' 소계', CASE WHEN MAX(RGLT_LQDT_ITEM_C) = 'A42' AND LVL2 IS NOT NULL THEN '요주의 대출채권' WHEN MAX(RGLT_LQDT_ITEM_C) = 'A41' AND LVL2 IS NOT NULL THEN '정상 대출채권' ELSE LVL3 END) AS ACCT_C_NM3 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 15, CASE WHEN MAX(RGLT_LQDT_ITEM_C) = 'A42' AND LVL3 IS NOT NULL THEN '요주의 대출채권' WHEN MAX(RGLT_LQDT_ITEM_C) = 'A41' AND LVL3 IS NOT NULL THEN '정상 대출채권' ELSE LVL3 END||' 소계', LVL4) AS ACCT_C_NM4 
+            , DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 7, MAX(REP_LVL)||' 소계', LVL5) AS ACCT_C_NM5
+                </otherwise>
+            </choose>
+            , DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 3, LVL5||' 소계', LVL6) AS ACCT_C_NM6
+            , DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 1, LVL6||' 소계', LVL7) AS ACCT_C_NM7
+            , GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7) AS GRP_ID
+        </if>
+             /*금액 계산*/
+            , SUM(M0_PRIN_AMT_SIMU)                                                                              AS M0_PRIN_AMT_SIMU /*기준월(기준일)*/
+            , SUM(M0_PRIN_AMT)                                                                                   AS M0_PRIN_AMT      /*기준월(기준일)*/
+            , SUM(M0_PRIN_AMT) - SUM(M0_PRIN_AMT_SIMU)                                                           AS IND_AMT          /*증감*/
+            , CASE WHEN SUM(M0_PRIN_AMT) !=0 
+                   THEN ROUND((SUM(M0_PRIN_AMT)- SUM(M0_PRIN_AMT_SIMU)) / SUM(M0_PRIN_AMT), 5)
+                   ELSE 0
+              END                                                                                                AS RATE             /*증감율*/
+        <if test="sch_pot_type == '0'.toString()">
+		      /*분석시점구분 현재시점일때만*/
+            , SUM(M1_PRIN_AMT)                                                                                   AS M1_PRIN_AMT      /*전월(전월마지막일)*/
+            , SUM(M2_PRIN_AMT)                                                                                   AS M2_PRIN_AMT      /*전분기마지막월(전분기마지막일)*/
+            , SUM(M2_PRIN_AMT) - SUM(M0_PRIN_AMT_SIMU)                                                           AS QUARTER_IND_AMT  /*증감*/
+            , CASE WHEN SUM(M2_PRIN_AMT) !=0
+                   THEN ROUND((SUM(M2_PRIN_AMT) - SUM(M0_PRIN_AMT_SIMU)) / SUM(M2_PRIN_AMT), 5)
+                   ELSE 0
+              END                                                                                                AS QUARTER_RATE     /*증감율*/
+        </if>
+		<if test="sch_pot_type != '0'.toString()">
+			/*분석시점구분 현재시점 아닌 경우 */
+            , NULL                                                                                               AS M1_PRIN_AMT      /*전월(전월마지막일)*/
+            , NULL                                                                                               AS M2_PRIN_AMT      /*전분기마지막월(전분기마지막일)*/
+            , NULL                                                                                               AS QUARTER_IND_AMT  /*증감*/
+            , NULL                                                                                               AS QUARTER_RATE     /*증감율*/
+		</if>
+            , MAX(PRNT_ORD)                                                                                      AS PRNT_ORD_PATH
+            , MAX(REP_LVL)                                                                                       AS REP_LVL
+            , MAX(RGLT_LQDT_ITEM_C)                                                                              AS RGLT_LQDT_ITEM_C
+         FROM (
+               SELECT LVL1                               AS LVL1
+                    , LVL2                               AS LVL2
+                    , LVL3                               AS LVL3
+                    , LVL4                               AS LVL4
+                    , LVL5                               AS LVL5
+                    , LVL6                               AS LVL6
+                    , LVL7                               AS LVL7
+                    , ROUND(SUM(M0_PRIN_AMT_SIMU), 0)    AS M0_PRIN_AMT_SIMU /*기준월(기준일)                */
+                    , ROUND(SUM(M1_PRIN_AMT_SIMU), 0)    AS M1_PRIN_AMT_SIMU /*전월(전월마지막일)            */
+                    , ROUND(SUM(M2_PRIN_AMT_SIMU), 0)    AS M2_PRIN_AMT_SIMU /*전분기마지막월(전분기마지막일)*/
+                    , ROUND(SUM(M0_PRIN_AMT     ), 0)    AS M0_PRIN_AMT      /*기준월(기준일)                */
+                    , ROUND(SUM(M1_PRIN_AMT     ), 0)    AS M1_PRIN_AMT      /*전월(전월마지막일)            */
+                    , ROUND(SUM(M2_PRIN_AMT     ), 0)    AS M2_PRIN_AMT      /*전분기마지막월(전분기마지막일)*/
+                    , MAX(PRNT_ORD)                      AS PRNT_ORD
+                    , MAX(REP_LVL)                       AS REP_LVL
+                    , MAX(RGLT_LQDT_ITEM_C)              AS RGLT_LQDT_ITEM_C
+                 FROM (
+                       SELECT A.AC_BUSI_TC
+                            , B.LVL1
+                              <choose>
+			                  	<when test="sch_br_c == '001'">
+                                    , B.LVL2||RGLT_LQDT_ITEM_C AS LVL2
+			                  	    , B.LVL3
+			                  	</when>
+			                  	<otherwise>
+                                    , B.LVL2
+                                    , B.LVL3||RGLT_LQDT_ITEM_C AS LVL3
+			                  	</otherwise>
+			                  </choose>
+                            , B.LVL4  
+                            , B.LVL5
+                            , B.LVL6
+                            , B.LVL7
+                            , B.ACCT_C_NM
+                            , A.M0_PRIN_AMT_SIMU  /*기준월(기준일)                */
+                            , A.M1_PRIN_AMT_SIMU  /*전월(전월마지막일)            */         
+                            , A.M2_PRIN_AMT_SIMU  /*전분기마지막월(전분기마지막일)*/
+                            , CASE WHEN RGLT_LQDT_ITEM_C = 'A42' 
+                                   THEN CASE WHEN ASTS_SDTP_CLAS_C IN ('10','20') 
+                                             THEN A.M0_PRIN_AMT 
+                                             ELSE 0 
+                                        END
+                                    ELSE A.M0_PRIN_AMT 
+                              END                                                      AS M0_PRIN_AMT /*요주의 대출채권 A42는 ASTS_SDTP_CLAS_C '20' 인건만 출력*/
+                            , CASE WHEN RGLT_LQDT_ITEM_C = 'A42' 
+                                   THEN CASE WHEN ASTS_SDTP_CLAS_C IN ('10','20')
+                                             THEN A.M1_PRIN_AMT 
+                                             ELSE 0 
+                                        END
+                                   ELSE A.M1_PRIN_AMT 
+                              END                                                      AS M1_PRIN_AMT
+                            , CASE WHEN RGLT_LQDT_ITEM_C = 'A42' 
+                                   THEN CASE WHEN ASTS_SDTP_CLAS_C IN ('10','20')
+                                             THEN A.M2_PRIN_AMT 
+                                             ELSE 0 
+                                        END
+                                   ELSE A.M2_PRIN_AMT
+                              END                                                      AS M2_PRIN_AMT 
+                            /*, A.M0_PRIN_AMT*/       /*기준월(기준일)                */
+                            /*, A.M1_PRIN_AMT*/       /*전월(전월마지막일)            */
+                            /*, A.M2_PRIN_AMT*/       /*전분기마지막월(전분기마지막일)*/ 
+                              <choose>
+                                  <when test="sch_br_c == '001'">
+									<if test="sch_acc_tc_lvl == 1">
+									, B.PRNT_ORD1  AS PRNT_ORD
+									</if>
+									<if test="sch_acc_tc_lvl == 2">
+									, B.PRNT_ORD1||B.PRNT_ORD2||NVL(RGLT_LQDT_ITEM_C,'000')  AS PRNT_ORD
+									</if>
+									<if test="sch_acc_tc_lvl == 3">
+									, B.PRNT_ORD1||B.PRNT_ORD2||NVL(RGLT_LQDT_ITEM_C,'000')||B.PRNT_ORD3  AS PRNT_ORD
+									</if>
+									<if test="sch_acc_tc_lvl == 4">
+									, B.PRNT_ORD1||B.PRNT_ORD2||NVL(RGLT_LQDT_ITEM_C,'000')||B.PRNT_ORD3||B.PRNT_ORD4  AS PRNT_ORD
+									</if>
+									<if test="sch_acc_tc_lvl == 5">
+									, B.PRNT_ORD1||B.PRNT_ORD2||NVL(RGLT_LQDT_ITEM_C,'000')||B.PRNT_ORD3||B.PRNT_ORD4||B.PRNT_ORD5  AS PRNT_ORD
+									</if>
+									<if test="sch_acc_tc_lvl == 6">
+									, B.PRNT_ORD1||B.PRNT_ORD2||NVL(RGLT_LQDT_ITEM_C,'000')||B.PRNT_ORD3||B.PRNT_ORD4||B.PRNT_ORD5||B.PRNT_ORD6  AS PRNT_ORD
+									</if>
+									<if test="sch_acc_tc_lvl == 7">
+									, B.PRNT_ORD1||B.PRNT_ORD2||NVL(RGLT_LQDT_ITEM_C,'000')||B.PRNT_ORD3||B.PRNT_ORD4||B.PRNT_ORD5||B.PRNT_ORD6||B.PRNT_ORD7 AS PRNT_ORD
+									</if>
+                                      , LVL3 AS REP_LVL
+                                  </when>
+                                  <otherwise>
+									<if test="sch_acc_tc_lvl == 1">
+				                    , B.PRNT_ORD1  AS PRNT_ORD
+				                    </if>
+									<if test="sch_acc_tc_lvl == 2">
+				                    , B.PRNT_ORD1||B.PRNT_ORD2  AS PRNT_ORD
+				                    </if>
+									<if test="sch_acc_tc_lvl == 3">
+				                    , B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||NVL(RGLT_LQDT_ITEM_C,'000')  AS PRNT_ORD
+				                    </if>
+									<if test="sch_acc_tc_lvl == 4">
+				                    , B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||NVL(RGLT_LQDT_ITEM_C,'000')||B.PRNT_ORD4  AS PRNT_ORD
+				                    </if>
+									<if test="sch_acc_tc_lvl == 5">
+				                    , B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||NVL(RGLT_LQDT_ITEM_C,'000')||B.PRNT_ORD4||B.PRNT_ORD5  AS PRNT_ORD
+				                    </if>
+									<if test="sch_acc_tc_lvl == 6">
+				                    , B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||NVL(RGLT_LQDT_ITEM_C,'000')||B.PRNT_ORD4||B.PRNT_ORD5||B.PRNT_ORD6  AS PRNT_ORD
+				                    </if>
+									<if test="sch_acc_tc_lvl == 7">
+				                    , B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||NVL(RGLT_LQDT_ITEM_C,'000')||B.PRNT_ORD4||B.PRNT_ORD5||B.PRNT_ORD6||B.PRNT_ORD7 AS PRNT_ORD
+				                    </if>
+                                      , LVL4 AS REP_LVL
+                                  </otherwise>
+                              </choose>
+                            , RGLT_LQDT_ITEM_C
+                         FROM DATA_TB A
+                         JOIN (
+                                SELECT LEVEL
+                                     , BASE_DATE                                                                                              AS BASE_DATE
+                                     , SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%')                                                              AS ACCT_PATH
+                                     , REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 1 )                              AS LVL1
+                                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 2 ),TRIM(ACCT_C_NM))         AS LVL2
+                                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 3 ),TRIM(ACCT_C_NM))         AS LVL3
+                                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 4 ),TRIM(ACCT_C_NM))         AS LVL4
+                                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 5 ),TRIM(ACCT_C_NM))         AS LVL5
+                                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 6 ),TRIM(ACCT_C_NM))         AS LVL6
+                                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 7 ),TRIM(ACCT_C_NM))         AS LVL7
+                                     , TRIM(ACCT_C_NM)                                                                                        AS ACCT_C_NM
+                                     , BS_PL_TC                                                                                               AS BS_PL_TC   
+                                     , ORG_CLAS_C                                                                                             AS ORG_CLAS_C 
+                                     , AC_BUSI_TC                                                                                             AS AC_BUSI_TC 
+                                     , ACCT_C                                                                                                 AS ACCT_C     
+                                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 1 ),'9999') AS PRNT_ORD1
+                                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 2 ),'9999') AS PRNT_ORD2
+                                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 3 ),'9999') AS PRNT_ORD3
+                                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 4 ),'9999') AS PRNT_ORD4
+                                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 5 ),'9999') AS PRNT_ORD5
+                                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 6 ),'9999') AS PRNT_ORD6
+                                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 7 ),'9999') AS PRNT_ORD7
+                                  FROM TSY_ACCT_MSTR_MNG
+                                 WHERE BASE_DATE = (SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE &lt;= #{sch_base_date})
+                                  <choose>
+                                       <when test="sch_ac_busi_tc == '0000'">
+                                              AND AC_BUSI_TC = '1105' /*회계구분*/
+                                              START WITH UP_ACCT_C = '0000000'
+                                            CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+                                           ) B ON B.ACCT_C = A.ACCT_C AND B.ORG_CLAS_C = A.ORG_CLAS_C
+                                       </when>
+                                       <otherwise>
+                                              AND AC_BUSI_TC = #{sch_ac_busi_tc} /*회계구분*/
+                                              START WITH UP_ACCT_C = '0000000'
+                                              CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+                                          ) B ON B.ACCT_C = A.ACCT_C AND B.ORG_CLAS_C = A.ORG_CLAS_C AND B.AC_BUSI_TC = A.AC_BUSI_TC
+                                       </otherwise>
+                                  </choose>
+                      )
+                GROUP BY LVL1, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7
+        )
+        GROUP BY
+            LVL1
+        <if test="sch_acc_tc_lvl == 1">
+
+        </if>
+        <if test="sch_acc_tc_lvl == 2">
+            , ROLLUP(LVL2)
+        </if>
+        <if test="sch_acc_tc_lvl == 3">
+            , ROLLUP(LVL2, LVL3)
+        </if>
+        <if test="sch_acc_tc_lvl == 4">
+            , ROLLUP(LVL2, LVL3, LVL4)
+        </if>
+        <if test="sch_acc_tc_lvl == 5">
+            , ROLLUP(LVL2, LVL3, LVL4, LVL5)
+        </if>
+        <if test="sch_acc_tc_lvl == 6">
+            , ROLLUP(LVL2, LVL3, LVL4, LVL5, LVL6)
+        </if>
+        <if test="sch_acc_tc_lvl == 7">
+            , ROLLUP(LVL2, LVL3, LVL4, LVL5, LVL6, LVL7)
+        </if>
+        ORDER BY PRNT_ORD_PATH, GRP_ID
+	</select>
+
+	<select id="selectTotAstsList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT
+		    SUM(BKPR_AMT) AS TOT_ASTS_AMT -- 총자산
+		    , CASE
+	            WHEN SUM(BKPR_AMT) &lt; 30000000000 -- 300억 미만 : 규제비율 80%
+	            THEN 0.8
+	            WHEN SUM(BKPR_AMT) &lt; 100000000000   -- 1000억 미만 : 규제비율 90%
+	            THEN 0.9
+	            WHEN SUM(BKPR_AMT) >= 100000000000  -- 1000억 이상 : 100%
+	            THEN 1
+	            ELSE NULL
+	        END AS RGLT_RTO -- 규제비율
+		FROM
+		    TIG_BS_RSLT_TOT_M
+		WHERE BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -12), 'YYYY')||'1231'
+		AND ACCT_C =  '1000010'  
+		AND BR_C IN (
+		    SELECT BR_C FROM TTL_BR_C_INFO
+		    WHERE MO_BR_C = (SELECT MO_BR_C FROM TTL_BR_C_INFO WHERE BR_C = #{sch_br_c})
+		    AND BR_TC = '03'
+		)
+		AND AC_BUSI_TC = #{sch_ac_busi_tc}
+		AND BR_C != '001'
+	</select>	
+	
+</mapper>

@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_4033Mapper">
+
+	<!-- 고객행동 연체금액 조회  -->
+	<select id="selectCsBhorList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		WITH DATA_TB AS (
+		    SELECT 
+		        STND_INDS_LCLS_C
+		        , MBASCN_TC
+		        , CSS_RATE_C
+		        , BUSI_MN_TC
+		        , ALM_MRTG_TC
+		        , LN_DP_GD_C
+		        , DLY_TURN
+		        , CASE WHEN BASE_DATE = #{sch_base_date} THEN DLY_AMT ELSE 0 END AS M0_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -1),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M1_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -2),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M2_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -3),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M3_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -4),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M4_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -5),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M5_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -6),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M6_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -7),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M7_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -8),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M8_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -9),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M9_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -10),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M10_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -11),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M11_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -12),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M12_DLY_AMT
+		<if test="sch_prod_trm_c > 12">
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -13),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M13_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -14),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M14_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -15),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M15_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -16),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M16_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -17),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M17_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -18),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M18_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -19),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M19_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -20),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M20_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -21),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M21_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -22),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M22_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -23),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M23_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -24),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M24_DLY_AMT
+		</if>
+		<if test="sch_prod_trm_c > 24">
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -25),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M25_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -26),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M26_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -27),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M27_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -28),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M28_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -29),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M29_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -30),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M30_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -31),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M31_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -32),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M32_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -33),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M33_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -34),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M34_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -35),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M35_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -36),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M36_DLY_AMT
+		</if>
+		<if test="sch_prod_trm_c > 36">
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -37),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M37_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -38),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M38_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -39),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M39_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -40),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M40_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -41),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M41_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -42),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M42_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -43),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M43_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -44),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M44_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -45),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M45_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -46),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M46_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -47),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M47_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -48),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M48_DLY_AMT
+		</if>
+		<if test="sch_prod_trm_c > 48">
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -49),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M49_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -50),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M50_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -51),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M51_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -52),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M52_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -53),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M53_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -54),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M54_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -55),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M55_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -56),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M56_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -57),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M57_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -58),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M58_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -59),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M59_DLY_AMT
+		        , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -60),'YYYYMMDD') THEN DLY_AMT ELSE 0 END AS M60_DLY_AMT
+		 </if>
+		    FROM (
+		        SELECT
+		            BASE_DATE
+		            , STND_INDS_LCLS_C
+		            , MBASCN_TC
+		            , CSS_RATE_C
+		            , BUSI_MN_TC
+		            , ALM_MRTG_TC
+		            , LN_DP_GD_C
+		            , DLY_TURN
+		 <if test="sch_prod_base_c == 'INS'">
+		            , INS_BASE_DLY_AMT AS DLY_AMT
+		 </if>
+		 <if test="sch_prod_base_c == 'FSS'">
+		            , FSS_BASE_DLY_AMT AS DLY_AMT
+		 </if>
+		        FROM TST_CS_DLY_BF_RATE_PROD
+		        WHERE BASE_DATE BETWEEN TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date},'YYYYMMDD'), -${sch_prod_trm_c}),'YYYYMMDD') AND #{sch_base_date}
+		<if test='sch_br_c == "ALL"'>
+				AND BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BR_TC = '03') /*전체조합*/
+		</if>
+		<if test="sch_br_c != 'ALL'">
+			<if test="sch_br_c == '001'">
+				AND BR_C = '001' /*중앙회*/
+			</if>
+			<if test="sch_br_c != '001' and (sch_blng_hq_br_c == '' or sch_blng_hq_br_c == null)">
+				AND BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{sch_br_c}) /*도지회별합산*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'Y'.toString()">
+				AND BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{sch_br_c}) /*단위조합별조회(지소포함)*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'N'.toString()">
+				AND BR_C = #{sch_br_c}
+			</if>
+		</if>
+		<if test="sch_acct_c != '' and sch_acct_c != null">
+				AND ACCT_C = #{sch_acct_c}
+		</if>
+		    )
+		)
+		SELECT
+		<choose>
+			<when test="sch_be_rate_dtl != '' and sch_be_rate_dtl != null">
+		    RPRT_TOT_CDNM
+		    , MAX(PRNT_SEQ) AS PRNT_SEQ
+		    , GROUPING_ID(DLY_TURN) AS GRP_ID
+		    --, DECODE(GROUPING_ID(DLY_TURN), 1, RPRT_TOT_CDNM || ' 소계', DLY_TURN) AS DLY_TURN
+		    , CASE
+                WHEN GROUPING_ID(DLY_TURN) = 1 THEN RPRT_TOT_CDNM || ' 소계'
+                ELSE (
+                    CASE
+                        WHEN DLY_TURN = 0 THEN '정상'
+                        WHEN DLY_TURN = 13 THEN '13 이상'
+                        ELSE TO_CHAR(DLY_TURN)
+                    END
+                )
+            END AS DLY_TURN
+		    </when>
+		    <otherwise>
+		    '' AS RPRT_TOT_CDNM
+		    , 0 AS PRNT_SEQ
+		    , 0 AS GRP_ID
+		    , CASE
+                WHEN DLY_TURN = 0 THEN '정상'
+                WHEN DLY_TURN = 13 THEN '13 이상'
+                ELSE TO_CHAR(DLY_TURN)
+            END AS DLY_TURN
+		    </otherwise>
+		</choose>
+			, DLY_TURN AS TURN_SEQ
+		    , SUM(M0_DLY_AMT) AS M0_DLY_AMT
+		    , SUM(M1_DLY_AMT) AS M1_DLY_AMT
+		    , SUM(M2_DLY_AMT) AS M2_DLY_AMT
+		    , SUM(M3_DLY_AMT) AS M3_DLY_AMT
+		    , SUM(M4_DLY_AMT) AS M4_DLY_AMT
+		    , SUM(M5_DLY_AMT) AS M5_DLY_AMT
+		    , SUM(M6_DLY_AMT) AS M6_DLY_AMT
+		    , SUM(M7_DLY_AMT) AS M7_DLY_AMT
+		    , SUM(M8_DLY_AMT) AS M8_DLY_AMT
+		    , SUM(M9_DLY_AMT) AS M9_DLY_AMT
+		    , SUM(M10_DLY_AMT) AS M10_DLY_AMT
+		    , SUM(M11_DLY_AMT) AS M11_DLY_AMT
+		    , SUM(M12_DLY_AMT) AS M12_DLY_AMT
+		<if test="sch_prod_trm_c > 12">
+		    , SUM(M13_DLY_AMT) AS M13_DLY_AMT
+		    , SUM(M14_DLY_AMT) AS M14_DLY_AMT
+		    , SUM(M15_DLY_AMT) AS M15_DLY_AMT
+		    , SUM(M16_DLY_AMT) AS M16_DLY_AMT
+		    , SUM(M17_DLY_AMT) AS M17_DLY_AMT
+		    , SUM(M18_DLY_AMT) AS M18_DLY_AMT
+		    , SUM(M19_DLY_AMT) AS M19_DLY_AMT
+		    , SUM(M20_DLY_AMT) AS M20_DLY_AMT
+		    , SUM(M21_DLY_AMT) AS M21_DLY_AMT
+		    , SUM(M22_DLY_AMT) AS M22_DLY_AMT
+		    , SUM(M23_DLY_AMT) AS M23_DLY_AMT
+		    , SUM(M24_DLY_AMT) AS M24_DLY_AMT
+		</if>
+		<if test="sch_prod_trm_c > 24">
+		    , SUM(M25_DLY_AMT) AS M25_DLY_AMT
+		    , SUM(M26_DLY_AMT) AS M26_DLY_AMT
+		    , SUM(M27_DLY_AMT) AS M27_DLY_AMT
+		    , SUM(M28_DLY_AMT) AS M28_DLY_AMT
+		    , SUM(M29_DLY_AMT) AS M29_DLY_AMT
+		    , SUM(M30_DLY_AMT) AS M30_DLY_AMT
+		    , SUM(M31_DLY_AMT) AS M31_DLY_AMT
+		    , SUM(M32_DLY_AMT) AS M32_DLY_AMT
+		    , SUM(M33_DLY_AMT) AS M33_DLY_AMT
+		    , SUM(M34_DLY_AMT) AS M34_DLY_AMT
+		    , SUM(M35_DLY_AMT) AS M35_DLY_AMT
+		    , SUM(M36_DLY_AMT) AS M36_DLY_AMT
+		</if>
+		<if test="sch_prod_trm_c > 36">
+		    , SUM(M37_DLY_AMT) AS M37_DLY_AMT
+		    , SUM(M38_DLY_AMT) AS M38_DLY_AMT
+		    , SUM(M39_DLY_AMT) AS M39_DLY_AMT
+		    , SUM(M40_DLY_AMT) AS M40_DLY_AMT
+		    , SUM(M41_DLY_AMT) AS M41_DLY_AMT
+		    , SUM(M42_DLY_AMT) AS M42_DLY_AMT
+		    , SUM(M43_DLY_AMT) AS M43_DLY_AMT
+		    , SUM(M44_DLY_AMT) AS M44_DLY_AMT
+		    , SUM(M45_DLY_AMT) AS M45_DLY_AMT
+		    , SUM(M46_DLY_AMT) AS M46_DLY_AMT
+		    , SUM(M47_DLY_AMT) AS M47_DLY_AMT
+		    , SUM(M48_DLY_AMT) AS M48_DLY_AMT
+		</if>
+		<if test="sch_prod_trm_c > 48">
+		    , SUM(M49_DLY_AMT) AS M49_DLY_AMT
+		    , SUM(M50_DLY_AMT) AS M50_DLY_AMT
+		    , SUM(M51_DLY_AMT) AS M51_DLY_AMT
+		    , SUM(M52_DLY_AMT) AS M52_DLY_AMT
+		    , SUM(M53_DLY_AMT) AS M53_DLY_AMT
+		    , SUM(M54_DLY_AMT) AS M54_DLY_AMT
+		    , SUM(M55_DLY_AMT) AS M55_DLY_AMT
+		    , SUM(M56_DLY_AMT) AS M56_DLY_AMT
+		    , SUM(M57_DLY_AMT) AS M57_DLY_AMT
+		    , SUM(M58_DLY_AMT) AS M58_DLY_AMT
+		    , SUM(M59_DLY_AMT) AS M59_DLY_AMT
+		    , SUM(M60_DLY_AMT) AS M60_DLY_AMT
+		</if>
+		FROM (
+		    SELECT
+		        DLY_TURN
+		<if test="sch_be_rate_dtl != '' and sch_be_rate_dtl != null">
+		        , NVL(B.RPRT_TOT_CDNM, '미분류') AS RPRT_TOT_CDNM
+		        , MAX(PRNT_SEQ) AS PRNT_SEQ
+		</if>
+		        , ROUND(SUM(M0_DLY_AMT)/${sch_amt_unit}, 0) AS M0_DLY_AMT
+		        , ROUND(SUM(M1_DLY_AMT)/${sch_amt_unit}, 0) AS M1_DLY_AMT
+		        , ROUND(SUM(M2_DLY_AMT)/${sch_amt_unit}, 0) AS M2_DLY_AMT
+		        , ROUND(SUM(M3_DLY_AMT)/${sch_amt_unit}, 0) AS M3_DLY_AMT
+		        , ROUND(SUM(M4_DLY_AMT)/${sch_amt_unit}, 0) AS M4_DLY_AMT
+		        , ROUND(SUM(M5_DLY_AMT)/${sch_amt_unit}, 0) AS M5_DLY_AMT
+		        , ROUND(SUM(M6_DLY_AMT)/${sch_amt_unit}, 0) AS M6_DLY_AMT
+		        , ROUND(SUM(M7_DLY_AMT)/${sch_amt_unit}, 0) AS M7_DLY_AMT
+		        , ROUND(SUM(M8_DLY_AMT)/${sch_amt_unit}, 0) AS M8_DLY_AMT
+		        , ROUND(SUM(M9_DLY_AMT)/${sch_amt_unit}, 0) AS M9_DLY_AMT
+		        , ROUND(SUM(M10_DLY_AMT)/${sch_amt_unit}, 0) AS M10_DLY_AMT
+		        , ROUND(SUM(M11_DLY_AMT)/${sch_amt_unit}, 0) AS M11_DLY_AMT
+		        , ROUND(SUM(M12_DLY_AMT)/${sch_amt_unit}, 0) AS M12_DLY_AMT
+		<if test="sch_prod_trm_c > 12">
+		        , ROUND(SUM(M13_DLY_AMT)/${sch_amt_unit}, 0) AS M13_DLY_AMT
+		        , ROUND(SUM(M14_DLY_AMT)/${sch_amt_unit}, 0) AS M14_DLY_AMT
+		        , ROUND(SUM(M15_DLY_AMT)/${sch_amt_unit}, 0) AS M15_DLY_AMT
+		        , ROUND(SUM(M16_DLY_AMT)/${sch_amt_unit}, 0) AS M16_DLY_AMT
+		        , ROUND(SUM(M17_DLY_AMT)/${sch_amt_unit}, 0) AS M17_DLY_AMT
+		        , ROUND(SUM(M18_DLY_AMT)/${sch_amt_unit}, 0) AS M18_DLY_AMT
+		        , ROUND(SUM(M19_DLY_AMT)/${sch_amt_unit}, 0) AS M19_DLY_AMT
+		        , ROUND(SUM(M20_DLY_AMT)/${sch_amt_unit}, 0) AS M20_DLY_AMT
+		        , ROUND(SUM(M21_DLY_AMT)/${sch_amt_unit}, 0) AS M21_DLY_AMT
+		        , ROUND(SUM(M22_DLY_AMT)/${sch_amt_unit}, 0) AS M22_DLY_AMT
+		        , ROUND(SUM(M23_DLY_AMT)/${sch_amt_unit}, 0) AS M23_DLY_AMT
+		        , ROUND(SUM(M24_DLY_AMT)/${sch_amt_unit}, 0) AS M24_DLY_AMT
+		</if>
+		<if test="sch_prod_trm_c > 24">
+		        , ROUND(SUM(M25_DLY_AMT)/${sch_amt_unit}, 0) AS M25_DLY_AMT
+		        , ROUND(SUM(M26_DLY_AMT)/${sch_amt_unit}, 0) AS M26_DLY_AMT
+		        , ROUND(SUM(M27_DLY_AMT)/${sch_amt_unit}, 0) AS M27_DLY_AMT
+		        , ROUND(SUM(M28_DLY_AMT)/${sch_amt_unit}, 0) AS M28_DLY_AMT
+		        , ROUND(SUM(M29_DLY_AMT)/${sch_amt_unit}, 0) AS M29_DLY_AMT
+		        , ROUND(SUM(M30_DLY_AMT)/${sch_amt_unit}, 0) AS M30_DLY_AMT
+		        , ROUND(SUM(M31_DLY_AMT)/${sch_amt_unit}, 0) AS M31_DLY_AMT
+		        , ROUND(SUM(M32_DLY_AMT)/${sch_amt_unit}, 0) AS M32_DLY_AMT
+		        , ROUND(SUM(M33_DLY_AMT)/${sch_amt_unit}, 0) AS M33_DLY_AMT
+		        , ROUND(SUM(M34_DLY_AMT)/${sch_amt_unit}, 0) AS M34_DLY_AMT
+		        , ROUND(SUM(M35_DLY_AMT)/${sch_amt_unit}, 0) AS M35_DLY_AMT
+		        , ROUND(SUM(M36_DLY_AMT)/${sch_amt_unit}, 0) AS M36_DLY_AMT
+		</if>
+		<if test="sch_prod_trm_c > 36">
+		        , ROUND(SUM(M37_DLY_AMT)/${sch_amt_unit}, 0) AS M37_DLY_AMT
+		        , ROUND(SUM(M38_DLY_AMT)/${sch_amt_unit}, 0) AS M38_DLY_AMT
+		        , ROUND(SUM(M39_DLY_AMT)/${sch_amt_unit}, 0) AS M39_DLY_AMT
+		        , ROUND(SUM(M40_DLY_AMT)/${sch_amt_unit}, 0) AS M40_DLY_AMT
+		        , ROUND(SUM(M41_DLY_AMT)/${sch_amt_unit}, 0) AS M41_DLY_AMT
+		        , ROUND(SUM(M42_DLY_AMT)/${sch_amt_unit}, 0) AS M42_DLY_AMT
+		        , ROUND(SUM(M43_DLY_AMT)/${sch_amt_unit}, 0) AS M43_DLY_AMT
+		        , ROUND(SUM(M44_DLY_AMT)/${sch_amt_unit}, 0) AS M44_DLY_AMT
+		        , ROUND(SUM(M45_DLY_AMT)/${sch_amt_unit}, 0) AS M45_DLY_AMT
+		        , ROUND(SUM(M46_DLY_AMT)/${sch_amt_unit}, 0) AS M46_DLY_AMT
+		        , ROUND(SUM(M47_DLY_AMT)/${sch_amt_unit}, 0) AS M47_DLY_AMT
+		        , ROUND(SUM(M48_DLY_AMT)/${sch_amt_unit}, 0) AS M48_DLY_AMT
+		</if>
+		<if test="sch_prod_trm_c > 48">
+		        , ROUND(SUM(M49_DLY_AMT)/${sch_amt_unit}, 0) AS M49_DLY_AMT
+		        , ROUND(SUM(M50_DLY_AMT)/${sch_amt_unit}, 0) AS M50_DLY_AMT
+		        , ROUND(SUM(M51_DLY_AMT)/${sch_amt_unit}, 0) AS M51_DLY_AMT
+		        , ROUND(SUM(M52_DLY_AMT)/${sch_amt_unit}, 0) AS M52_DLY_AMT
+		        , ROUND(SUM(M53_DLY_AMT)/${sch_amt_unit}, 0) AS M53_DLY_AMT
+		        , ROUND(SUM(M54_DLY_AMT)/${sch_amt_unit}, 0) AS M54_DLY_AMT
+		        , ROUND(SUM(M55_DLY_AMT)/${sch_amt_unit}, 0) AS M55_DLY_AMT
+		        , ROUND(SUM(M56_DLY_AMT)/${sch_amt_unit}, 0) AS M56_DLY_AMT
+		        , ROUND(SUM(M57_DLY_AMT)/${sch_amt_unit}, 0) AS M57_DLY_AMT
+		        , ROUND(SUM(M58_DLY_AMT)/${sch_amt_unit}, 0) AS M58_DLY_AMT
+		        , ROUND(SUM(M59_DLY_AMT)/${sch_amt_unit}, 0) AS M59_DLY_AMT
+		        , ROUND(SUM(M60_DLY_AMT)/${sch_amt_unit}, 0) AS M60_DLY_AMT
+		</if>
+		    FROM DATA_TB A
+		<if test="sch_be_rate_dtl == 1">
+			LEFT JOIN TII_DLY_BE_RATE_DTL_INFO B 
+				ON B.BE_RATE_ITEM_VAL = '1' 
+				AND B.RPRT_TOT_C_VAL = A.BUSI_MN_TC
+		</if>
+		<if test="sch_be_rate_dtl == 2">
+			LEFT JOIN TII_DLY_BE_RATE_DTL_INFO B 
+				ON B.BE_RATE_ITEM_VAL = '2' 
+				AND B.RPRT_TOT_C_VAL = A.MBASCN_TC
+		</if>
+		<if test="sch_be_rate_dtl == 3">
+			LEFT JOIN TII_DLY_BE_RATE_DTL_INFO B 
+				ON B.BE_RATE_ITEM_VAL = '3' 
+				AND B.RPRT_TOT_C_VAL = A.CSS_RATE_C
+		</if>
+		<if test="sch_be_rate_dtl == 4">
+			LEFT JOIN TII_DLY_BE_RATE_DTL_INFO B 
+				ON B.BE_RATE_ITEM_VAL = '4' 
+				AND B.RPRT_TOT_C_VAL = A.ALM_MRTG_TC
+		</if>
+		<if test="sch_be_rate_dtl == 5">
+			LEFT JOIN TII_DLY_BE_RATE_DTL_INFO B 
+				ON B.BE_RATE_ITEM_VAL = '5' 
+				AND B.RPRT_TOT_C_VAL = A.STND_INDS_LCLS_C
+		</if>
+		<if test="sch_be_rate_dtl == 6">
+			LEFT JOIN TII_DLY_BE_RATE_DTL_INFO B 
+				ON B.BE_RATE_ITEM_VAL = '6' 
+				AND B.RPRT_TOT_C_VAL = A.LN_DP_GD_C
+		</if>
+		    GROUP BY 
+		<if test="sch_be_rate_dtl != '' and sch_be_rate_dtl != null">
+		        B.RPRT_TOT_CDNM,
+		</if>
+		        A.DLY_TURN
+		)
+		GROUP BY
+		<choose>
+			<when test="sch_be_rate_dtl != '' and sch_be_rate_dtl != null">
+		    ROLLUP(DLY_TURN)
+		    , RPRT_TOT_CDNM 
+			</when>
+			<otherwise>
+			DLY_TURN
+			</otherwise>
+		</choose>
+		ORDER BY PRNT_SEQ, GRP_ID, TURN_SEQ
+	</select>
+	
+	<select id="selectBaseDateSchCbList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT 
+			TO_CHAR(TO_DATE(MAX(BASE_DATE), 'YYYYMMDD'), 'YYYY-MM') AS BASE_DATE 
+		FROM TST_CS_DLY_BF_RATE_PROD
+	</select>
+	
+	<select id="selectDlyBeRateDtlList" parameterType="java.util.Map" resultType="java.util.HashMap">
+	    SELECT
+			BE_RATE_ITEM_VAL
+			, BE_RATE_ITEM_NM
+	    FROM TII_DLY_BE_RATE_DTL_INFO
+	    GROUP BY
+			BE_RATE_ITEM_VAL
+			, BE_RATE_ITEM_NM
+		ORDER BY BE_RATE_ITEM_VAL
+	</select>
+	
+	<select id="selectAcctCListPopup" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT 
+			ACCT_C, ACCT_PATH, ACCT_C_NM, ACCT_LVL
+		FROM (
+		    SELECT 
+		        LEVEL AS ACCT_LVL, BASE_DATE, 
+		        --SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '&gt;'), 2) AS ACCT_PATH,
+		        SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '>'), 2, LENGTH(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '&gt;'))-LENGTH(TRIM(ACCT_C_NM))-2) AS ACCT_PATH,
+		        REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 1 ) AS LVL1,
+		        REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 2 ) AS LVL2,
+		        REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 3 ) AS LVL3,
+		        REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 4 ) AS LVL4,
+		        REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 5 ) AS LVL5,
+		        REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 6 ) AS LVL6,
+		        REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 7 ) AS LVL7,
+		        TRIM(ACCT_C_NM) AS ACCT_C_NM,
+		        BS_PL_TC,
+		        ORG_CLAS_C,
+		        AC_BUSI_TC,
+		        ACCT_C,
+		        LWST_YN,
+        		PRNT_ORD
+		    FROM TSY_ACCT_MSTR_MNG
+			WHERE BASE_DATE = (SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE &lt;= #{sch_base_date})
+		<choose>
+			<when test="sch_br_tc == '10'">
+			AND AC_BUSI_TC = '1105' /*회계구분*/
+			</when>
+		    <otherwise>
+		    AND AC_BUSI_TC = '2102' /*회계구분*/
+		    </otherwise>
+		</choose>
+			START WITH UP_ACCT_C = '0000000'
+	        CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+		)
+		WHERE LWST_YN = 'Y'
+		AND (ACCT_C_NM LIKE '%'||#{sch_acct_c_nm}||'%' OR ACCT_C = #{sch_acct_c_nm})
+		ORDER BY PRNT_ORD
+	</select>
+
+</mapper>

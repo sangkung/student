@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_9111Mapper">
+
+	<select id="selectTr9111CoaPopup" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+         SELECT LQDT_COA_C                         AS LQDT_COA_C 
+              , '('||LQDT_COA_C||') '||LQDT_COA_NM AS LQDT_COA_NM 
+              , LQDT_COA_NM                        AS LQDT_COA_NM_ORG
+           FROM TII_LQDT_COA_INFO
+          GROUP BY LQDT_COA_C
+                 , LQDT_COA_NM
+          ORDER BY LQDT_COA_C	
+	</select>
+
+	<select id="selectTr9111RprtItem" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+SELECT 'ALL'                         AS BSL3_LQDT_RPRT_ITEM_VAL
+     , '전체'                        AS BSL3_LQDT_RPRT_ITEM_NM
+     , 'A'                           AS ORD
+     , '00'                          AS BSL3_LQDT_RPRT_C
+  FROM DUAL
+ UNION ALL
+SELECT BSL3_LQDT_RPRT_ITEM_VAL                                           AS BSL3_LQDT_RPRT_ITEM_VAL
+     , '('||BSL3_LQDT_RPRT_ITEM_VAL||')  '||TRIM(BSL3_LQDT_RPRT_ITEM_NM) AS BSL3_LQDT_RPRT_ITEM_NM
+     , BSL3_LQDT_RPRT_ITEM_VAL||'1'                                      AS ORD
+     , BSL3_LQDT_RPRT_C                                                  AS BSL3_LQDT_RPRT_C 
+  FROM TII_BSL3_RPRT_ITEM_INFO      /*기초_바젤3보고서항목정보*/
+ GROUP BY BSL3_LQDT_RPRT_ITEM_VAL
+        , BSL3_LQDT_RPRT_ITEM_NM
+        , BSL3_LQDT_RPRT_C
+ ORDER BY BSL3_LQDT_RPRT_C
+        , ORD
+	</select>
+	
+	<select id="selectTr9111RprtMtrtSect" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+SELECT MTRT_SECT_SEQ 
+     , MTRT_SECT_NM
+  FROM TSY_MTRT_SECT_MNG 
+ WHERE ALM_MTRT_SECT_C = '30'
+	</select>
+
+	<select id="selectTr9111List" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+SELECT TO_CHAR(A.LAST_CHNG_DT, 'YYYY.MM.DD') AS APLY_START_DATE         /*적용시작일자           */
+     , A.BSL3_LQDT_RPRT_ITEM_VAL           AS BSL3_LQDT_RPRT_ITEM_VAL /*바젤3유동성보고서항목값*/
+     , A.RPRT_SECT_VAL                     AS RPRT_SECT_VAL           /* 보고서구간값          */
+     , A.SEQ                               AS SEQ                     /*일련번호               */
+     , A.LQDT_COA_C                        AS LQDT_COA_C              /*유동성COA코드          */
+     , B.LQDT_COA_NM                       AS LQDT_COA_NM             /*LQDT_COA_NM            */
+     , A.MTRT_SECT_SEQ                     AS MTRT_SECT_SEQ           /*만기구간일련번호       */
+     , A.ALM_MTRT_SECT_C                   AS ALM_MTRT_SECT_C         /*ALM만기구간코드        */
+     , A.USE_YN                            AS USE_YN
+     , A.BSL3_LQDT_RPRT_C                  AS BSL3_LQDT_RPRT_C
+  FROM TSY_BSL3_RPRT_MAP_MNG A   /* 시스템_바젤3보고서매핑관리 */
+     , (
+         SELECT LQDT_COA_C, LQDT_COA_NM 
+           FROM TII_LQDT_COA_INFO
+          GROUP BY LQDT_COA_C, LQDT_COA_NM
+       )     B   /*기초_유동성COA정보          */
+ WHERE A.LQDT_COA_C       = B.LQDT_COA_C(+)
+   AND A.BSL3_LQDT_RPRT_C = #{BSL3_LQDT_RPRT_C}        /*보고서코드    */
+   <if test="BSL3_LQDT_RPRT_ITEM_VAL != 'ALL'">
+   AND A.BSL3_LQDT_RPRT_ITEM_VAL = #{BSL3_LQDT_RPRT_ITEM_VAL} /*보고서항목코드*/
+   </if>
+   ORDER BY A.BSL3_LQDT_RPRT_C
+          , A.BSL3_LQDT_RPRT_ITEM_VAL 
+          , A.SEQ, LQDT_COA_C 
+	</select>
+	
+	
+	<insert id="saveTr9111" parameterType="java.util.Map">
+MERGE INTO TSY_BSL3_RPRT_MAP_MNG A 
+USING (
+		SELECT #{BSL3_LQDT_RPRT_C}         AS BSL3_LQDT_RPRT_C
+		     , #{BSL3_LQDT_RPRT_ITEM_VAL}  AS BSL3_LQDT_RPRT_ITEM_VAL 
+		     , #{RPRT_SECT_VAL}            AS RPRT_SECT_VAL
+		     , TO_NUMBER(#{SEQ})           AS SEQ
+		     , #{LQDT_COA_C}               AS LQDT_COA_C 
+		     , #{ALM_MTRT_SECT_C}          AS ALM_MTRT_SECT_C
+		     , TO_NUMBER(#{MTRT_SECT_SEQ}) AS MTRT_SECT_SEQ
+		     , #{USE_YN}                   AS USE_YN
+		     , #{LAST_CHNG_ID}             AS LAST_CHNG_ID 
+		     , SYSDATE                     AS LAST_CHNG_DT
+		  FROM DUAL
+      ) B
+  ON  (
+            A.BSL3_LQDT_RPRT_C        = B.BSL3_LQDT_RPRT_C
+        AND A.BSL3_LQDT_RPRT_ITEM_VAL = B.BSL3_LQDT_RPRT_ITEM_VAL
+        AND A.RPRT_SECT_VAL           = B.RPRT_SECT_VAL
+        AND A.SEQ                     = B.SEQ
+        AND A.LQDT_COA_C              = B.LQDT_COA_C
+      )   
+ WHEN MATCHED THEN
+      UPDATE SET A.ALM_MTRT_SECT_C = B.ALM_MTRT_SECT_C         
+               , A.MTRT_SECT_SEQ   = B.MTRT_SECT_SEQ           
+               , A.USE_YN          = B.USE_YN              
+               , A.LAST_CHNG_ID    = B.LAST_CHNG_ID
+               , A.LAST_CHNG_DT    = B.LAST_CHNG_DT 
+ WHEN NOT MATCHED THEN
+     INSERT (
+              A.BSL3_LQDT_RPRT_C       
+            , A.BSL3_LQDT_RPRT_ITEM_VAL
+            , A.RPRT_SECT_VAL          
+            , A.SEQ                    
+            , A.LQDT_COA_C             
+            , A.ALM_MTRT_SECT_C        
+            , A.MTRT_SECT_SEQ          
+            , A.USE_YN                 
+            , A.LAST_CHNG_ID           
+            , A.LAST_CHNG_DT           
+     ) VALUES (
+              B.BSL3_LQDT_RPRT_C       
+            , B.BSL3_LQDT_RPRT_ITEM_VAL
+            , B.RPRT_SECT_VAL          
+            , (
+               SELECT NVL((SELECT MAX(SEQ) + 1
+                             FROM TSY_BSL3_RPRT_MAP_MNG 
+                            WHERE BSL3_LQDT_RPRT_C        = #{BSL3_LQDT_RPRT_C}
+                              AND BSL3_LQDT_RPRT_ITEM_VAL = #{BSL3_LQDT_RPRT_ITEM_VAL}
+                              AND RPRT_SECT_VAL           = #{RPRT_SECT_VAL}
+                              ), 1) AS SEQ
+                  FROM DUAL
+              )
+            , B.LQDT_COA_C             
+            , B.ALM_MTRT_SECT_C        
+            , B.MTRT_SECT_SEQ          
+            , B.USE_YN                 
+            , B.LAST_CHNG_ID           
+            , B.LAST_CHNG_DT           
+     )
+	</insert>
+	
+	<update id="deleteTr9111" parameterType="java.util.Map">
+UPDATE TSY_BSL3_RPRT_MAP_MNG   /* 시스템_바젤3보고서매핑관리 */
+   SET USE_YN                  = 'N'
+     , LAST_CHNG_ID            = #{LAST_CHNG_ID}
+     , LAST_CHNG_DT            = SYSDATE
+ WHERE BSL3_LQDT_RPRT_C        = #{BSL3_LQDT_RPRT_C}
+   AND BSL3_LQDT_RPRT_ITEM_VAL = #{BSL3_LQDT_RPRT_ITEM_VAL}
+   AND RPRT_SECT_VAL           = #{RPRT_SECT_VAL}
+   AND SEQ                     = #{SEQ}
+   AND LQDT_COA_C	           = #{LQDT_COA_C}
+	</update>
+
+</mapper>

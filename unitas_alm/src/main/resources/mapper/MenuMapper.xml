@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.MenuMapper">
+
+	<select id="selectMenuList" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT ALM_MENU_C        AS ALM_MENU_C   
+		     , ALM_UP_MENU_C     AS ALM_UP_MENU_C
+		     , MENU_NM           AS MENU_NM      
+		     , MENU_LVL          AS MENU_LVL     
+		     , MENU_PATH_URL     AS MENU_PATH_URL
+		     , MENU_FILE_NM      AS MENU_FILE_NM 
+		     , MENU_PLC_VAL      AS MENU_PLC_VAL 
+		     , ALM_MENU_SEQ      AS ALM_MENU_SEQ 
+		     , USE_YN            AS USE_YN       
+		     , LEVEL             AS LVL
+		  FROM (
+		        SELECT B.ALM_MENU_C
+				     , B.ALM_UP_MENU_C
+				     , B.MENU_NM
+				     , B.MENU_LVL
+				     , B.MENU_PATH_URL
+				     , B.MENU_FILE_NM
+				     , B.MENU_PLC_VAL
+				     , B.ALM_MENU_SEQ
+				     , B.USE_YN
+		          FROM TSY_AUTH_MNG A
+		             , TSY_MENU_MNG B
+		         WHERE A.ALM_MENU_C = B.ALM_MENU_C 
+		           AND A.AUTH_TC    = #{AUTH_TC}
+		           AND B.USE_YN     = 'Y'
+		       ) C
+		CONNECT BY PRIOR C.ALM_MENU_C = C.ALM_UP_MENU_C 
+		  START WITH C.ALM_UP_MENU_C = '-'
+		  ORDER BY ALM_MENU_SEQ 
+	</select>	
+
+</mapper>

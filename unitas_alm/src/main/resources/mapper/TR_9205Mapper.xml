@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_9205Mapper">
+
+	<select id="getBLog" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT TO_CHAR(TO_DATE(A.BASE_DATE,'YYYYMMDD'),'YYYY-MM-DD') AS "BASE_DATE"
+		     , A.PROC_NM
+		     , A.EXEC_STAG_NO
+		     , A.EXEC_STAT_C
+		     , A.ALM_BTCH_LOG_CNTN
+		     , TO_CHAR(A.ALM_BTCH_LOG_DT,'YYYY-MM-DD HH24:MI:SS')	AS "ALM_BTCH_LOG_DT"
+		  FROM ALMADM.TSY_BATCH_LOG  A
+		     , (
+				 SELECT BASE_DATE, PROC_NM, EXEC_STAG_NO, EXEC_STAT_C, MAX(ALM_BTCH_LOG_DT) AS  ALM_BTCH_LOG_DT
+				   FROM ALMADM.TSY_BATCH_LOG A
+				  WHERE ALM_BTCH_LOG_DT <![CDATA[>=]]> TO_DATE(#{rfn_date}, 'YYYY-MM-DD HH24:MI:SS')
+				    <if test="keyword != null and keyword.length() > 0"> 
+				    AND upper(PROC_NM) LIKE '%' || upper(#{keyword}) || '%'
+			        </if>
+				  GROUP BY BASE_DATE, PROC_NM, EXEC_STAG_NO, EXEC_STAT_C
+		       ) B
+		 WHERE A.BASE_DATE       = B.BASE_DATE
+		   AND A.PROC_NM         = B.PROC_NM 
+		   AND A.EXEC_STAG_NO    = B.EXEC_STAG_NO
+		   AND A.EXEC_STAT_C     = B.EXEC_STAT_C
+		   AND A.ALM_BTCH_LOG_DT = B.ALM_BTCH_LOG_DT
+           AND A.ALM_BTCH_LOG_DT <![CDATA[>=]]> TO_DATE(#{rfn_date}, 'YYYY-MM-DD HH24:MI:SS')
+           <if test="errorCheck != null and errorCheck.length() > 0">
+		   AND upper(A.ALM_BTCH_LOG_CNTN) LIKE '%' || upper(#{errorCheck}) || '%'	
+           </if>
+		   <if test="keyword != null and keyword.length() > 0"> 
+		   AND upper(A.PROC_NM) LIKE '%' || upper(#{keyword}) || '%'
+	       </if>
+		ORDER BY A.ALM_BTCH_LOG_DT DESC, EXEC_STAG_NO DESC
+	</select>
+
+	<!-- 배치로그 내역 조회  -->
+	<select id="getBLog_backup" parameterType="java.util.Map" resultType="java.util.HashMap">
+			SELECT 
+			    TO_CHAR(TO_DATE(BASE_DATE,'YYYYMMDD'),'YYYY-MM-DD') AS "BASE_DATE"
+			    ,PROC_NM
+			    ,EXEC_STAG_NO
+			    ,EXEC_STAT_C
+			    ,ALM_BTCH_LOG_CNTN
+			    ,TO_CHAR(ALM_BTCH_LOG_DT,'YYYY-MM-DD HH24:MI:SS')	AS "ALM_BTCH_LOG_DT"
+			FROM
+			    ALMADM.TSY_BATCH_LOG
+			WHERE
+			    1=1
+			<if test="keyword != null and keyword.length() > 0">
+				AND
+					upper(PROC_NM) LIKE '%' || upper(#{keyword}) || '%'
+			</if>
+			<if test="rfn_date != null and rfn_date.length() > 0">
+				AND
+					BASE_DATE = #{rfn_date}
+			</if>
+			<if test="errorCheck != null and errorCheck.length() > 0">
+				AND
+					upper(ALM_BTCH_LOG_CNTN) LIKE '%' || upper(#{errorCheck}) || '%'	
+			</if>
+	</select>
+	
+  
+
+</mapper>
+
+
+
+
+
+

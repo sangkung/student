@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_4201Mapper">
+
+	<!-- 금리예측 조회  -->
+	<select id="selectTr4201List" parameterType="java.util.Map" resultType="java.util.HashMap">	
+		SELECT 
+		    A.BASE_DATE, SUBSTR(BASE_DATE, 1,4)||'년'||SUBSTR(BASE_DATE,5,2)||'월' AS BASE_YM_NM, A.BR_C
+		    , A.ALM_BASE_RATE_C, A.ALM_BASE_RATE_TRM_CNT
+		    , A.ALM_BASE_RATE_C || '_' || A.ALM_BASE_RATE_TRM_CNT AS ALM_BASE_RATE_C_TRM_CNT
+		    , B.ALM_BASE_RATE_NM
+		    , RATE_PEST_TC, C.DTL_CLAS_NM AS RATE_PEST_NM
+		    , RATE_TOT_TC
+		    , MMS1_ASSM_BASE_RATE AS M01
+		    , MMS2_ASSM_BASE_RATE AS M02
+		    , MMS3_ASSM_BASE_RATE AS M03
+		    , MMS4_ASSM_BASE_RATE AS M04
+		    , MMS5_ASSM_BASE_RATE AS M05
+		    , MMS6_ASSM_BASE_RATE AS M06
+		    , MMS7_ASSM_BASE_RATE AS M07
+		    , MMS8_ASSM_BASE_RATE AS M08
+		    , MMS9_ASSM_BASE_RATE AS M09
+		    , MMS10_ASSM_BASE_RATE AS M10
+		    , MMS11_ASSM_BASE_RATE AS M11
+		    , MMS12_ASSM_BASE_RATE AS M12
+		    , MMS13_ASSM_BASE_RATE AS M13
+		    , MMS14_ASSM_BASE_RATE AS M14
+		    , MMS15_ASSM_BASE_RATE AS M15
+		    , MMS16_ASSM_BASE_RATE AS M16
+		    , MMS17_ASSM_BASE_RATE AS M17
+		    , MMS18_ASSM_BASE_RATE AS M18
+		    , MMS19_ASSM_BASE_RATE AS M19
+		    , MMS20_ASSM_BASE_RATE AS M20
+		    , MMS21_ASSM_BASE_RATE AS M21
+		    , MMS22_ASSM_BASE_RATE AS M22
+		    , MMS23_ASSM_BASE_RATE AS M23
+		    , MMS24_ASSM_BASE_RATE AS M24
+		    , MMS25_ASSM_BASE_RATE AS M25
+		    , MMS26_ASSM_BASE_RATE AS M26
+		    , MMS27_ASSM_BASE_RATE AS M27
+		    , MMS28_ASSM_BASE_RATE AS M28
+		    , MMS29_ASSM_BASE_RATE AS M29
+		    , MMS30_ASSM_BASE_RATE AS M30
+		    , MMS31_ASSM_BASE_RATE AS M31
+		    , MMS32_ASSM_BASE_RATE AS M32
+		    , MMS33_ASSM_BASE_RATE AS M33
+		    , MMS34_ASSM_BASE_RATE AS M34
+		    , MMS35_ASSM_BASE_RATE AS M35
+		    , MMS36_ASSM_BASE_RATE AS M36
+		FROM TST_PEST_RATE_TOT A
+		JOIN TSY_ALM_BASE_RATE_MNG B ON B.ALM_BASE_RATE_C = A.ALM_BASE_RATE_C AND B.ALM_BASE_RATE_TRM_CNT = A.ALM_BASE_RATE_TRM_CNT AND B.USE_YN = 'Y'
+		JOIN TSY_CO_MNG C ON C.CO_C = 'RATE_PEST_TC' AND C.DTL_CLAS_VAL = A.RATE_PEST_TC
+		WHERE A.BASE_DATE = #{sch_base_date}
+		AND A.RATE_TOT_TC = #{sch_rate_tot_tc}
+		AND (A.BR_C = #{sch_br_c} OR A.ALM_BASE_RATE_C LIKE '11%') 
+		ORDER BY
+            CASE WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '12' THEN 1  -- 여신금리
+                 WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '13' THEN 2  -- 수신금리
+                 WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '21' THEN 3  -- 상품금리
+                 WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '22' THEN 4  -- 수익률
+                 WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '23' THEN 5  -- 유가증권
+                 WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '11' THEN 6  -- 시장금리
+                 WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '00' THEN 7 
+            END
+            , A.ALM_BASE_RATE_C, A.ALM_BASE_RATE_TRM_CNT, RATE_PEST_TC, RATE_TOT_TC
+	</select>
+	
+	<select id="selectTr4201SchCbList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT 
+			TO_CHAR(TO_DATE(MAX(BASE_DATE), 'YYYYMMDD'), 'YYYY-MM') AS BASE_DATE 
+		FROM TST_PEST_RATE_TOT
+	</select>
+	
+	<select id="selectTr4201SchInfoList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT 
+			ALM_BASE_RATE_C || '_' || ALM_BASE_RATE_TRM_CNT AS ALM_BASE_RATE_C_TRM_CNT
+			, ALM_BASE_RATE_NM
+			, '36' AS RSLT_CNT /*실적기간*/
+			, '36' AS PEST_CNT /*예측기간*/
+		FROM TSY_ALM_BASE_RATE_MNG
+		WHERE ALM_REP_RATE_YN = 'Y'
+		AND USE_YN = 'Y'
+	</select>
+
+</mapper>
+
+
+
+
+
+

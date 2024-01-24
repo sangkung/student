@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<!-- Default Layout Import-->
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{common/layouts/defaultLayout}"
+      layout:fragment="Content"
+>
+	<head>
+	    <title>테스트 페이지 </title>
+	    
+	    <!-- inline CSS 영역-->
+	    <style th:inline="css" type="text/css">
+	        body {
+	            margin: 30px;
+	            border: 1px solid red;
+	        }
+	        
+	    </style>
+	</head>
+
+	<body>
+		<div class="content">
+			<div th:text="${hello}"></div>
+			<div>
+				<a th:href="@{/basic}">Basic Grid</a>
+			</div>
+			<div>
+				<a th:href="@{/tree}">Tree Grid</a>
+			</div>
+			<div>
+				<a th:href="@{/tree2}">Tree Grid2</a>
+			</div>
+			<div>
+				<h1>Content 영역입니다.</h1>
+			</div>
+		</div>
+	</body>
+</html>

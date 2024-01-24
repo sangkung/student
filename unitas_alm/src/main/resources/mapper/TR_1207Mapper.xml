@@ -1,0 +1,540 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_1207Mapper">
+
+
+
+
+    <!-- 수신 과세비과세 현황 조회  -->
+	<select id = "selectTR_1207" parameterType="java.util.Map" resultType="java.util.HashMap">
+	
+		-- 전체 조합( 도지회, 동일권역, 전국 )
+		WITH THE_ENTIRE AS(
+
+		    SELECT 
+		            BASE_DATE
+		          , ALM_WORK_TC
+		          , ORG_CLAS_C
+		          , BR_C
+		          , CUR_C
+		          , AC_BUSI_TC
+		          , STAT_RPRT_ID
+		          , STAT_RPRT_ITEM_ID
+                  --------------------------------------------
+                  , NVL( CASE WHEN BASE_DATE     = #{BASE_DATE} THEN BKPR_AMT ELSE NULL END           ,0)                 AS            BKPR_AMT
+                  , NVL( CASE WHEN BASE_DATE     = #{BASE_DATE} THEN RPRT_ACC_CNT ELSE NULL END       ,0)                 AS        RPRT_ACC_CNT
+                  , NVL( CASE WHEN BASE_DATE     = #{BASE_DATE} THEN BKPR_APLY_RATE_AMT ELSE NULL END ,0)                 AS  BKPR_APLY_RATE_AMT
+                  --------------------------------------------                                                              
+                  , NVL( CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1),'YYYYMMDD') THEN BKPR_AMT ELSE NULL END           ,0)  AS            BKPR_AMT1
+                  , NVL( CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1),'YYYYMMDD') THEN RPRT_ACC_CNT ELSE NULL END       ,0)  AS        RPRT_ACC_CNT1
+                  , NVL( CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1),'YYYYMMDD') THEN BKPR_APLY_RATE_AMT ELSE NULL END ,0)  AS  BKPR_APLY_RATE_AMT1
+                  --------------------------------------------
+		      FROM  TSR_DP_TAXTYPE_STAT  
+		     WHERE  ALM_WORK_TC  = 'M'
+		       AND  CUR_C        = 'KRW'
+		       AND  ORG_CLAS_C   = #{ORG_CLAS_C}
+		       AND  BASE_DATE    IN( #{BASE_DATE} , TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1),'YYYYMMDD') )
+		  
+	 	    <if test="AC_BUSI_TC == '0000'">
+	 	      AND AC_BUSI_TC IN('1105','1106','1107')
+	 	    </if>
+	 	    <if test="AC_BUSI_TC != '0000'">
+	 		  AND AC_BUSI_TC = #{AC_BUSI_TC}
+	 	    </if>
+	)
+	,SELECT_BR_C AS(
+	
+	    SELECT 
+	            BASE_DATE
+	          , ALM_WORK_TC
+	          , ORG_CLAS_C
+	          , BR_C
+	          , CUR_C
+	          , AC_BUSI_TC
+	          , STAT_RPRT_ID
+	          , STAT_RPRT_ITEM_ID
+              , BKPR_AMT
+              , BKPR_APLY_RATE_AMT
+              , RPRT_ACC_CNT
+	      FROM  TSR_DP_TAXTYPE_STAT 
+	     WHERE  ALM_WORK_TC  = 'M'
+	       AND  CUR_C        = 'KRW'
+	       AND  ORG_CLAS_C   = #{ORG_CLAS_C}
+	       AND  BASE_DATE    = #{BASE_DATE}
+		        
+		 -- ( 회계구분  )
+		 -- 중앙회를 제외한 나머지는 신용회계(2102) 로 고정!
+		 ----------------------------------------
+		 /* 중앙회 조회 시 에만 발생  */
+	 	<if test="AC_BUSI_TC == '0000'">
+	 		AND AC_BUSI_TC IN('1105','1106','1107')
+	 	</if>
+	 	<if test="AC_BUSI_TC != '0000'">
+	 		AND AC_BUSI_TC = #{AC_BUSI_TC}
+	 	</if>
+		 ----------------------------------------
+	 	
+		 -- ( 점소코드  )
+		 ----------------------------------------
+		 -- 전체조합 조회 시 
+		 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'">
+		 	-- 모든 점소코드 나오기
+		 </if>
+		 
+		 -- 단위조합별 조회 시 (지소포함여부  yes/no)
+		 <if test="JISO_INCLUDE == 'yes' and BLNG_HQ_BR_C != ''">   
+		 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{BR_C} ) 
+		 </if>
+		 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+		 	AND BR_C     = #{BR_C}
+		 </if>
+		 
+		 -- 도지회별 조회 시 
+		 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+		 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} )
+		 </if>
+		 
+		 -- 중앙회 조회 시  
+		 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == '001'">
+			AND BR_C     = #{BR_C}
+		 </if>
+		 ----------------------------------------
+	)      
+		,GET_SAME_ZONE_BR_C AS(
+
+		    SELECT BR_C 
+		      FROM TTL_BR_C_INFO
+		     WHERE 1 = 1 
+		       AND ZONE_TC IN(
+		                       SELECT DTL_CLAS_VAL 
+		                         FROM TSY_CO_MNG 
+		                        WHERE CO_C = 'ZONE_TC'
+		                          AND CO_C_1_VAL = ( 
+		                                             SELECT CO_C_1_VAL 
+		                                               FROM TSY_CO_MNG
+		                                              WHERE CO_C = 'ZONE_TC'
+		                                                AND DTL_CLAS_VAL = #{ZONE_TC} 
+		                                           ) 
+		                     ) 
+		 
+		)  
+		-- 조회
+		SELECT
+	            Y2.LVL1           																			   AS ACCT_NM1   
+	          <if test="LVL == 2">
+	          , DECODE( GROUPING_ID( Y2.LVL2 ), 1, Y2.LVL1 || ' 소계', Y2.LVL2 )        						   AS ACCT_NM2
+	          , GROUPING_ID( Y2.LVL2 )                                             						       AS GRP_ID
+	          </if>       		
+	          																	     
+	          <if test="LVL == 3">
+	          , DECODE( GROUPING_ID( Y2.LVL2,Y2.LVL3 ), 3, Y2.LVL1 || ' 소계', Y2.LVL2 )       			       AS ACCT_NM2
+	          , DECODE( GROUPING_ID( Y2.LVL2,Y2.LVL3 ), 1, Y2.LVL2 || ' 소계', Y2.LVL3 )       			       AS ACCT_NM3
+	          , GROUPING_ID( Y2.LVL2, Y2.LVL3 )                                             			       AS GRP_ID
+	          </if>        			
+	          																  
+	          <if test="LVL == 4">
+	          , DECODE( GROUPING_ID( Y2.LVL2,Y2.LVL3,Y2.LVL4 ), 7, Y2.LVL1 || ' 소계', Y2.LVL2 )         	       AS ACCT_NM2
+	          , DECODE( GROUPING_ID( Y2.LVL2,Y2.LVL3,Y2.LVL4 ), 3, Y2.LVL2 || ' 소계', Y2.LVL3 )         	       AS ACCT_NM3
+	          , DECODE( GROUPING_ID( Y2.LVL2,Y2.LVL3,Y2.LVL4 ), 1 ,Y2.LVL3 || ' 소계', Y2.LVL4 )        	   	   AS ACCT_NM4 
+	          , GROUPING_ID( Y2.LVL2, Y2.LVL3, Y2.LVL4 )                                             		   AS GRP_ID
+	          </if>        													
+	          						   
+	          <if test="LVL == 5">
+	          , DECODE( GROUPING_ID( Y2.LVL2,Y2.LVL3,Y2.LVL4,Y2.LVL5 ), 15, Y2.LVL1 || ' 소계', Y2.LVL2 )        AS ACCT_NM2
+	          , DECODE( GROUPING_ID( Y2.LVL2,Y2.LVL3,Y2.LVL4,Y2.LVL5 ), 7 , Y2.LVL2 || ' 소계', Y2.LVL3 )        AS ACCT_NM3 
+	          , DECODE( GROUPING_ID( Y2.LVL2,Y2.LVL3,Y2.LVL4,Y2.LVL5 ), 3 , Y2.LVL3 || ' 소계', Y2.LVL4 )        AS ACCT_NM4 
+	          , DECODE( GROUPING_ID( Y2.LVL2,Y2.LVL3,Y2.LVL4,Y2.LVL5 ), 1 , Y2.LVL4 || ' 소계', Y2.LVL5 )        AS ACCT_NM5 
+	          , GROUPING_ID( Y2.LVL2, Y2.LVL3, Y2.LVL4, Y2.LVL5 )                                              AS GRP_ID
+	          </if>               
+              -----------------------------------------------------------
+	          , SUM(Y2.VIEW_BKPR_AMT)                                                                                                           AS BKPR_AMT         -- 잔액   
+	          , SUM(Y2.RPRT_ACC_CNT)                                                                                                            AS RPRT_ACC_CNT     -- 계좌건수
+	          , NVL(ROUND( SUM(Y2.BKPR_APLY_RATE_AMT)  / DECODE( SUM(Y2.BKPR_AMT),0,NULL,SUM(Y2.BKPR_AMT) ) ,2),0)                              AS RPRT_AVG_RATE    -- 평균금리(기준월)                                                                                                        
+              -----------------------------------------------------------                                                                       
+              , NVL(ROUND( SUM(Y1.BKPR_APLY_RATE_AMT1_1) / DECODE( SUM(Y1.BKPR_AMT1_1), 0, NULL, SUM(Y1.BKPR_AMT1_1) ) , 2), 0)                 AS DOZI             -- 도지회       
+              , NVL(ROUND( SUM(Y1.BKPR_APLY_RATE_AMT1_2) / DECODE( SUM(Y1.BKPR_AMT1_2), 0, NULL, SUM(Y1.BKPR_AMT1_2) ) , 2), 0)                 AS EQUAL_ZONE       -- 동일권역
+              , NVL(ROUND( SUM(Y1.BKPR_APLY_RATE_AMT1_3) / DECODE( SUM(Y1.BKPR_AMT1_3), 0, NULL, SUM(Y1.BKPR_AMT1_3) ) , 2), 0)                 AS NATIONWIDE       -- 전국 
+              -----------------------------------------------------------
+	          , NVL(ROUND( (
+	          
+                          ( 
+                              ( SUM(Y1.BKPR_APLY_RATE_AMT1_1) / DECODE( SUM(Y1.BKPR_AMT1_1),0,NULL,SUM(Y1.BKPR_AMT1_1) ) ) 
+                                - 
+                              ( SUM(Y1.BKPR_APLY_RATE_AMT2_1) / DECODE( SUM(Y1.BKPR_AMT2_1),0,NULL,SUM(Y1.BKPR_AMT2_1) ) ) 
+                          ) /
+	            
+                             DECODE( SUM(Y1.BKPR_APLY_RATE_AMT2_1) / DECODE( SUM(Y1.BKPR_AMT2_1),0,NULL,SUM(Y1.BKPR_AMT2_1) ) , 0 , NULL 
+                                    ,SUM(Y1.BKPR_APLY_RATE_AMT2_1) / DECODE( SUM(Y1.BKPR_AMT2_1),0,NULL,SUM(Y1.BKPR_AMT2_1) ) ) -- ELSE 부분 
+
+                ) * 100, 2), 0)                                                                                                                 AS DOZI_PLUS_RATIO1  -- 도지회(전월대비증감률)
+	          , NVL(ROUND( (
+	          
+                          ( 
+                              ( SUM(Y1.BKPR_APLY_RATE_AMT1_2) / DECODE( SUM(Y1.BKPR_AMT1_2),0,NULL,SUM(Y1.BKPR_AMT1_2) ) ) 
+                                - 
+                              ( SUM(Y1.BKPR_APLY_RATE_AMT2_2) / DECODE( SUM(Y1.BKPR_AMT2_2),0,NULL,SUM(Y1.BKPR_AMT2_2) ) ) 
+                          ) /
+	            
+                             DECODE( SUM(Y1.BKPR_APLY_RATE_AMT2_2) / DECODE( SUM(Y1.BKPR_AMT2_2),0,NULL,SUM(Y1.BKPR_AMT2_2) ) , 0 , NULL 
+                                    ,SUM(Y1.BKPR_APLY_RATE_AMT2_2) / DECODE( SUM(Y1.BKPR_AMT2_2),0,NULL,SUM(Y1.BKPR_AMT2_2) ) ) -- ELSE 부분 
+
+                ) * 100, 2), 0)                                                                                                                  AS DOZI_PLUS_RATIO2  -- 동일권역(전월대비증감률)
+	          , NVL(ROUND( (
+	          
+                          ( 
+                              ( SUM(Y1.BKPR_APLY_RATE_AMT1_3) / DECODE( SUM(Y1.BKPR_AMT1_3),0,NULL,SUM(Y1.BKPR_AMT1_3) ) ) 
+                                - 
+                              ( SUM(Y1.BKPR_APLY_RATE_AMT2_3) / DECODE( SUM(Y1.BKPR_AMT2_3),0,NULL,SUM(Y1.BKPR_AMT2_3) ) ) 
+                          ) /
+	            
+                             DECODE( SUM(Y1.BKPR_APLY_RATE_AMT2_3) / DECODE( SUM(Y1.BKPR_AMT2_3),0,NULL,SUM(Y1.BKPR_AMT2_3) ) , 0 , NULL 
+                                    ,SUM(Y1.BKPR_APLY_RATE_AMT2_3) / DECODE( SUM(Y1.BKPR_AMT2_3),0,NULL,SUM(Y1.BKPR_AMT2_3) ) ) -- ELSE 부분 
+
+                ) * 100, 2), 0)                                                                                                                   AS DOZI_PLUS_RATIO3  -- 전국(전월대비증감률)
+              -----------------------------------------------------------     
+              , SUM( Y1.BKPR_AMT1_1           )                                                                                                   AS BKPR_AMT1_1
+              , SUM( Y1.BKPR_APLY_RATE_AMT1_1 )                                                                                                   AS BKPR_APLY_RATE_AMT1_1
+              , SUM( Y1.BKPR_AMT1_2			  )	                                                                                                  AS BKPR_AMT1_2
+              , SUM( Y1.BKPR_APLY_RATE_AMT1_2 )	                                                                                    			  AS BKPR_APLY_RATE_AMT1_2
+              , SUM( Y1.BKPR_AMT1_3           )                                                                                                   AS BKPR_AMT1_3
+              , SUM( Y1.BKPR_APLY_RATE_AMT1_3 )                                                                                         		  AS BKPR_APLY_RATE_AMT1_3
+              , SUM( Y1.BKPR_AMT2_1           )                                                                                                   AS BKPR_AMT2_1
+              , SUM( Y1.BKPR_APLY_RATE_AMT2_1 )                                                                                                   AS BKPR_APLY_RATE_AMT2_1
+              , SUM( Y1.BKPR_AMT2_2			  )	                                                                                                  AS BKPR_AMT2_2
+              , SUM( Y1.BKPR_APLY_RATE_AMT2_2 )	                                                                                    			  AS BKPR_APLY_RATE_AMT2_2
+              , SUM( Y1.BKPR_AMT2_3     	  )	                                                                                    	          AS BKPR_AMT2_3
+              , SUM( Y1.BKPR_APLY_RATE_AMT2_3 )                                                                                        			  AS BKPR_APLY_RATE_AMT2_3
+              , SUM( Y2.BKPR_AMT              )                          							                                              AS CAL_BKPR_AMT            
+              , SUM( Y2.BKPR_APLY_RATE_AMT    )									    	                                                          AS CAL_BKPR_APLY_RATE_AMT 
+              , SUM( Y2.RPRT_ACC_CNT          )                                                                                                   AS CAL_RPRT_ACC_CNT  
+              -----------------------------------------------------------      
+	      FROM 
+	    (
+	        SELECT
+	                LVL1 
+			    <if test="LVL == 2">
+			      , LVL2
+			    </if>
+			    <if test="LVL == 3">
+			      , LVL2
+			      , LVL3
+			    </if>
+			    <if test="LVL == 4">
+			      , LVL2
+			      , LVL3
+			      , LVL4
+			    </if>
+			    <if test="LVL == 5">
+			      , LVL2
+			      , LVL3
+			      , LVL4
+			      , LVL5  
+			    </if>      
+                  ----------------------------------------------기준월
+                  , SUM( CASE WHEN BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BLNG_HQ_BR_C} ) THEN AMT1      END )      AS BKPR_AMT1_1
+                  , SUM( CASE WHEN BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BLNG_HQ_BR_C} ) THEN RATE_AMT1 END )      AS BKPR_APLY_RATE_AMT1_1
+                  , SUM( CASE WHEN BR_C IN ( SELECT BR_C FROM GET_SAME_ZONE_BR_C  ) THEN AMT1      END )         							 AS BKPR_AMT1_2
+                  , SUM( CASE WHEN BR_C IN ( SELECT BR_C FROM GET_SAME_ZONE_BR_C  ) THEN RATE_AMT1 END )         							 AS BKPR_APLY_RATE_AMT1_2
+                  , SUM(AMT1)                                                                                                                AS BKPR_AMT1_3
+                  , SUM(RATE_AMT1)                                                                                                 		     AS BKPR_APLY_RATE_AMT1_3
+                  ----------------------------------------------전월       
+                  , SUM( CASE WHEN BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BLNG_HQ_BR_C} ) THEN AMT2      END )      AS BKPR_AMT2_1
+                  , SUM( CASE WHEN BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BLNG_HQ_BR_C} ) THEN RATE_AMT2 END )      AS BKPR_APLY_RATE_AMT2_1
+                  , SUM( CASE WHEN BR_C IN ( SELECT BR_C FROM GET_SAME_ZONE_BR_C  ) THEN AMT2      END )      								 AS BKPR_AMT2_2
+                  , SUM( CASE WHEN BR_C IN ( SELECT BR_C FROM GET_SAME_ZONE_BR_C  ) THEN RATE_AMT2 END )      								 AS BKPR_APLY_RATE_AMT2_2
+                  , SUM(AMT2)                                                                                                     			 AS BKPR_AMT2_3
+                  , SUM(RATE_AMT2)                                                                                                			 AS BKPR_APLY_RATE_AMT2_3
+                  ----------------------------------------------
+	              , MAX(PRNT_ORD1)                                                                                                			 AS PRNT_ORD1
+	              , MAX(PRNT_ORD2)                                                                                              			 AS PRNT_ORD2
+	              , MAX(PRNT_ORD3)                                                                                               		  	 AS PRNT_ORD3
+	              , MAX(PRNT_ORD4)                                                                                               		   	 AS PRNT_ORD4
+	              , MAX(PRNT_ORD5)                                                                                               		   	 AS PRNT_ORD5
+	          FROM 
+	        (
+	            SELECT
+	                    B.LVL1   
+	                  , B.LVL2
+	                  , B.LVL3
+	                  , B.LVL4
+	                  , B.LVL5          
+	                  , A.ORG_CLAS_C
+	                  , A.BR_C
+	                  , A.AC_BUSI_TC
+	                  , A.STAT_RPRT_ID
+	                  , A.STAT_RPRT_ITEM_ID
+	                  , A.BKPR_AMT                                                                                                                      AS AMT1
+	                  , A.RPRT_ACC_CNT                                                                                                                  AS ACC_CNT1
+	                  , A.BKPR_APLY_RATE_AMT                                                                                                            AS RATE_AMT1
+	                  , A.BKPR_AMT1                                                                                                                     AS AMT2
+	                  , A.RPRT_ACC_CNT1                                                                                                                 AS ACC_CNT2
+	                  , A.BKPR_APLY_RATE_AMT1                                                                                                           AS RATE_AMT2
+	                  , B.PRNT_ORD1
+	                  , B.PRNT_ORD2
+	                  , B.PRNT_ORD3
+	                  , B.PRNT_ORD4
+	                  , B.PRNT_ORD5
+	              FROM  THE_ENTIRE A
+	            ,(
+	                SELECT 
+                          LEVEL AS LVL
+                        , SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%') AS STAT_RPRT_ITEM_NM_PATH
+                        , REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 1 )                              AS LVL1
+                        , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 2 ),TRIM(STAT_RPRT_ITEM_NM)) AS LVL2
+                        , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 3 ),TRIM(STAT_RPRT_ITEM_NM)) AS LVL3
+                        , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 4 ),TRIM(STAT_RPRT_ITEM_NM)) AS LVL4
+                        , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 5 ),TRIM(STAT_RPRT_ITEM_NM)) AS LVL5
+                        , STAT_RPRT_ITEM_NM
+                        , ORG_CLAS_C
+                        , STAT_RPRT_ID
+                        , STAT_RPRT_ITEM_ID
+                        , TO_NUMBER(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 1 ) )                           AS PRNT_ORD1
+                        , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 2 ),TRIM(PRNT_ORD)))        AS PRNT_ORD2
+                        , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 3 ),TRIM(PRNT_ORD)))        AS PRNT_ORD3
+                        , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 4 ),TRIM(PRNT_ORD)))        AS PRNT_ORD4
+                        , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 5 ),TRIM(PRNT_ORD)))        AS PRNT_ORD5
+	                FROM(
+	                        SELECT 
+	                              ORG_CLAS_C
+	                              ,STAT_RPRT_ID
+	                              ,STAT_RPRT_NM
+	                              ,STAT_RPRT_ITEM_ID
+	                              ,CASE
+	                                WHEN STAT_RPRT_LVL = 1 THEN '-'
+	                                WHEN STAT_RPRT_LVL = 2 THEN SUBSTR( STAT_RPRT_ITEM_ID,0,STAT_RPRT_LVL - 1 )
+	                                WHEN STAT_RPRT_LVL = 3 AND ORG_CLAS_C = '30' THEN SUBSTR( STAT_RPRT_ITEM_ID,0,STAT_RPRT_LVL )
+	                                WHEN STAT_RPRT_LVL = 3 AND ORG_CLAS_C = '10' THEN SUBSTR( STAT_RPRT_ITEM_ID,0,STAT_RPRT_LVL )
+	                               END  AS UP_STAT_RPRT_ITEM_ID
+	                              ,STAT_RPRT_ITEM_NM
+	                              ,STAT_RPRT_LVL
+	                              ,TOT_ITEM_YN
+	                              ,PRNT_ORD
+	                         FROM ALMADM.TII_STAT_ANAL_RPRT_INFO
+	                        WHERE ORG_CLAS_C   = #{ORG_CLAS_C}
+	                          AND STAT_RPRT_ID = 'P700'
+	                    )   
+	                START WITH UP_STAT_RPRT_ITEM_ID = '-'
+	                CONNECT BY PRIOR STAT_RPRT_ITEM_ID = UP_STAT_RPRT_ITEM_ID
+	                       AND PRIOR ORG_CLAS_C        = ORG_CLAS_C
+	                       AND PRIOR STAT_RPRT_ID      = STAT_RPRT_ID
+	            ) B
+	            WHERE A.ORG_CLAS_C         = B.ORG_CLAS_C
+	              AND A.STAT_RPRT_ID       = B.STAT_RPRT_ID
+	              AND A.STAT_RPRT_ITEM_ID  = B.STAT_RPRT_ITEM_ID
+	        )     
+	        GROUP BY 
+	                LVL1  
+			    <if test="LVL == 2">
+			    	, LVL2
+			    </if>
+			    <if test="LVL == 3">
+			        , LVL2
+			        , LVL3
+			    </if>
+			    <if test="LVL == 4">
+			        , LVL2
+			        , LVL3
+			        , LVL4
+			    </if>
+			    <if test="LVL == 5">
+			        , LVL2
+			        , LVL3
+			        , LVL4
+			        , LVL5  
+			    </if>    
+	    )Y1
+	    ,
+	    (
+	        SELECT
+	                LVL1  
+			    <if test="LVL == 2">
+			    	, LVL2
+			    </if>
+			    <if test="LVL == 3">
+			        , LVL2
+			        , LVL3
+			    </if>
+			    <if test="LVL == 4">
+			        , LVL2
+			        , LVL3
+			        , LVL4
+			    </if>
+			    <if test="LVL == 5">
+			        , LVL2
+			        , LVL3
+			        , LVL4
+			        , LVL5  
+			    </if>    
+	              /* 데이터처리 */                                                                                 
+	              ----------------------------------------------------------------------------------------------------------
+	              /* 화면에 보여질 금액부분 처리  */  
+	              , ROUND(SUM( BKPR_AMT ) / TO_NUMBER(#{AMT_UNIT}))                       AS VIEW_BKPR_AMT   
+	              , SUM( BKPR_AMT )                          							  AS BKPR_AMT            
+	              , SUM( BKPR_APLY_RATE_AMT )									    	  AS BKPR_APLY_RATE_AMT 
+	              , SUM( RPRT_ACC_CNT )                                                   AS RPRT_ACC_CNT        
+	              ----------------------------------------------------------------------------------------------------------
+	              , MAX(PRNT_ORD1)                                                        AS PRNT_ORD1
+	              , MAX(PRNT_ORD2)                                                        AS PRNT_ORD2
+	              , MAX(PRNT_ORD3)                                                        AS PRNT_ORD3
+	              , MAX(PRNT_ORD4)                                                        AS PRNT_ORD4
+	              , MAX(PRNT_ORD5)                                                        AS PRNT_ORD5
+	          FROM 
+	        (
+	            SELECT
+	                    B.LVL1   
+	                  , B.LVL2
+	                  , B.LVL3
+	                  , B.LVL4
+	                  , B.LVL5     
+	                  , A.ORG_CLAS_C
+	                  , A.BR_C
+	                  , A.AC_BUSI_TC
+	                  , A.STAT_RPRT_ID
+	                  , A.STAT_RPRT_ITEM_ID  
+	                  , A.BKPR_AMT
+	                  , A.BKPR_APLY_RATE_AMT 	                                                                                                       	
+	                  , A.RPRT_ACC_CNT       
+	                  , B.PRNT_ORD1
+	                  , B.PRNT_ORD2
+	                  , B.PRNT_ORD3
+	                  , B.PRNT_ORD4
+	                  , B.PRNT_ORD5
+	              FROM  SELECT_BR_C A
+	            ,(
+	                SELECT 
+                          LEVEL AS LVL
+                        , SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%') AS STAT_RPRT_ITEM_NM_PATH
+                        , REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 1 )                              AS LVL1
+                        , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 2 ),TRIM(STAT_RPRT_ITEM_NM)) AS LVL2
+                        , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 3 ),TRIM(STAT_RPRT_ITEM_NM)) AS LVL3
+                        , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 4 ),TRIM(STAT_RPRT_ITEM_NM)) AS LVL4
+                        , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 5 ),TRIM(STAT_RPRT_ITEM_NM)) AS LVL5
+                        , STAT_RPRT_ITEM_NM
+                        , ORG_CLAS_C
+                        , STAT_RPRT_ID
+                        , STAT_RPRT_ITEM_ID
+                        , TO_NUMBER(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 1 ) )                           AS PRNT_ORD1
+                        , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 2 ),TRIM(PRNT_ORD)))        AS PRNT_ORD2
+                        , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 3 ),TRIM(PRNT_ORD)))        AS PRNT_ORD3
+                        , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 4 ),TRIM(PRNT_ORD)))        AS PRNT_ORD4
+                        , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 5 ),TRIM(PRNT_ORD)))        AS PRNT_ORD5
+	                FROM(
+	                        SELECT 
+	                              ORG_CLAS_C
+	                              ,STAT_RPRT_ID
+	                              ,STAT_RPRT_NM
+	                              ,STAT_RPRT_ITEM_ID
+	                              ,CASE
+	                                WHEN STAT_RPRT_LVL = 1 THEN '-'
+	                                WHEN STAT_RPRT_LVL = 2 THEN SUBSTR( STAT_RPRT_ITEM_ID,0,STAT_RPRT_LVL - 1 )
+	                                WHEN STAT_RPRT_LVL = 3 AND ORG_CLAS_C = '30' THEN SUBSTR( STAT_RPRT_ITEM_ID,0,STAT_RPRT_LVL )
+	                                WHEN STAT_RPRT_LVL = 3 AND ORG_CLAS_C = '10' THEN SUBSTR( STAT_RPRT_ITEM_ID,0,STAT_RPRT_LVL )
+	                               END  AS UP_STAT_RPRT_ITEM_ID
+	                              ,STAT_RPRT_ITEM_NM
+	                              ,STAT_RPRT_LVL
+	                              ,TOT_ITEM_YN
+	                              ,PRNT_ORD
+	                         FROM ALMADM.TII_STAT_ANAL_RPRT_INFO
+	                        WHERE ORG_CLAS_C   = #{ORG_CLAS_C}
+	                          AND STAT_RPRT_ID = 'P700'
+	                    )   
+	                START WITH UP_STAT_RPRT_ITEM_ID = '-'
+	                CONNECT BY PRIOR STAT_RPRT_ITEM_ID = UP_STAT_RPRT_ITEM_ID
+	                       AND PRIOR ORG_CLAS_C        = ORG_CLAS_C
+	                       AND PRIOR STAT_RPRT_ID      = STAT_RPRT_ID
+	            ) B
+	            WHERE A.ORG_CLAS_C         = B.ORG_CLAS_C
+	              AND A.STAT_RPRT_ID       = B.STAT_RPRT_ID
+	              AND A.STAT_RPRT_ITEM_ID  = B.STAT_RPRT_ITEM_ID
+	        )     
+	        GROUP BY 
+	                LVL1  
+			    <if test="LVL == 2">
+			    	, LVL2
+			    </if>
+			    <if test="LVL == 3">
+			        , LVL2
+			        , LVL3
+			    </if>
+			    <if test="LVL == 4">
+			        , LVL2
+			        , LVL3
+			        , LVL4
+			    </if>
+			    <if test="LVL == 5">
+			        , LVL2
+			        , LVL3
+			        , LVL4
+			        , LVL5  
+			    </if>    
+	    )Y2
+	    WHERE 1=1
+	      AND Y1.LVL1 = Y2.LVL1 
+     <if test="LVL == 2">
+	      AND Y1.LVL2 = Y2.LVL2
+     </if>
+     <if test="LVL == 3">
+	      AND Y1.LVL2 = Y2.LVL2
+	      AND Y1.LVL3 = Y2.LVL3
+     </if>
+     <if test="LVL == 4">
+	      AND Y1.LVL2 = Y2.LVL2
+	      AND Y1.LVL3 = Y2.LVL3
+	      AND Y1.LVL4 = Y2.LVL4
+     </if>
+     <if test="LVL == 5">
+	      AND Y1.LVL2 = Y2.LVL2
+	      AND Y1.LVL3 = Y2.LVL3
+	      AND Y1.LVL4 = Y2.LVL4
+	      AND Y1.LVL5 = Y2.LVL5	  
+     </if>      
+		
+		GROUP BY
+			Y2.LVL1
+	   <if test="LVL == 1">
+		ORDER BY
+	      	MAX(Y2.PRNT_ORD1)
+	   </if>
+	   <if test="LVL == 2">
+	   		, ROLLUP( Y2.LVL2 )	
+		ORDER BY
+		      MAX(Y2.PRNT_ORD1)    
+		    , MAX(Y2.PRNT_ORD2) 
+		    , GRP_ID     	
+	   </if>
+	   <if test="LVL == 3">
+	   		, ROLLUP( Y2.LVL2, Y2.LVL3 )
+		ORDER BY
+		      MAX(Y2.PRNT_ORD1)    
+		    , MAX(Y2.PRNT_ORD2)    
+		    , MAX(Y2.PRNT_ORD3) 
+		    , GRP_ID    	
+	   </if>
+	   <if test="LVL == 4">
+	   		, ROLLUP( Y2.LVL2, Y2.LVL3, Y2.LVL4 )
+		ORDER BY
+		      MAX(Y2.PRNT_ORD1)    
+		    , MAX(Y2.PRNT_ORD2)    
+		    , MAX(Y2.PRNT_ORD3)    
+		    , MAX(Y2.PRNT_ORD4)  	
+		    , GRP_ID    
+	   </if>
+	   <if test="LVL == 5">
+	   		, ROLLUP( Y2.LVL2, Y2.LVL3, Y2.LVL4, Y2.LVL5 )
+		ORDER BY
+		      MAX(Y2.PRNT_ORD1)    
+		    , MAX(Y2.PRNT_ORD2)    
+		    , MAX(Y2.PRNT_ORD3)    
+		    , MAX(Y2.PRNT_ORD4)    
+		    , MAX(Y2.PRNT_ORD5)
+		    , GRP_ID     
+	   </if>
+
+	
+	</select>
+
+
+  
+
+
+</mapper>

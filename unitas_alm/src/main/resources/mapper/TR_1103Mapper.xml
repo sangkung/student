@@ -1,0 +1,950 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_1103Mapper">
+
+
+
+
+  
+	<select id = "selectTR_1103" parameterType="java.util.Map" resultType="java.util.HashMap">
+	
+	
+		/* 기준월 대비 12개월 추이 */
+		WITH TEMP AS(
+		
+		    SELECT 
+		            #{BR_C}          AS BR_C
+		          , #{BASE_DATE}     AS BASE_DATE
+		          , ALM_WORK_TC
+		          , ORG_CLAS_C
+		          , CUR_C
+		          <if test="AC_BUSI_TC == '0000'">
+		          , '1105'           AS AC_BUSI_TC
+		          </if>
+		          <if test="AC_BUSI_TC != '0000'">
+		          , AC_BUSI_TC
+		          </if>
+		          , STAT_RPRT_ID
+		          , STAT_RPRT_ITEM_ID
+				  ---------------------------------------                                                                                              
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1),'YYYYMMDD')  THEN BKPR_AMT           ELSE 0 END ) AS            BKPR_AMT_1
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1),'YYYYMMDD')  THEN RPRT_ACC_CNT       ELSE 0 END ) AS        RPRT_ACC_CNT_1
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1),'YYYYMMDD')  THEN BKPR_APLY_RATE_AMT ELSE 0 END ) AS  BKPR_APLY_RATE_AMT_1
+				  ---------------------------------------                                                                                         
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-2),'YYYYMMDD')  THEN BKPR_AMT           ELSE 0 END ) AS            BKPR_AMT_2
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-2),'YYYYMMDD')  THEN RPRT_ACC_CNT       ELSE 0 END ) AS        RPRT_ACC_CNT_2
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-2),'YYYYMMDD')  THEN BKPR_APLY_RATE_AMT ELSE 0 END ) AS  BKPR_APLY_RATE_AMT_2
+				  ---------------------------------------                                                                                          
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-3),'YYYYMMDD')  THEN BKPR_AMT           ELSE 0 END ) AS            BKPR_AMT_3
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-3),'YYYYMMDD')  THEN RPRT_ACC_CNT       ELSE 0 END ) AS        RPRT_ACC_CNT_3
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-3),'YYYYMMDD')  THEN BKPR_APLY_RATE_AMT ELSE 0 END ) AS  BKPR_APLY_RATE_AMT_3
+				  ---------------------------------------                                                                                          
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-4),'YYYYMMDD')  THEN BKPR_AMT           ELSE 0 END ) AS            BKPR_AMT_4
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-4),'YYYYMMDD')  THEN RPRT_ACC_CNT       ELSE 0 END ) AS        RPRT_ACC_CNT_4
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-4),'YYYYMMDD')  THEN BKPR_APLY_RATE_AMT ELSE 0 END ) AS  BKPR_APLY_RATE_AMT_4
+				  ---------------------------------------                                                                                         
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-5),'YYYYMMDD')  THEN BKPR_AMT           ELSE 0 END ) AS            BKPR_AMT_5
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-5),'YYYYMMDD')  THEN RPRT_ACC_CNT       ELSE 0 END ) AS        RPRT_ACC_CNT_5
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-5),'YYYYMMDD')  THEN BKPR_APLY_RATE_AMT ELSE 0 END ) AS  BKPR_APLY_RATE_AMT_5
+				  ---------------------------------------                                                                                          
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-6),'YYYYMMDD')  THEN BKPR_AMT           ELSE 0 END ) AS            BKPR_AMT_6
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-6),'YYYYMMDD')  THEN RPRT_ACC_CNT       ELSE 0 END ) AS        RPRT_ACC_CNT_6
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-6),'YYYYMMDD')  THEN BKPR_APLY_RATE_AMT ELSE 0 END ) AS  BKPR_APLY_RATE_AMT_6
+				  ---------------------------------------                                                                                          
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-7),'YYYYMMDD')  THEN BKPR_AMT           ELSE 0 END ) AS            BKPR_AMT_7
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-7),'YYYYMMDD')  THEN RPRT_ACC_CNT       ELSE 0 END ) AS        RPRT_ACC_CNT_7
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-7),'YYYYMMDD')  THEN BKPR_APLY_RATE_AMT ELSE 0 END ) AS  BKPR_APLY_RATE_AMT_7
+				  ---------------------------------------                                                                                          
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-8),'YYYYMMDD')  THEN BKPR_AMT           ELSE 0 END ) AS            BKPR_AMT_8
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-8),'YYYYMMDD')  THEN RPRT_ACC_CNT       ELSE 0 END ) AS        RPRT_ACC_CNT_8
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-8),'YYYYMMDD')  THEN BKPR_APLY_RATE_AMT ELSE 0 END ) AS  BKPR_APLY_RATE_AMT_8
+				  ---------------------------------------                                                                                        
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-9),'YYYYMMDD')  THEN BKPR_AMT           ELSE 0 END ) AS           BKPR_AMT_9
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-9),'YYYYMMDD')  THEN RPRT_ACC_CNT       ELSE 0 END ) AS       RPRT_ACC_CNT_9
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-9),'YYYYMMDD')  THEN BKPR_APLY_RATE_AMT ELSE 0 END ) AS BKPR_APLY_RATE_AMT_9
+				  ---------------------------------------                                                                                        
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-10),'YYYYMMDD') THEN BKPR_AMT           ELSE 0 END ) AS           BKPR_AMT_10
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-10),'YYYYMMDD') THEN RPRT_ACC_CNT       ELSE 0 END ) AS       RPRT_ACC_CNT_10
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-10),'YYYYMMDD') THEN BKPR_APLY_RATE_AMT ELSE 0 END ) AS BKPR_APLY_RATE_AMT_10
+				  ---------------------------------------                                                                                        
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-11),'YYYYMMDD') THEN BKPR_AMT           ELSE 0 END ) AS           BKPR_AMT_11
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-11),'YYYYMMDD') THEN RPRT_ACC_CNT       ELSE 0 END ) AS       RPRT_ACC_CNT_11
+				  , SUM(CASE WHEN BASE_DATE     = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-11),'YYYYMMDD') THEN BKPR_APLY_RATE_AMT ELSE 0 END ) AS BKPR_APLY_RATE_AMT_11
+				  ---------------------------------------         
+		      FROM  TSR_FIX_VAR_STAT 
+		     WHERE  ALM_WORK_TC  = 'M'
+		       AND  CUR_C        = 'KRW'
+		       AND  STAT_RPRT_ID = 'R200'
+		       -------------------------- 여까진 고정.
+		       AND  ORG_CLAS_C   = #{ORG_CLAS_C}
+		       AND  BASE_DATE    IN (
+		                                 TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), -1  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), -2  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), -3  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), -4  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), -5  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), -6  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), -7  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), -8  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), -9  ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), -10 ),'YYYYMMDD')
+		                                ,TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD'), -11 ),'YYYYMMDD')            
+		                        )
+			        
+		 	<if test="AC_BUSI_TC == '0000'">
+		 		AND AC_BUSI_TC IN('1105','1106','1107')
+		 	</if>
+		 	<if test="AC_BUSI_TC != '0000'">
+		 		AND AC_BUSI_TC = #{AC_BUSI_TC}
+		 	</if>
+			 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'">
+			 	-- 모든 점소코드 나오기
+			 </if>
+			 <if test="JISO_INCLUDE == 'yes' and BLNG_HQ_BR_C != ''">   
+			 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{BR_C} ) 
+			 </if>
+			 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+			 	AND BR_C     = #{BR_C}
+			 </if>
+			 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+			 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} )
+			 </if>
+			 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == '001'">
+				AND BR_C     = #{BR_C}
+			 </if>
+	    GROUP BY 
+	            ALM_WORK_TC
+	          , ORG_CLAS_C
+	          , CUR_C
+	          , AC_BUSI_TC
+	          , STAT_RPRT_ID
+	          , STAT_RPRT_ITEM_ID   
+	          
+		)-- TEMP 끝 블럭
+		
+
+		/* 기준월 */
+		, TEMP2 AS(
+		
+		    SELECT 
+		            #{BR_C}          AS BR_C
+		          , BASE_DATE
+		          , ALM_WORK_TC
+		          , ORG_CLAS_C
+		          , CUR_C
+			 	<if test="AC_BUSI_TC == '0000'">
+			 	  , '1105' 		 AS AC_BUSI_TC
+			 	</if>
+			 	<if test="AC_BUSI_TC != '0000'">
+			 	  , AC_BUSI_TC
+			 	</if>
+		          , STAT_RPRT_ID
+		          , STAT_RPRT_ITEM_ID
+				  ---------------------------------------                                                                                              
+				  , BKPR_AMT           
+				  , RPRT_ACC_CNT       
+				  , BKPR_APLY_RATE_AMT 
+		      FROM  TSR_FIX_VAR_STAT 
+		     WHERE  ALM_WORK_TC  = 'M'
+		       AND  CUR_C        = 'KRW'
+		       AND  STAT_RPRT_ID = 'R200'
+		       -------------------------- 여까진 고정.
+		       AND  ORG_CLAS_C   = #{ORG_CLAS_C}
+		       AND  BASE_DATE    = #{BASE_DATE}
+		       
+		 	<if test="AC_BUSI_TC == '0000'">
+		 		AND AC_BUSI_TC IN('1105','1106','1107')
+		 	</if>
+		 	<if test="AC_BUSI_TC != '0000'">
+		 		AND AC_BUSI_TC = #{AC_BUSI_TC}
+		 	</if>
+			 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'">
+			 	-- 모든 점소코드 나오기
+			 </if>
+			 <if test="JISO_INCLUDE == 'yes' and BLNG_HQ_BR_C != ''">   
+			 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{BR_C} ) 
+			 </if>
+			 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+			 	AND BR_C     = #{BR_C}
+			 </if>
+			 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+			 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} )
+			 </if>
+			 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == '001'">
+				AND BR_C     = #{BR_C}
+			 </if>
+		 
+		)-- TEMP2 끝 블럭    
+		
+		/* 보고서 과목명 */
+		, TEMP3 AS(
+		
+		SELECT 
+		    LEVEL  AS LVL
+		    , SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%') AS STAT_RPRT_ITEM_NM_PATH
+		    , REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 1 )                              AS LVL1
+		    ---------------------------------------------------------------------------------------------------
+		    , CASE
+		        WHEN REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 1 ) = '고정' 
+		             OR 
+		             REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 1 ) = '기타' 
+		        THEN ' '
+		        ELSE NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 2 ),TRIM(STAT_RPRT_ITEM_NM)) 
+		      END                                                                                                            AS LVL2
+		    ---------------------------------------------------------------------------------------------------
+		    , CASE
+		        WHEN REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 1 ) = '고정' 
+		             OR 
+		             REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 1 ) = '기타' 
+		        THEN NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 2 ),TRIM(STAT_RPRT_ITEM_NM))
+		        ELSE NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 3 ),TRIM(STAT_RPRT_ITEM_NM)) 
+		      END                                                                                                            AS LVL3
+		    ---------------------------------------------------------------------------------------------------
+		    , CASE
+		        WHEN REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 1 ) = '고정' 
+		             OR 
+		             REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 1 ) = '기타' 
+		        THEN NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 3 ),TRIM(STAT_RPRT_ITEM_NM))
+		        ELSE NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 4 ),TRIM(STAT_RPRT_ITEM_NM)) 
+		      END                                                                                                            AS LVL4
+		    ---------------------------------------------------------------------------------------------------
+		    <if test="LVL == 5">
+		    , CASE
+		        WHEN REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 1 ) = '고정' 
+		             OR 
+		             REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 1 ) = '기타' 
+		        THEN NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 4 ),TRIM(STAT_RPRT_ITEM_NM))
+		        ELSE NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 5 ),TRIM(STAT_RPRT_ITEM_NM)) 
+		      END     																										 AS LVL5
+		    </if>                                                                                                        
+		    ---------------------------------------------------------------------------------------------------
+		    , STAT_RPRT_ITEM_NM
+		    , ORG_CLAS_C
+		    , STAT_RPRT_ID
+		    , STAT_RPRT_ITEM_ID
+		    , TO_NUMBER(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 1 ) )                           AS PRNT_ORD1
+		    , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 2 ),TRIM(PRNT_ORD)))        AS PRNT_ORD2
+		    , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 3 ),TRIM(PRNT_ORD)))        AS PRNT_ORD3
+		    , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 4 ),TRIM(PRNT_ORD)))        AS PRNT_ORD4
+		    , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 5 ),TRIM(PRNT_ORD)))        AS PRNT_ORD5
+		FROM(
+		        SELECT 
+		              ORG_CLAS_C
+		              ,STAT_RPRT_ID
+		              ,STAT_RPRT_NM
+		              ,STAT_RPRT_ITEM_ID
+		              <if test="ORG_CLAS_C == '30'">
+		              ,CASE
+		                WHEN STAT_RPRT_LVL = 1 THEN '-'
+		                WHEN STAT_RPRT_LVL = 2 THEN SUBSTR( STAT_RPRT_ITEM_ID,0,STAT_RPRT_LVL - 1 )
+		                WHEN STAT_RPRT_LVL = 3 AND (STAT_RPRT_ITEM_ID     LIKE 'A%' OR STAT_RPRT_ITEM_ID     LIKE 'D%') THEN SUBSTR( STAT_RPRT_ITEM_ID,0,STAT_RPRT_LVL - 2 )
+		                WHEN STAT_RPRT_LVL = 3 AND (STAT_RPRT_ITEM_ID NOT LIKE 'A%' OR STAT_RPRT_ITEM_ID NOT LIKE 'D%') THEN SUBSTR( STAT_RPRT_ITEM_ID,0,STAT_RPRT_LVL - 1 )
+		                WHEN STAT_RPRT_LVL = 4 AND (STAT_RPRT_ITEM_ID     LIKE 'A%' OR STAT_RPRT_ITEM_ID     LIKE 'D%') THEN SUBSTR( STAT_RPRT_ITEM_ID,0,STAT_RPRT_LVL - 2 )
+		                WHEN STAT_RPRT_LVL = 4 AND (STAT_RPRT_ITEM_ID NOT LIKE 'A%' OR STAT_RPRT_ITEM_ID NOT LIKE 'D%') THEN SUBSTR( STAT_RPRT_ITEM_ID,0,STAT_RPRT_LVL - 1 )
+		                WHEN STAT_RPRT_LVL = 5 AND (STAT_RPRT_ITEM_ID     LIKE 'A%' OR STAT_RPRT_ITEM_ID     LIKE 'D%') THEN SUBSTR( STAT_RPRT_ITEM_ID,0,STAT_RPRT_LVL - 1 )
+		                WHEN STAT_RPRT_LVL = 5 AND (STAT_RPRT_ITEM_ID NOT LIKE 'A%' OR STAT_RPRT_ITEM_ID NOT LIKE 'D%') THEN SUBSTR( STAT_RPRT_ITEM_ID,0,STAT_RPRT_LVL     )
+		               END  AS UP_STAT_RPRT_ITEM_ID
+		              </if>
+		              <if test="ORG_CLAS_C == '10'">
+				      ,CASE
+				        WHEN STAT_RPRT_LVL = 1 THEN '-'
+				        WHEN STAT_RPRT_LVL = 2 THEN SUBSTR( STAT_RPRT_ITEM_ID,0,STAT_RPRT_LVL - 1 )
+				        WHEN STAT_RPRT_LVL = 3 AND (STAT_RPRT_ITEM_ID     LIKE 'A%' OR STAT_RPRT_ITEM_ID     LIKE 'D%') THEN SUBSTR( STAT_RPRT_ITEM_ID,0,STAT_RPRT_LVL - 2 )
+				        WHEN STAT_RPRT_LVL = 3 AND (STAT_RPRT_ITEM_ID NOT LIKE 'A%' OR STAT_RPRT_ITEM_ID NOT LIKE 'D%') THEN SUBSTR( STAT_RPRT_ITEM_ID,0,STAT_RPRT_LVL - 1 )
+				        WHEN STAT_RPRT_LVL = 4 AND (STAT_RPRT_ITEM_ID     LIKE 'A%' OR STAT_RPRT_ITEM_ID     LIKE 'D%') THEN SUBSTR( STAT_RPRT_ITEM_ID,0,STAT_RPRT_LVL - 1 )
+				        WHEN STAT_RPRT_LVL = 4 AND (STAT_RPRT_ITEM_ID NOT LIKE 'A%' OR STAT_RPRT_ITEM_ID NOT LIKE 'D%') THEN SUBSTR( STAT_RPRT_ITEM_ID,0,STAT_RPRT_LVL     )
+				       END  AS UP_STAT_RPRT_ITEM_ID
+		              </if>
+		              ,STAT_RPRT_ITEM_NM
+		              ,STAT_RPRT_LVL
+		              ,TOT_ITEM_YN
+		              ,PRNT_ORD
+		         FROM ALMADM.TII_STAT_ANAL_RPRT_INFO
+		        WHERE ORG_CLAS_C   = #{ORG_CLAS_C}
+		          AND STAT_RPRT_ID = 'R200'
+		    )   
+		START WITH UP_STAT_RPRT_ITEM_ID = '-'
+		CONNECT BY PRIOR STAT_RPRT_ITEM_ID = UP_STAT_RPRT_ITEM_ID
+		       AND PRIOR ORG_CLAS_C        = ORG_CLAS_C
+		       AND PRIOR STAT_RPRT_ID      = STAT_RPRT_ID
+		
+		)-- TEMP3 끝 블럭
+		
+		/* 전체 조합( 도지회, 동일권역, 전국 ) */
+		, TEMP4 AS(
+		
+		    SELECT 
+		            BASE_DATE
+		          , ALM_WORK_TC
+		          , ORG_CLAS_C
+		          , BR_C
+		          , CUR_C
+			 	<if test="AC_BUSI_TC == '0000'">
+			 	  , '1105' 		 AS AC_BUSI_TC
+			 	</if>
+			 	<if test="AC_BUSI_TC != '0000'">
+			 	  , AC_BUSI_TC
+			 	</if>
+		          , STAT_RPRT_ID
+		          , STAT_RPRT_ITEM_ID
+		          , BKPR_AMT
+		          , BKPR_APLY_RATE_AMT
+		          , RPRT_ACC_CNT
+		      FROM  TSR_FIX_VAR_STAT 
+		     WHERE  ALM_WORK_TC  = 'M'
+		       AND  CUR_C        = 'KRW'
+		       AND  STAT_RPRT_ID = 'R200'
+		       -------------------------- 여까진 고정.
+		       AND  ORG_CLAS_C   = #{ORG_CLAS_C}
+		       AND  BASE_DATE    = #{BASE_DATE}
+		 	<if test="AC_BUSI_TC == '0000'">
+		 	   AND AC_BUSI_TC IN('1105','1106','1107')
+		 	</if>
+		 	<if test="AC_BUSI_TC != '0000'">
+		 	   AND AC_BUSI_TC = #{AC_BUSI_TC}
+		 	</if>
+		
+		)-- TEMP4 끝 블럭
+		
+		/* 동일권역 점소코드 얻기 */
+		,GET_SAME_ZONE_BR_C AS(
+		
+				    SELECT BR_C 
+				      FROM TTL_BR_C_INFO
+				     WHERE 1 = 1 
+				       AND ZONE_TC IN(
+				                       SELECT DTL_CLAS_VAL 
+				                         FROM TSY_CO_MNG 
+				                        WHERE CO_C = 'ZONE_TC'
+				                          AND CO_C_1_VAL = ( 
+				                                             SELECT CO_C_1_VAL 
+				                                               FROM TSY_CO_MNG
+				                                              WHERE CO_C = 'ZONE_TC'
+				                                                AND DTL_CLAS_VAL = #{ZONE_TC} 
+				                                           ) 
+				                     ) 
+		
+		)-- GET_SAME_ZONE_BR_C 끝 블럭    
+		-----------------------------------------------------------------------------------------
+		-- 조회 --	
+		SELECT
+	            LVL1           																		AS ACCT_NM1   
+	          <if test="LVL == 2">
+	          , DECODE( GROUPING_ID( LVL2 ), 1, LVL1 || ' 소계', LVL2 )        						AS ACCT_NM2
+	          , GROUPING_ID( LVL2 )                                             					AS GRP_ID
+	          </if>       		
+	          																	     
+	          <if test="LVL == 3">
+	          , DECODE( GROUPING_ID( LVL2,LVL3 ), 3, LVL1 || ' 소계', LVL2 )       			        AS ACCT_NM2
+	          , CASE
+	                WHEN TRIM(LVL1) = '고정' OR TRIM(LVL1) = '기타' 
+	                THEN DECODE( GROUPING_ID( LVL2,LVL3 ), 1 , LVL1 || ' 소계', LVL3 ) 
+	                ELSE DECODE( GROUPING_ID( LVL2,LVL3 ), 1 , LVL2 || ' 소계', LVL3 )        
+	            END                                                                                 AS ACCT_NM3 
+	          , GROUPING_ID( LVL2, LVL3 )                                             			    AS GRP_ID
+	          </if>        			
+	          																  
+	          <if test="LVL == 4">
+	          , DECODE( GROUPING_ID( LVL2,LVL3,LVL4 ), 7, LVL1 || ' 소계', LVL2 )         	        AS ACCT_NM2
+	          , CASE
+	                WHEN TRIM(LVL1) = '고정' OR TRIM(LVL1) = '기타' 
+	                THEN DECODE( GROUPING_ID( LVL2,LVL3,LVL4 ), 3 , LVL1 || ' 소계', LVL3 ) 
+	                ELSE DECODE( GROUPING_ID( LVL2,LVL3,LVL4 ), 3 , LVL2 || ' 소계', LVL3 )        
+	            END                                                                                 AS ACCT_NM3 
+	          , DECODE( GROUPING_ID( LVL2,LVL3,LVL4 ), 1 , LVL3 || ' 소계', LVL4 )        	   	    AS ACCT_NM4 
+	          , GROUPING_ID( LVL2, LVL3, LVL4 )                                             	    AS GRP_ID
+	          </if>        													
+	          						   
+	          <if test="LVL == 5">
+	          , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ), 15, LVL1 || ' 소계', LVL2 )        		AS ACCT_NM2
+	          , CASE
+	                WHEN TRIM(LVL1) = '고정' OR TRIM(LVL1) = '기타' 
+	                THEN DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ), 7 , LVL1 || ' 소계', LVL3 ) 
+	                ELSE DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ), 7 , LVL2 || ' 소계', LVL3 )        
+	            END                                                                                 AS ACCT_NM3 
+	          , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ), 3 , LVL3 || ' 소계', LVL4 )        		AS ACCT_NM4 
+	          , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ), 1 , LVL4 || ' 소계', LVL5 )              AS ACCT_NM5 
+	          , GROUPING_ID( LVL2, LVL3, LVL4, LVL5 )                                               AS GRP_ID
+	          </if>               
+		      ----------------------------------------------------------------------------------------------------------------------------
+		      , SUM(VIEW_BKPR_AMT)                                                                                              AS BASE_AMT
+		      , CASE WHEN NVL(SUM(BKPR_AMT),0) = 0 THEN 0 ELSE ROUND( SUM(BKPR_APLY_RATE_AMT) / SUM(BKPR_AMT) ,2) END           AS BASE_AVG_RATE
+		      , SUM(RPRT_ACC_CNT)                                                                                               AS BASE_ACC_CNT
+		      ----------------------------------------------------------------------------------------------------------------------------
+		      , CASE WHEN NVL(SUM(DOZI_AMT),0)   = 0 THEN 0 ELSE ROUND( SUM(DOZI_RATE_AMT)   / SUM(DOZI_AMT) ,2)   END          AS DOZI_AVG_RATE
+		      , CASE WHEN NVL(SUM(S_ZONE_AMT),0) = 0 THEN 0 ELSE ROUND( SUM(S_ZONE_RATE_AMT) / SUM(S_ZONE_AMT) ,2) END          AS S_ZONE_AVG_RATE
+		      , CASE WHEN NVL(SUM(ALL_AMT),0)    = 0 THEN 0 ELSE ROUND( SUM(ALL_RATE_AMT)    / SUM(ALL_AMT) ,2)    END          AS ALL_AVG_RATE
+		      ----------------------------------------------------------------------------------------------------------------------------
+		      , SUM(VIEW_BKPR_AMT1)                                                                                             AS AMT1
+		      , CASE WHEN NVL(SUM(BKPR_AMT1),0) = 0 THEN 0 ELSE ROUND( SUM(BKPR_APLY_RATE_AMT1) / SUM(BKPR_AMT1) ,2) END        AS AVG_RATE1
+		      , SUM(RPRT_ACC_CNT1)                                                                                              AS ACC_CNT1
+		      , SUM(VIEW_BKPR_AMT2)                                                                                             AS AMT2
+		      , CASE WHEN NVL(SUM(BKPR_AMT2),0) = 0 THEN 0 ELSE ROUND( SUM(BKPR_APLY_RATE_AMT2) / SUM(BKPR_AMT2) ,2) END        AS AVG_RATE2
+		      , SUM(RPRT_ACC_CNT2)                                                                                              AS ACC_CNT2
+		      , SUM(VIEW_BKPR_AMT3)                                                                                             AS AMT3
+		      , CASE WHEN NVL(SUM(BKPR_AMT3),0) = 0 THEN 0 ELSE ROUND( SUM(BKPR_APLY_RATE_AMT3) / SUM(BKPR_AMT3) ,2) END        AS AVG_RATE3
+		      , SUM(RPRT_ACC_CNT3)                                                                                              AS ACC_CNT3
+		      , SUM(VIEW_BKPR_AMT4)                                                                                             AS AMT4
+		      , CASE WHEN NVL(SUM(BKPR_AMT4),0) = 0 THEN 0 ELSE ROUND( SUM(BKPR_APLY_RATE_AMT4) / SUM(BKPR_AMT4) ,2) END        AS AVG_RATE4
+		      , SUM(RPRT_ACC_CNT4)                                                                                              AS ACC_CNT4
+		      , SUM(VIEW_BKPR_AMT5)                                                                                             AS AMT5
+		      , CASE WHEN NVL(SUM(BKPR_AMT5),0) = 0 THEN 0 ELSE ROUND( SUM(BKPR_APLY_RATE_AMT5) / SUM(BKPR_AMT5) ,2) END        AS AVG_RATE5
+		      , SUM(RPRT_ACC_CNT5)                                                                                              AS ACC_CNT5
+		      , SUM(VIEW_BKPR_AMT6)                                                                                             AS AMT6
+		      , CASE WHEN NVL(SUM(BKPR_AMT6),0) = 0 THEN 0 ELSE ROUND( SUM(BKPR_APLY_RATE_AMT6) / SUM(BKPR_AMT6) ,2) END        AS AVG_RATE6
+		      , SUM(RPRT_ACC_CNT6)                                                                                              AS ACC_CNT6
+		      , SUM(VIEW_BKPR_AMT7)                                                                                             AS AMT7
+		      , CASE WHEN NVL(SUM(BKPR_AMT7),0) = 0 THEN 0 ELSE ROUND( SUM(BKPR_APLY_RATE_AMT7) / SUM(BKPR_AMT7) ,2) END        AS AVG_RATE7
+		      , SUM(RPRT_ACC_CNT7)                                                                                              AS ACC_CNT7
+		      , SUM(VIEW_BKPR_AMT8)                                                                                             AS AMT8
+		      , CASE WHEN NVL(SUM(BKPR_AMT8),0) = 0 THEN 0 ELSE ROUND( SUM(BKPR_APLY_RATE_AMT8) / SUM(BKPR_AMT8) ,2) END        AS AVG_RATE8
+		      , SUM(RPRT_ACC_CNT8)                                                                                              AS ACC_CNT8
+		      , SUM(VIEW_BKPR_AMT9)                                                                                             AS AMT9
+		      , CASE WHEN NVL(SUM(BKPR_AMT9),0) = 0 THEN 0 ELSE ROUND( SUM(BKPR_APLY_RATE_AMT9) / SUM(BKPR_AMT9) ,2) END        AS AVG_RATE9
+		      , SUM(RPRT_ACC_CNT9)                                                                                              AS ACC_CNT9
+		      , SUM(VIEW_BKPR_AMT10)                                                                                            AS AMT10
+		      , CASE WHEN NVL(SUM(BKPR_AMT10),0) = 0 THEN 0 ELSE ROUND( SUM(BKPR_APLY_RATE_AMT10) / SUM(BKPR_AMT10) ,2) END     AS AVG_RATE10
+		      , SUM(RPRT_ACC_CNT10)                                                                                             AS ACC_CNT10
+		      , SUM(VIEW_BKPR_AMT11)                                                                                            AS AMT11
+		      , CASE WHEN NVL(SUM(BKPR_AMT11),0) = 0 THEN 0 ELSE ROUND( SUM(BKPR_APLY_RATE_AMT11) / SUM(BKPR_AMT11) ,2) END     AS AVG_RATE11
+		      , SUM(RPRT_ACC_CNT11)                                                                                             AS ACC_CNT11
+		      ----------------------------------------------------------------------------------------------------------------------------
+		      -- summary 합계 계산용 컬럼
+		      ----------------------------------------------------------------------------------------------------------------------------
+			  , SUM(BKPR_AMT             )   AS BKPR_AMT             
+              , SUM(BKPR_APLY_RATE_AMT   )   AS BKPR_APLY_RATE_AMT     
+              , SUM(BKPR_AMT1           )    AS BKPR_AMT1              
+              , SUM(BKPR_APLY_RATE_AMT1 )    AS BKPR_APLY_RATE_AMT1 
+              , SUM(BKPR_AMT2           )    AS BKPR_AMT2           
+              , SUM(BKPR_APLY_RATE_AMT2 )    AS BKPR_APLY_RATE_AMT2 
+              , SUM(BKPR_AMT3           )    AS BKPR_AMT3             
+              , SUM(BKPR_APLY_RATE_AMT3 )    AS BKPR_APLY_RATE_AMT3 
+              , SUM(BKPR_AMT4           )    AS BKPR_AMT4              
+              , SUM(BKPR_APLY_RATE_AMT4 )    AS BKPR_APLY_RATE_AMT4 
+              , SUM(BKPR_AMT5           )    AS BKPR_AMT5              
+              , SUM(BKPR_APLY_RATE_AMT5 )    AS BKPR_APLY_RATE_AMT5 
+              , SUM(BKPR_AMT6           )    AS BKPR_AMT6             
+              , SUM(BKPR_APLY_RATE_AMT6 )    AS BKPR_APLY_RATE_AMT6 
+              , SUM(BKPR_AMT7           )    AS BKPR_AMT7             
+              , SUM(BKPR_APLY_RATE_AMT7 )    AS BKPR_APLY_RATE_AMT7 
+              , SUM(BKPR_AMT8           )    AS BKPR_AMT8           
+              , SUM(BKPR_APLY_RATE_AMT8 )    AS BKPR_APLY_RATE_AMT8 
+              , SUM(BKPR_AMT9           )    AS BKPR_AMT9             
+              , SUM(BKPR_APLY_RATE_AMT9 )    AS BKPR_APLY_RATE_AMT9 
+              , SUM(BKPR_AMT10          )    AS BKPR_AMT10             
+              , SUM(BKPR_APLY_RATE_AMT10)    AS BKPR_APLY_RATE_AMT10
+              , SUM(BKPR_AMT11          )    AS BKPR_AMT11            
+              , SUM(BKPR_APLY_RATE_AMT11)    AS BKPR_APLY_RATE_AMT11 
+              , SUM(DOZI_AMT       )         AS DOZI_AMT       
+              , SUM(DOZI_RATE_AMT  )         AS DOZI_RATE_AMT  
+              , SUM(S_ZONE_AMT     )         AS S_ZONE_AMT     
+              , SUM(S_ZONE_RATE_AMT)         AS S_ZONE_RATE_AMT
+              , SUM(ALL_AMT        )         AS ALL_AMT        
+              , SUM(ALL_RATE_AMT   )         AS ALL_RATE_AMT
+		      ----------------------------------------------------------------------------------------------------------------------------
+	    FROM
+			(
+			    SELECT 
+			           Y1.LVL1
+		             <if test="LVL == 2">
+		             , Y1.LVL2
+		             </if>
+		             <if test="LVL == 3">
+		             , Y1.LVL2
+		             , Y1.LVL3  
+		             </if>
+		             <if test="LVL == 4">
+		             , Y1.LVL2
+		             , Y1.LVL3  
+		             , Y1.LVL4  
+		             </if>
+		             <if test="LVL == 5">
+		             , Y1.LVL2
+		             , Y1.LVL3
+		             , Y1.LVL4 
+		             , Y1.LVL5
+		             </if>
+			         /* 화면에 보일 잔액 */
+			         , ROUND(SUM(Y1.BKPR_AMT  )  / TO_NUMBER(#{AMT_UNIT}),0)  AS VIEW_BKPR_AMT
+			         , ROUND(SUM(Y1.BKPR_AMT_1 ) / TO_NUMBER(#{AMT_UNIT}),0)  AS VIEW_BKPR_AMT1 
+			         , ROUND(SUM(Y1.BKPR_AMT_2 ) / TO_NUMBER(#{AMT_UNIT}),0)  AS VIEW_BKPR_AMT2 
+			         , ROUND(SUM(Y1.BKPR_AMT_3 ) / TO_NUMBER(#{AMT_UNIT}),0)  AS VIEW_BKPR_AMT3 
+			         , ROUND(SUM(Y1.BKPR_AMT_4 ) / TO_NUMBER(#{AMT_UNIT}),0)  AS VIEW_BKPR_AMT4 
+			         , ROUND(SUM(Y1.BKPR_AMT_5 ) / TO_NUMBER(#{AMT_UNIT}),0)  AS VIEW_BKPR_AMT5 
+			         , ROUND(SUM(Y1.BKPR_AMT_6 ) / TO_NUMBER(#{AMT_UNIT}),0)  AS VIEW_BKPR_AMT6 
+			         , ROUND(SUM(Y1.BKPR_AMT_7 ) / TO_NUMBER(#{AMT_UNIT}),0)  AS VIEW_BKPR_AMT7 
+			         , ROUND(SUM(Y1.BKPR_AMT_8 ) / TO_NUMBER(#{AMT_UNIT}),0)  AS VIEW_BKPR_AMT8 
+			         , ROUND(SUM(Y1.BKPR_AMT_9 ) / TO_NUMBER(#{AMT_UNIT}),0)  AS VIEW_BKPR_AMT9 
+			         , ROUND(SUM(Y1.BKPR_AMT_10) / TO_NUMBER(#{AMT_UNIT}),0)  AS VIEW_BKPR_AMT10
+			         , ROUND(SUM(Y1.BKPR_AMT_11) / TO_NUMBER(#{AMT_UNIT}),0)  AS VIEW_BKPR_AMT11
+			         /* 그 외  */
+			         , SUM(Y1.BKPR_AMT             )   AS BKPR_AMT             
+			         , SUM(Y1.BKPR_APLY_RATE_AMT   )   AS BKPR_APLY_RATE_AMT   
+			         , SUM(Y1.RPRT_ACC_CNT         )   AS RPRT_ACC_CNT         
+			         , SUM(Y1.BKPR_AMT_1           )   AS BKPR_AMT1           
+			         , SUM(Y1.RPRT_ACC_CNT_1       )   AS RPRT_ACC_CNT1       
+			         , SUM(Y1.BKPR_APLY_RATE_AMT_1 )   AS BKPR_APLY_RATE_AMT1 
+			         , SUM(Y1.BKPR_AMT_2           )   AS BKPR_AMT2           
+			         , SUM(Y1.RPRT_ACC_CNT_2       )   AS RPRT_ACC_CNT2       
+			         , SUM(Y1.BKPR_APLY_RATE_AMT_2 )   AS BKPR_APLY_RATE_AMT2 
+			         , SUM(Y1.BKPR_AMT_3           )   AS BKPR_AMT3           
+			         , SUM(Y1.RPRT_ACC_CNT_3       )   AS RPRT_ACC_CNT3       
+			         , SUM(Y1.BKPR_APLY_RATE_AMT_3 )   AS BKPR_APLY_RATE_AMT3 
+			         , SUM(Y1.BKPR_AMT_4           )   AS BKPR_AMT4           
+			         , SUM(Y1.RPRT_ACC_CNT_4       )   AS RPRT_ACC_CNT4       
+			         , SUM(Y1.BKPR_APLY_RATE_AMT_4 )   AS BKPR_APLY_RATE_AMT4 
+			         , SUM(Y1.BKPR_AMT_5           )   AS BKPR_AMT5           
+			         , SUM(Y1.RPRT_ACC_CNT_5       )   AS RPRT_ACC_CNT5       
+			         , SUM(Y1.BKPR_APLY_RATE_AMT_5 )   AS BKPR_APLY_RATE_AMT5 
+			         , SUM(Y1.BKPR_AMT_6           )   AS BKPR_AMT6           
+			         , SUM(Y1.RPRT_ACC_CNT_6       )   AS RPRT_ACC_CNT6       
+			         , SUM(Y1.BKPR_APLY_RATE_AMT_6 )   AS BKPR_APLY_RATE_AMT6 
+			         , SUM(Y1.BKPR_AMT_7           )   AS BKPR_AMT7           
+			         , SUM(Y1.RPRT_ACC_CNT_7       )   AS RPRT_ACC_CNT7       
+			         , SUM(Y1.BKPR_APLY_RATE_AMT_7 )   AS BKPR_APLY_RATE_AMT7 
+			         , SUM(Y1.BKPR_AMT_8           )   AS BKPR_AMT8           
+			         , SUM(Y1.RPRT_ACC_CNT_8       )   AS RPRT_ACC_CNT8       
+			         , SUM(Y1.BKPR_APLY_RATE_AMT_8 )   AS BKPR_APLY_RATE_AMT8 
+			         , SUM(Y1.BKPR_AMT_9           )   AS BKPR_AMT9           
+			         , SUM(Y1.RPRT_ACC_CNT_9       )   AS RPRT_ACC_CNT9       
+			         , SUM(Y1.BKPR_APLY_RATE_AMT_9 )   AS BKPR_APLY_RATE_AMT9 
+			         , SUM(Y1.BKPR_AMT_10          )   AS BKPR_AMT10          
+			         , SUM(Y1.RPRT_ACC_CNT_10      )   AS RPRT_ACC_CNT10      
+			         , SUM(Y1.BKPR_APLY_RATE_AMT_10)   AS BKPR_APLY_RATE_AMT10
+			         , SUM(Y1.BKPR_AMT_11          )   AS BKPR_AMT11          
+			         , SUM(Y1.RPRT_ACC_CNT_11      )   AS RPRT_ACC_CNT11      
+			         , SUM(Y1.BKPR_APLY_RATE_AMT_11)   AS BKPR_APLY_RATE_AMT11 
+			         , SUM(Y2.DOZI_AMT       )         AS DOZI_AMT       
+			         , SUM(Y2.DOZI_RATE_AMT  )         AS DOZI_RATE_AMT  
+			         , SUM(Y2.S_ZONE_AMT     )         AS S_ZONE_AMT     
+			         , SUM(Y2.S_ZONE_RATE_AMT)         AS S_ZONE_RATE_AMT
+			         , SUM(Y2.ALL_AMT        )         AS ALL_AMT        
+			         , SUM(Y2.ALL_RATE_AMT   )         AS ALL_RATE_AMT 
+		             , MAX(Y1.PRNT_ORD1)               AS PRNT_ORD1
+		             <if test="LVL == 2">
+		             , MAX(Y1.PRNT_ORD2)               AS PRNT_ORD2
+		             </if>
+		             <if test="LVL == 3">
+		             , MAX(Y1.PRNT_ORD2)               AS PRNT_ORD2
+		             , MAX(Y1.PRNT_ORD3)               AS PRNT_ORD3
+		             </if>
+		             <if test="LVL == 4">
+		             , MAX(Y1.PRNT_ORD2)               AS PRNT_ORD2
+		             , MAX(Y1.PRNT_ORD3)               AS PRNT_ORD3
+		             , MAX(Y1.PRNT_ORD4)               AS PRNT_ORD4
+		             </if>
+		             <if test="LVL == 5">
+		             , MAX(Y1.PRNT_ORD2)               AS PRNT_ORD2
+		             , MAX(Y1.PRNT_ORD3)               AS PRNT_ORD3
+		             , MAX(Y1.PRNT_ORD4)               AS PRNT_ORD4
+		             , MAX(Y1.PRNT_ORD5)               AS PRNT_ORD5
+		             </if>
+			      FROM
+			    (
+			        SELECT 
+			               S2.LVL1
+		                 , MAX(S2.PRNT_ORD1)               AS PRNT_ORD1
+			             <if test="LVL == 2">
+			             , S2.LVL2
+		                 , MAX(S2.PRNT_ORD2)               AS PRNT_ORD2
+			             </if>
+			             <if test="LVL == 3">
+			             , S2.LVL2
+			             , S2.LVL3  
+		                 , MAX(S2.PRNT_ORD2)               AS PRNT_ORD2
+		                 , MAX(S2.PRNT_ORD3)               AS PRNT_ORD3
+			             </if>
+			             <if test="LVL == 4">
+			             , S2.LVL2
+			             , S2.LVL3  
+			             , S2.LVL4  
+		                 , MAX(S2.PRNT_ORD2)               AS PRNT_ORD2
+		                 , MAX(S2.PRNT_ORD3)               AS PRNT_ORD3
+		                 , MAX(S2.PRNT_ORD4)               AS PRNT_ORD4
+			             </if>
+			             <if test="LVL == 5">
+			             , S2.LVL2
+			             , S2.LVL3
+			             , S2.LVL4 
+			             , S2.LVL5
+		                 , MAX(S2.PRNT_ORD2)               AS PRNT_ORD2
+		                 , MAX(S2.PRNT_ORD3)               AS PRNT_ORD3
+		                 , MAX(S2.PRNT_ORD4)               AS PRNT_ORD4
+		                 , MAX(S2.PRNT_ORD5)               AS PRNT_ORD5
+			             </if>
+			             , SUM(S2.BKPR_AMT             )   AS BKPR_AMT             
+			             , SUM(S2.BKPR_APLY_RATE_AMT   )   AS BKPR_APLY_RATE_AMT   
+			             , SUM(S2.RPRT_ACC_CNT         )   AS RPRT_ACC_CNT         
+			             , SUM(S1.BKPR_AMT_1           )   AS BKPR_AMT_1           
+			             , SUM(S1.RPRT_ACC_CNT_1       )   AS RPRT_ACC_CNT_1       
+			             , SUM(S1.BKPR_APLY_RATE_AMT_1 )   AS BKPR_APLY_RATE_AMT_1 
+			             , SUM(S1.BKPR_AMT_2           )   AS BKPR_AMT_2           
+			             , SUM(S1.RPRT_ACC_CNT_2       )   AS RPRT_ACC_CNT_2       
+			             , SUM(S1.BKPR_APLY_RATE_AMT_2 )   AS BKPR_APLY_RATE_AMT_2 
+			             , SUM(S1.BKPR_AMT_3           )   AS BKPR_AMT_3           
+			             , SUM(S1.RPRT_ACC_CNT_3       )   AS RPRT_ACC_CNT_3       
+			             , SUM(S1.BKPR_APLY_RATE_AMT_3 )   AS BKPR_APLY_RATE_AMT_3 
+			             , SUM(S1.BKPR_AMT_4           )   AS BKPR_AMT_4           
+			             , SUM(S1.RPRT_ACC_CNT_4       )   AS RPRT_ACC_CNT_4       
+			             , SUM(S1.BKPR_APLY_RATE_AMT_4 )   AS BKPR_APLY_RATE_AMT_4 
+			             , SUM(S1.BKPR_AMT_5           )   AS BKPR_AMT_5           
+			             , SUM(S1.RPRT_ACC_CNT_5       )   AS RPRT_ACC_CNT_5       
+			             , SUM(S1.BKPR_APLY_RATE_AMT_5 )   AS BKPR_APLY_RATE_AMT_5 
+			             , SUM(S1.BKPR_AMT_6           )   AS BKPR_AMT_6           
+			             , SUM(S1.RPRT_ACC_CNT_6       )   AS RPRT_ACC_CNT_6       
+			             , SUM(S1.BKPR_APLY_RATE_AMT_6 )   AS BKPR_APLY_RATE_AMT_6 
+			             , SUM(S1.BKPR_AMT_7           )   AS BKPR_AMT_7           
+			             , SUM(S1.RPRT_ACC_CNT_7       )   AS RPRT_ACC_CNT_7       
+			             , SUM(S1.BKPR_APLY_RATE_AMT_7 )   AS BKPR_APLY_RATE_AMT_7 
+			             , SUM(S1.BKPR_AMT_8           )   AS BKPR_AMT_8           
+			             , SUM(S1.RPRT_ACC_CNT_8       )   AS RPRT_ACC_CNT_8       
+			             , SUM(S1.BKPR_APLY_RATE_AMT_8 )   AS BKPR_APLY_RATE_AMT_8 
+			             , SUM(S1.BKPR_AMT_9           )   AS BKPR_AMT_9           
+			             , SUM(S1.RPRT_ACC_CNT_9       )   AS RPRT_ACC_CNT_9       
+			             , SUM(S1.BKPR_APLY_RATE_AMT_9 )   AS BKPR_APLY_RATE_AMT_9 
+			             , SUM(S1.BKPR_AMT_10          )   AS BKPR_AMT_10          
+			             , SUM(S1.RPRT_ACC_CNT_10      )   AS RPRT_ACC_CNT_10      
+			             , SUM(S1.BKPR_APLY_RATE_AMT_10)   AS BKPR_APLY_RATE_AMT_10
+			             , SUM(S1.BKPR_AMT_11          )   AS BKPR_AMT_11          
+			             , SUM(S1.RPRT_ACC_CNT_11      )   AS RPRT_ACC_CNT_11      
+			             , SUM(S1.BKPR_APLY_RATE_AMT_11)   AS BKPR_APLY_RATE_AMT_11 
+			          FROM
+			        (
+			            SELECT B.LVL1
+			                 , MAX(B.PRNT_ORD1)             AS PRNT_ORD1
+				             <if test="LVL == 2">
+				             , B.LVL2
+			                 , MAX(B.PRNT_ORD2)             AS PRNT_ORD2
+				             </if>
+				             <if test="LVL == 3">
+				             , B.LVL2
+				             , B.LVL3  
+			                 , MAX(B.PRNT_ORD2)             AS PRNT_ORD2
+			                 , MAX(B.PRNT_ORD3)             AS PRNT_ORD3
+				             </if>
+				             <if test="LVL == 4">
+				             , B.LVL2
+				             , B.LVL3  
+				             , B.LVL4  
+			                 , MAX(B.PRNT_ORD2)             AS PRNT_ORD2
+			                 , MAX(B.PRNT_ORD3)             AS PRNT_ORD3
+			                 , MAX(B.PRNT_ORD4)             AS PRNT_ORD4
+				             </if>
+				             <if test="LVL == 5">
+				             , B.LVL2
+				             , B.LVL3
+				             , B.LVL4 
+				             , B.LVL5
+			                 , MAX(B.PRNT_ORD2)             AS PRNT_ORD2
+			                 , MAX(B.PRNT_ORD3)             AS PRNT_ORD3
+			                 , MAX(B.PRNT_ORD4)             AS PRNT_ORD4
+			                 , MAX(B.PRNT_ORD5)             AS PRNT_ORD5
+				             </if>   
+			                 , SUM(A.BKPR_AMT_1           ) AS BKPR_AMT_1              
+			                 , SUM(A.RPRT_ACC_CNT_1       ) AS RPRT_ACC_CNT_1       
+			                 , SUM(A.BKPR_APLY_RATE_AMT_1 ) AS BKPR_APLY_RATE_AMT_1 
+			                 , SUM(A.BKPR_AMT_2           ) AS BKPR_AMT_2           
+			                 , SUM(A.RPRT_ACC_CNT_2       ) AS RPRT_ACC_CNT_2       
+			                 , SUM(A.BKPR_APLY_RATE_AMT_2 ) AS BKPR_APLY_RATE_AMT_2 
+			                 , SUM(A.BKPR_AMT_3           ) AS BKPR_AMT_3           
+			                 , SUM(A.RPRT_ACC_CNT_3       ) AS RPRT_ACC_CNT_3       
+			                 , SUM(A.BKPR_APLY_RATE_AMT_3 ) AS BKPR_APLY_RATE_AMT_3 
+			                 , SUM(A.BKPR_AMT_4           ) AS BKPR_AMT_4           
+			                 , SUM(A.RPRT_ACC_CNT_4       ) AS RPRT_ACC_CNT_4       
+			                 , SUM(A.BKPR_APLY_RATE_AMT_4 ) AS BKPR_APLY_RATE_AMT_4 
+			                 , SUM(A.BKPR_AMT_5           ) AS BKPR_AMT_5           
+			                 , SUM(A.RPRT_ACC_CNT_5       ) AS RPRT_ACC_CNT_5       
+			                 , SUM(A.BKPR_APLY_RATE_AMT_5 ) AS BKPR_APLY_RATE_AMT_5 
+			                 , SUM(A.BKPR_AMT_6           ) AS BKPR_AMT_6           
+			                 , SUM(A.RPRT_ACC_CNT_6       ) AS RPRT_ACC_CNT_6       
+			                 , SUM(A.BKPR_APLY_RATE_AMT_6 ) AS BKPR_APLY_RATE_AMT_6 
+			                 , SUM(A.BKPR_AMT_7           ) AS BKPR_AMT_7           
+			                 , SUM(A.RPRT_ACC_CNT_7       ) AS RPRT_ACC_CNT_7       
+			                 , SUM(A.BKPR_APLY_RATE_AMT_7 ) AS BKPR_APLY_RATE_AMT_7 
+			                 , SUM(A.BKPR_AMT_8           ) AS BKPR_AMT_8           
+			                 , SUM(A.RPRT_ACC_CNT_8       ) AS RPRT_ACC_CNT_8       
+			                 , SUM(A.BKPR_APLY_RATE_AMT_8 ) AS BKPR_APLY_RATE_AMT_8 
+			                 , SUM(A.BKPR_AMT_9           ) AS BKPR_AMT_9           
+			                 , SUM(A.RPRT_ACC_CNT_9       ) AS RPRT_ACC_CNT_9       
+			                 , SUM(A.BKPR_APLY_RATE_AMT_9 ) AS BKPR_APLY_RATE_AMT_9 
+			                 , SUM(A.BKPR_AMT_10          ) AS BKPR_AMT_10          
+			                 , SUM(A.RPRT_ACC_CNT_10      ) AS RPRT_ACC_CNT_10      
+			                 , SUM(A.BKPR_APLY_RATE_AMT_10) AS BKPR_APLY_RATE_AMT_10
+			                 , SUM(A.BKPR_AMT_11          ) AS BKPR_AMT_11          
+			                 , SUM(A.RPRT_ACC_CNT_11      ) AS RPRT_ACC_CNT_11      
+			                 , SUM(A.BKPR_APLY_RATE_AMT_11) AS BKPR_APLY_RATE_AMT_11  
+			              FROM TEMP A , TEMP3 B
+			             WHERE A.ORG_CLAS_C         = B.ORG_CLAS_C
+			               AND A.STAT_RPRT_ID       = B.STAT_RPRT_ID
+			               AND A.STAT_RPRT_ITEM_ID  = B.STAT_RPRT_ITEM_ID
+			             GROUP BY 
+		                       B.LVL1
+				              <if test="LVL == 2">
+				              , B.LVL2
+				              </if>
+				              <if test="LVL == 3">
+				              , B.LVL2
+				              , B.LVL3  
+				              </if>
+				              <if test="LVL == 4">
+				              , B.LVL2
+				              , B.LVL3  
+				              , B.LVL4  
+				              </if>
+				              <if test="LVL == 5">
+				              , B.LVL2
+				              , B.LVL3
+				              , B.LVL4 
+				              , B.LVL5
+				              </if>   
+			                      
+			        )S1 -- 12개월 추이
+			        ,
+			        (
+			            SELECT B.LVL1
+			                 , MAX(B.PRNT_ORD1)             AS PRNT_ORD1
+				             <if test="LVL == 2">
+				             , B.LVL2
+			                 , MAX(B.PRNT_ORD2)             AS PRNT_ORD2
+				             </if>
+				             <if test="LVL == 3">
+				             , B.LVL2
+				             , B.LVL3  
+			                 , MAX(B.PRNT_ORD2)             AS PRNT_ORD2
+			                 , MAX(B.PRNT_ORD3)             AS PRNT_ORD3
+				             </if>
+				             <if test="LVL == 4">
+				             , B.LVL2
+				             , B.LVL3  
+				             , B.LVL4  
+			                 , MAX(B.PRNT_ORD2)             AS PRNT_ORD2
+			                 , MAX(B.PRNT_ORD3)             AS PRNT_ORD3
+			                 , MAX(B.PRNT_ORD4)             AS PRNT_ORD4
+				             </if>
+				             <if test="LVL == 5">
+				             , B.LVL2
+				             , B.LVL3
+				             , B.LVL4 
+				             , B.LVL5
+			                 , MAX(B.PRNT_ORD2)             AS PRNT_ORD2
+			                 , MAX(B.PRNT_ORD3)             AS PRNT_ORD3
+			                 , MAX(B.PRNT_ORD4)             AS PRNT_ORD4
+			                 , MAX(B.PRNT_ORD5)             AS PRNT_ORD5
+				             </if> 
+			                 , SUM(A.BKPR_AMT          )    AS BKPR_AMT           
+			                 , SUM(A.BKPR_APLY_RATE_AMT)    AS BKPR_APLY_RATE_AMT
+			                 , SUM(A.RPRT_ACC_CNT      )    AS RPRT_ACC_CNT   
+			              FROM TEMP2 A , TEMP3 B
+			             WHERE A.ORG_CLAS_C         = B.ORG_CLAS_C
+			               AND A.STAT_RPRT_ID       = B.STAT_RPRT_ID
+			               AND A.STAT_RPRT_ITEM_ID  = B.STAT_RPRT_ITEM_ID
+			             GROUP BY 
+		                       B.LVL1
+				              <if test="LVL == 2">
+				              , B.LVL2
+				              </if>
+				              <if test="LVL == 3">
+				              , B.LVL2
+				              , B.LVL3  
+				              </if>
+				              <if test="LVL == 4">
+				              , B.LVL2
+				              , B.LVL3  
+				              , B.LVL4  
+				              </if>
+				              <if test="LVL == 5">
+				              , B.LVL2
+				              , B.LVL3
+				              , B.LVL4 
+				              , B.LVL5
+				              </if>    
+			        )S2 -- 기준월
+			        WHERE 1 = 1
+			          AND S1.LVL1(+) = S2.LVL1
+		     		<if test="LVL == 2">
+			      	  AND S1.LVL2(+) = S2.LVL2
+		     		</if>
+		     		<if test="LVL == 3">
+			    	  AND S1.LVL2(+) = S2.LVL2
+			    	  AND S1.LVL3(+) = S2.LVL3
+		     		</if>
+		     		<if test="LVL == 4">
+			    	  AND S1.LVL2(+) = S2.LVL2
+			   	      AND S1.LVL3(+) = S2.LVL3
+			     	  AND S1.LVL4(+) = S2.LVL4
+		     		</if>
+		     		<if test="LVL == 5">
+			    	  AND S1.LVL2(+) = S2.LVL2
+			    	  AND S1.LVL3(+) = S2.LVL3
+			    	  AND S1.LVL4(+) = S2.LVL4
+			    	  AND S1.LVL5(+) = S2.LVL5	  
+		   		    </if> 
+			        GROUP BY 
+			              S2.LVL1
+			            <if test="LVL == 2">
+			            , S2.LVL2
+			            </if>
+			            <if test="LVL == 3">
+			            , S2.LVL2
+			            , S2.LVL3
+			            </if>
+			            <if test="LVL == 4">
+			            , S2.LVL2
+			            , S2.LVL3
+			            , S2.LVL4  
+			            </if>
+			            <if test="LVL == 5">
+			            , S2.LVL2
+			            , S2.LVL3
+			            , S2.LVL4 
+			            , S2.LVL5
+			            </if>  
+			    )Y1
+			    ,     
+			    (    
+			        SELECT 
+			               B.LVL1
+			             <if test="LVL == 2">
+			             , B.LVL2
+			             </if>
+			             <if test="LVL == 3">
+			             , B.LVL2
+			             , B.LVL3  
+			             </if>
+			             <if test="LVL == 4">
+			             , B.LVL2
+			             , B.LVL3  
+			             , B.LVL4  
+			             </if>
+			             <if test="LVL == 5">
+			             , B.LVL2
+			             , B.LVL3
+			             , B.LVL4 
+			             , B.LVL5
+			             </if>   
+			             ----------------------
+			             , SUM(CASE WHEN A.BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BLNG_HQ_BR_C} ) THEN A.BKPR_AMT           ELSE 0 END ) AS DOZI_AMT
+			             , SUM(CASE WHEN A.BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BLNG_HQ_BR_C} ) THEN A.BKPR_APLY_RATE_AMT ELSE 0 END ) AS DOZI_RATE_AMT
+			             ----------------------
+			             , SUM(CASE WHEN A.BR_C IN ( SELECT BR_C FROM GET_SAME_ZONE_BR_C ) THEN A.BKPR_AMT           ELSE 0 END )                       		  AS S_ZONE_AMT
+			             , SUM(CASE WHEN A.BR_C IN ( SELECT BR_C FROM GET_SAME_ZONE_BR_C ) THEN A.BKPR_APLY_RATE_AMT ELSE 0 END )                     			  AS S_ZONE_RATE_AMT
+			             ----------------------
+			             , SUM(A.BKPR_AMT          )                                                                                                  			  AS ALL_AMT
+			             , SUM(A.BKPR_APLY_RATE_AMT)                                                                                                  			  AS ALL_RATE_AMT
+			             ----------------------
+			          FROM TEMP4 A, TEMP3 B
+			         WHERE 1 = 1
+			           AND A.ORG_CLAS_C        = B.ORG_CLAS_C  
+			           AND A.STAT_RPRT_ID      = B.STAT_RPRT_ID
+			           AND A.STAT_RPRT_ITEM_ID = B.STAT_RPRT_ITEM_ID    
+			         GROUP BY
+			               B.LVL1
+			             <if test="LVL == 2">
+			             , B.LVL2
+			             </if>
+			             <if test="LVL == 3">
+			             , B.LVL2
+			             , B.LVL3  
+			             </if>
+			             <if test="LVL == 4">
+			             , B.LVL2
+			             , B.LVL3  
+			             , B.LVL4  
+			             </if>
+			             <if test="LVL == 5">
+			             , B.LVL2
+			             , B.LVL3
+			             , B.LVL4 
+			             , B.LVL5
+			             </if>   
+		    )Y2
+		    WHERE 1=1
+		      AND Y1.LVL1 = Y2.LVL1(+) 
+	     <if test="LVL == 2">
+		      AND Y1.LVL2 = Y2.LVL2(+)
+	     </if>
+	     <if test="LVL == 3">
+		      AND Y1.LVL2 = Y2.LVL2(+)
+		      AND Y1.LVL3 = Y2.LVL3(+)
+	     </if>
+	     <if test="LVL == 4">
+		      AND Y1.LVL2 = Y2.LVL2(+)
+		      AND Y1.LVL3 = Y2.LVL3(+)
+		      AND Y1.LVL4 = Y2.LVL4(+)
+	     </if>
+	     <if test="LVL == 5">
+		      AND Y1.LVL2 = Y2.LVL2(+)
+		      AND Y1.LVL3 = Y2.LVL3(+)
+		      AND Y1.LVL4 = Y2.LVL4(+)
+		      AND Y1.LVL5 = Y2.LVL5(+)	  
+	     </if>      
+			GROUP BY
+			  Y1.LVL1
+	        <if test="LVL == 2">
+	        , Y1.LVL2
+	        </if>
+	        <if test="LVL == 3">
+	        , Y1.LVL2
+	        , Y1.LVL3
+	        </if>
+	        <if test="LVL == 4">
+	        , Y1.LVL2
+	        , Y1.LVL3
+	        , Y1.LVL4
+	        </if>
+	        <if test="LVL == 5">
+	        , Y1.LVL2
+	        , Y1.LVL3
+	        , Y1.LVL4
+	        , Y1.LVL5
+	        </if>  
+		)
+		GROUP BY
+			  LVL1
+	   <if test="LVL == 1">
+		ORDER BY
+	      	MAX(PRNT_ORD1)
+	   </if>
+	   <if test="LVL == 2">
+	   		, ROLLUP( LVL2 )	
+		ORDER BY
+		      MAX(PRNT_ORD1)    
+		    , MAX(PRNT_ORD2) 
+		    , GRP_ID     	
+	   </if>
+	   <if test="LVL == 3">
+	   		, ROLLUP( LVL2, LVL3 )
+		ORDER BY
+		      MAX(PRNT_ORD1)    
+		    , MAX(PRNT_ORD2)    
+		    , MAX(PRNT_ORD3) 
+		    , GRP_ID    	
+	   </if>
+	   <if test="LVL == 4">
+	   		, ROLLUP( LVL2, LVL3, LVL4 )
+		ORDER BY
+		      MAX(PRNT_ORD1)    
+		    , MAX(PRNT_ORD2)    
+		    , MAX(PRNT_ORD3)    
+		    , MAX(PRNT_ORD4)  	
+		    , GRP_ID    
+	   </if>
+	   <if test="LVL == 5">
+	   		, ROLLUP( LVL2, LVL3, LVL4, LVL5 )
+		ORDER BY
+		      MAX(PRNT_ORD1)    
+		    , MAX(PRNT_ORD2)    
+		    , MAX(PRNT_ORD3)    
+		    , MAX(PRNT_ORD4)    
+		    , MAX(PRNT_ORD5)
+		    , GRP_ID     
+	   </if>
+
+	
+	</select>
+
+
+  
+
+
+</mapper>

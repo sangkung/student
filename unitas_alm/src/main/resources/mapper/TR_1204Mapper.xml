@@ -1,0 +1,457 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_1204Mapper">
+
+
+	<sql id="br_condition" >
+		
+		 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'"></if>
+		 <if test="JISO_INCLUDE == 'yes' and BLNG_HQ_BR_C != ''">   
+		 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{BR_C} ) 
+		 </if>
+		 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+		 	AND BR_C     = #{BR_C}
+		 </if>
+		 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+		 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} )
+		 </if>
+		 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == '001'">
+			AND BR_C     = #{BR_C}
+		 </if>
+	
+	</sql>
+
+
+
+  	<!-- 연체기간별 현황 조회  -->
+	<select id = "selectTR_1204" parameterType="java.util.Map" resultType="java.util.HashMap">
+
+	/* 연체기간별 조회  */	
+	WITH DLY_TRM AS(
+	
+	
+		SELECT 
+		       A.BASE_DATE
+		     , A.ORG_CLAS_C
+		     , A.STAT_RPRT_ID
+		     , A.STAT_RPRT_ITEM_ID
+		     , A.BASE_SEQ               AS BASE_SEQ            -- 연체기간
+		     , A.BASE_BKPR_AMT          AS BASE_BKPR_AMT       -- 장부가금액(기준월 전체 잔액)
+		     , A.BASE_RPRT_ACC_CNT      AS BASE_RPRT_ACC_CNT   -- 건수 
+		     , A.BASE_DLY_AMT           AS BASE_DLY_AMT        -- 연체금액
+		     , B.PREV_SEQ               AS PREV_SEQ            -- 전월 대비 , 
+		     , B.PREV_DLY_AMT           AS PREV_DLY_AMT        -- 잔액 증감률 을 위한 컬럼
+		  FROM
+		    (
+		    SELECT 
+		          BASE_DATE
+		        , ALM_WORK_TC
+		        , ORG_CLAS_C
+		        , BR_C
+		        , CUR_C
+		        , AC_BUSI_TC
+		        , STAT_RPRT_ID
+		        , STAT_RPRT_ITEM_ID
+		        , SEQ                AS BASE_SEQ            -- 연체기간
+		        , BKPR_AMT           AS BASE_BKPR_AMT       -- 장부가금액(기준월 전체 잔액)
+		        , RPRT_ACC_CNT       AS BASE_RPRT_ACC_CNT   -- 건수 
+		        , DLY_AMT            AS BASE_DLY_AMT        -- 연체금액
+		     FROM TSR_DLY_TRM_STAT
+		    WHERE BASE_DATE   	 = #{BASE_DATE}
+		      AND ALM_WORK_TC 	 = 'M'
+		      AND CUR_C       	 = 'KRW'
+			  AND ORG_CLAS_C  	 = #{ORG_CLAS_C}
+			  AND DLY_MNG_BASE_C = #{DLY_MNG_BASE_C}
+			  AND STAT_RPRT_ID 	 = 'P4' || #{TAB_TC} || '0'
+	 		  AND AC_BUSI_TC     = #{AC_BUSI_TC}
+		      <include refid="br_condition"></include>
+		    )A
+		    ,(
+		    SELECT 
+		          BASE_DATE
+		        , ALM_WORK_TC
+		        , ORG_CLAS_C
+		        , BR_C
+		        , CUR_C
+		        , AC_BUSI_TC
+		        , STAT_RPRT_ID
+		        , STAT_RPRT_ITEM_ID
+		        , SEQ                AS PREV_SEQ        -- 전월 대비 
+		        , DLY_AMT            AS PREV_DLY_AMT    -- 잔액 증감률 을 위한 컬럼
+		     FROM TSR_DLY_TRM_STAT
+		    WHERE BASE_DATE   	 = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'), -1),'YYYYMMDD')
+		      AND ALM_WORK_TC 	 = 'M'
+		      AND CUR_C       	 = 'KRW'
+			  AND ORG_CLAS_C  	 = #{ORG_CLAS_C}
+			  AND DLY_MNG_BASE_C = #{DLY_MNG_BASE_C}
+			  AND STAT_RPRT_ID 	 = 'P4' || #{TAB_TC} || '0'
+	 		  AND AC_BUSI_TC     = #{AC_BUSI_TC}
+		      <include refid="br_condition"></include>
+		    )B
+		  WHERE 1 = 1
+		    AND A.ALM_WORK_TC       = B.ALM_WORK_TC      (+)
+		    AND A.ORG_CLAS_C        = B.ORG_CLAS_C       (+)
+		    AND A.BR_C              = B.BR_C             (+)
+		    AND A.CUR_C             = B.CUR_C            (+)
+		    AND A.AC_BUSI_TC        = B.AC_BUSI_TC       (+)
+		    AND A.STAT_RPRT_ID      = B.STAT_RPRT_ID     (+)
+		    AND A.STAT_RPRT_ITEM_ID = B.STAT_RPRT_ITEM_ID(+)     
+		    AND A.BASE_SEQ          = B.PREV_SEQ         (+)
+		 
+	)      
+                                                                                    
+
+    SELECT 
+  		  LVL1                                                                   AS ACCT_NM1         
+	    <if test="LVL == 2">                                   
+	    , DECODE( GROUPING_ID(LVL2) , 1 , LVL1 || ' 소계' , LVL2 )      			 AS ACCT_NM2 
+	    , GROUPING_ID(LVL2)                                           			 AS GRP_ID  
+	    </if>                                                                                      
+	    <if test="LVL == 3">                                   
+	    , DECODE( GROUPING_ID(LVL2,LVL3) , 3 , LVL1 || ' 소계' , LVL2 )      		 AS ACCT_NM2                                                                                                                  
+	    , DECODE( GROUPING_ID(LVL2,LVL3) , 1 , LVL2 || ' 소계' , LVL3 )       	 AS ACCT_NM3  
+	    , GROUPING_ID(LVL2,LVL3)                                           		 AS GRP_ID  
+	    </if>                                                                  
+	    <if test="LVL == 4">                                   
+	    , DECODE( GROUPING_ID(LVL2,LVL3,LVL4) , 7 , LVL1 || ' 소계' , LVL2 )       AS ACCT_NM2                                                                                                                  
+	    , DECODE( GROUPING_ID(LVL2,LVL3,LVL4) , 3 , LVL2 || ' 소계' , LVL3 )       AS ACCT_NM3                                                                                                                   
+	    , DECODE( GROUPING_ID(LVL2,LVL3,LVL4) , 1 , LVL3 || ' 소계' , LVL4 )       AS ACCT_NM4 
+	    , GROUPING_ID(LVL2,LVL3,LVL4)                                            AS GRP_ID  
+	    </if>      
+        ------------------------------------------------------------------------------------------
+	    , SUM(BKPR_AMT)                                                                               		 AS BKPR_AMT   
+	    , SUM(ACC_CNT)                                                                                       AS ACC_CNT   
+        ------------------------------------------------------------------------------------------     
+	    , SUM(BKPR_AMT0)                                                                                     AS BKPR_AMT0 
+	    , SUM(ACC_CNT0)                                                                                      AS ACC_CNT0 
+	    , CASE 
+            WHEN NVL(SUM(P_M1_AMT0),0) = 0 
+            THEN 0 
+            ELSE ROUND( NVL( ( SUM(BASE_AMT0) - SUM(P_M1_AMT0) ) / SUM(P_M1_AMT0) ,0) * 100 ,2)
+          END                                                                                               AS AMT_PLUS_RATIO0 
+        -----------------------------------------------------------------------------------------              
+	    , SUM(BKPR_AMT1)                                                                                    AS BKPR_AMT1   
+	    , SUM(ACC_CNT1)                                                                                     AS ACC_CNT1 
+	    , CASE 
+            WHEN NVL(SUM(P_M1_AMT1),0) = 0 
+            THEN 0
+            ELSE ROUND( NVL( ( SUM(BASE_AMT1) - SUM(P_M1_AMT1) ) / SUM(P_M1_AMT1) ,0) * 100 ,2)
+          END                                                                                               AS AMT_PLUS_RATIO1 
+        -----------------------------------------------------------------------------------------         
+	    , SUM(BKPR_AMT2)                                                                                    AS BKPR_AMT2   
+	    , SUM(ACC_CNT2)                                                                                     AS ACC_CNT2
+	    , CASE 
+            WHEN NVL(SUM(P_M1_AMT2),0) = 0 
+            THEN 0 
+            ELSE ROUND( NVL( ( SUM(BASE_AMT2) - SUM(P_M1_AMT2) ) / SUM(P_M1_AMT2) ,0) * 100 ,2)
+          END                                                                                               AS AMT_PLUS_RATIO2
+        -----------------------------------------------------------------------------------------        
+	    , SUM(BKPR_AMT3)                                                                                    AS BKPR_AMT3  
+	    , SUM(ACC_CNT3)                                                                                     AS ACC_CNT3 
+	    , CASE 
+            WHEN NVL(SUM(P_M1_AMT3),0) = 0 
+            THEN 0 
+            ELSE ROUND( NVL( ( SUM(BASE_AMT3) - SUM(P_M1_AMT3) ) / SUM(P_M1_AMT3) ,0) * 100 ,2)
+          END                                                                                               AS AMT_PLUS_RATIO3
+        -----------------------------------------------------------------------------------------         
+	    , SUM(BKPR_AMT6)                                                                                    AS BKPR_AMT6 
+	    , SUM(ACC_CNT6)                                                                                     AS ACC_CNT6 
+	    , CASE 
+            WHEN NVL(SUM(P_M1_AMT6),0) = 0 
+            THEN 0 
+            ELSE ROUND( NVL( ( SUM(BASE_AMT6) - SUM(P_M1_AMT6) ) / SUM(P_M1_AMT6) ,0) * 100 ,2)
+          END                                                                                               AS AMT_PLUS_RATIO6
+        -----------------------------------------------------------------------------------------         
+	    , SUM(BKPR_AMT9)                                                                                    AS BKPR_AMT9  
+	    , SUM(ACC_CNT9)                                                                                     AS ACC_CNT9 
+	    , CASE 
+            WHEN NVL(SUM(P_M1_AMT9),0) = 0 
+            THEN 0 
+            ELSE ROUND( NVL( ( SUM(BASE_AMT9) - SUM(P_M1_AMT9) ) / SUM(P_M1_AMT9) ,0) * 100 ,2)
+          END                                                                                                AS AMT_PLUS_RATIO9
+        ------------------------------------------------------------------------------------------          
+	    , SUM(BKPR_AMT12)                                                                                    AS BKPR_AMT12 
+	    , SUM(ACC_CNT12)                                                                                     AS ACC_CNT12 
+	    , CASE 
+            WHEN NVL(SUM(P_M1_AMT12),0) = 0 
+            THEN 0 
+            ELSE ROUND( NVL( ( SUM(BASE_AMT12) - SUM(P_M1_AMT12) ) / SUM(P_M1_AMT12) ,0) * 100 ,2)
+          END                                                                                                AS AMT_PLUS_RATIO12
+        ------------------------------------------------------------------------------------------           
+	    , SUM(BKPR_AMT18)                                                                                    AS BKPR_AMT18 
+	    , SUM(ACC_CNT18)                                                                                     AS ACC_CNT18 
+	    , CASE 
+            WHEN NVL(SUM(P_M1_AMT18),0) = 0 
+            THEN 0 
+            ELSE ROUND( NVL( ( SUM(BASE_AMT18) - SUM(P_M1_AMT18) ) / SUM(P_M1_AMT18) ,0) * 100 ,2)
+          END                                                                                                AS AMT_PLUS_RATIO18
+        ------------------------------------------------------------------------------------------           
+	    , SUM(BKPR_AMT24)                                                                                    AS BKPR_AMT24   
+	    , SUM(ACC_CNT24)                                                                                     AS ACC_CNT24 
+	    , CASE 
+            WHEN NVL(SUM(P_M1_AMT24),0) = 0 
+            THEN 0 
+            ELSE ROUND( NVL( ( SUM(BASE_AMT24) - SUM(P_M1_AMT24) ) / SUM(P_M1_AMT24) ,0) * 100 ,2)
+          END                                                                                                AS AMT_PLUS_RATIO24
+        ------------------------------------------------------------------------------------------          
+	    , SUM(BKPR_AMT25)                                                                                    AS BKPR_AMT25 
+	    , SUM(ACC_CNT25)                                                                                     AS ACC_CNT25 
+	    , CASE 
+            WHEN NVL(SUM(P_M1_AMT25),0) = 0 
+            THEN 0 
+            ELSE ROUND( NVL( ( SUM(BASE_AMT25) - SUM(P_M1_AMT25) ) / SUM(P_M1_AMT25) ,0) * 100 ,2)
+          END                                                                                                AS AMT_PLUS_RATIO25
+        ------------------------------------------------------------------------------------------           
+	    , SUM(BKPR_AMT_N0)                                                                                   AS BKPR_AMT_N0
+	    , SUM(ACC_CNT_N0)                                                                                    AS ACC_CNT_N0 
+	    , CASE 
+            WHEN NVL(SUM(P_M1_AMT_N0),0) = 0 
+            THEN 0 
+            ELSE ROUND( NVL( ( SUM(BASE_AMT_N0) - SUM(P_M1_AMT_N0) ) / SUM(P_M1_AMT_N0) ,0) * 100 ,2)
+          END                                                                                                AS AMT_PLUS_RATIO_N0
+        ------------------------------------------------------------------------------------------ 
+        -- SUMMARY 계산용 컬럼 
+        ------------------------------------------------------------------------------------------           
+        , SUM(BASE_AMT0  )  AS BASE_AMT0   
+        , SUM(P_M1_AMT0  )  AS P_M1_AMT0        
+        , SUM(BASE_AMT1  )  AS BASE_AMT1   
+        , SUM(P_M1_AMT1  )  AS P_M1_AMT1      
+        , SUM(BASE_AMT2  )  AS BASE_AMT2   
+        , SUM(P_M1_AMT2  )  AS P_M1_AMT2        
+        , SUM(BASE_AMT3  )  AS BASE_AMT3   
+        , SUM(P_M1_AMT3  )  AS P_M1_AMT3      
+        , SUM(BASE_AMT6  )  AS BASE_AMT6   
+        , SUM(P_M1_AMT6  )  AS P_M1_AMT6       
+        , SUM(BASE_AMT9  )  AS BASE_AMT9   
+        , SUM(P_M1_AMT9  )  AS P_M1_AMT9         
+        , SUM(BASE_AMT12 )  AS BASE_AMT12  
+        , SUM(P_M1_AMT12 )  AS P_M1_AMT12         
+        , SUM(BASE_AMT18 )  AS BASE_AMT18  
+        , SUM(P_M1_AMT18 )  AS P_M1_AMT18       
+        , SUM(BASE_AMT24 )  AS BASE_AMT24  
+        , SUM(P_M1_AMT24 )  AS P_M1_AMT24       
+        , SUM(BASE_AMT25 )  AS BASE_AMT25  
+        , SUM(P_M1_AMT25 )  AS P_M1_AMT25       
+        , SUM(BASE_AMT_N0)  AS BASE_AMT_N0  
+        , SUM(P_M1_AMT_N0)  AS P_M1_AMT_N0              
+        ------------------------------------------------------------------------------------------                                                                                                                                                                                  
+	FROM 
+	(    
+        /* 데이터 처리 죤 */
+        SELECT 
+                LVL1 
+		    <if test="LVL == 2">
+		      , LVL2
+		    </if>
+		    <if test="LVL == 3">
+		      , LVL2
+		      , LVL3
+		    </if>
+		    <if test="LVL == 4">
+		      , LVL2
+		      , LVL3
+		      , LVL4
+		    </if>
+              /* 화면에 보여질 금액부분 처리  */ 
+              , ROUND(NVL(SUM(BASE_BKPR_AMT) / TO_NUMBER(#{AMT_UNIT}),0))                                                       AS BKPR_AMT
+              , ROUND(NVL(SUM( CASE WHEN BASE_SEQ = '0'  THEN BASE_DLY_AMT END ),0) / TO_NUMBER(#{AMT_UNIT}))                   AS BKPR_AMT0
+              , ROUND(NVL(SUM( CASE WHEN BASE_SEQ = '1'  THEN BASE_DLY_AMT END ),0) / TO_NUMBER(#{AMT_UNIT}))                   AS BKPR_AMT1
+              , ROUND(NVL(SUM( CASE WHEN BASE_SEQ = '2'  THEN BASE_DLY_AMT END ),0) / TO_NUMBER(#{AMT_UNIT}))                   AS BKPR_AMT2
+              , ROUND(NVL(SUM( CASE WHEN BASE_SEQ = '3'  THEN BASE_DLY_AMT END ),0) / TO_NUMBER(#{AMT_UNIT}))                   AS BKPR_AMT3
+              , ROUND(NVL(SUM( CASE WHEN BASE_SEQ = '6'  THEN BASE_DLY_AMT END ),0) / TO_NUMBER(#{AMT_UNIT}))                   AS BKPR_AMT6
+              , ROUND(NVL(SUM( CASE WHEN BASE_SEQ = '9'  THEN BASE_DLY_AMT END ),0) / TO_NUMBER(#{AMT_UNIT}))                   AS BKPR_AMT9
+              , ROUND(NVL(SUM( CASE WHEN BASE_SEQ = '12' THEN BASE_DLY_AMT END ),0) / TO_NUMBER(#{AMT_UNIT}))                   AS BKPR_AMT12
+              , ROUND(NVL(SUM( CASE WHEN BASE_SEQ = '18' THEN BASE_DLY_AMT END ),0) / TO_NUMBER(#{AMT_UNIT}))                   AS BKPR_AMT18
+              , ROUND(NVL(SUM( CASE WHEN BASE_SEQ = '24' THEN BASE_DLY_AMT END ),0) / TO_NUMBER(#{AMT_UNIT}))                   AS BKPR_AMT24
+              , ROUND(NVL(SUM( CASE WHEN BASE_SEQ = '25' THEN BASE_DLY_AMT END ),0) / TO_NUMBER(#{AMT_UNIT}))                   AS BKPR_AMT25
+              , ROUND(NVL(SUM( CASE WHEN BASE_SEQ != '0' THEN BASE_DLY_AMT END ),0) / TO_NUMBER(#{AMT_UNIT}))                   AS BKPR_AMT_N0        
+              ------------------------------------------------------------------------------------------기준월
+              , NVL(SUM(BASE_RPRT_ACC_CNT),0)                                                                                 AS ACC_CNT
+              ------------------------------------------------------------------------------------------미연체              
+              , NVL(SUM( CASE WHEN BASE_SEQ = '0' THEN BASE_RPRT_ACC_CNT END ),0)                                             AS ACC_CNT0       
+              , NVL(SUM( CASE WHEN BASE_SEQ = '0' THEN BASE_DLY_AMT END ),0)                                                  AS BASE_AMT0
+              , NVL(SUM( CASE WHEN PREV_SEQ = '0' THEN PREV_DLY_AMT END ),0)                                                  AS P_M1_AMT0
+              ------------------------------------------------------------------------------------------1개월               
+              , NVL(SUM( CASE WHEN BASE_SEQ = '1' THEN BASE_RPRT_ACC_CNT END ),0)                                             AS ACC_CNT1         
+              , NVL(SUM( CASE WHEN BASE_SEQ = '1' THEN BASE_DLY_AMT END ),0)                                                  AS BASE_AMT1
+              , NVL(SUM( CASE WHEN PREV_SEQ = '1' THEN PREV_DLY_AMT END ),0)                                                  AS P_M1_AMT1
+              ------------------------------------------------------------------------------------------2개월               
+              , NVL(SUM( CASE WHEN BASE_SEQ = '2' THEN BASE_RPRT_ACC_CNT END ),0)                                             AS ACC_CNT2         
+              , NVL(SUM( CASE WHEN BASE_SEQ = '2' THEN BASE_DLY_AMT END ),0)                                                  AS BASE_AMT2
+              , NVL(SUM( CASE WHEN PREV_SEQ = '2' THEN PREV_DLY_AMT END ),0)                                                  AS P_M1_AMT2
+              ------------------------------------------------------------------------------------------3개월               
+              , NVL(SUM( CASE WHEN BASE_SEQ = '3' THEN BASE_RPRT_ACC_CNT END ),0)                                             AS ACC_CNT3          
+              , NVL(SUM( CASE WHEN BASE_SEQ = '3' THEN BASE_DLY_AMT END ),0)                                                  AS BASE_AMT3
+              , NVL(SUM( CASE WHEN PREV_SEQ = '3' THEN PREV_DLY_AMT END ),0)                                                  AS P_M1_AMT3
+              ------------------------------------------------------------------------------------------6개월               
+              , NVL(SUM( CASE WHEN BASE_SEQ = '6' THEN BASE_RPRT_ACC_CNT END ),0)                                             AS ACC_CNT6         
+              , NVL(SUM( CASE WHEN BASE_SEQ = '6' THEN BASE_DLY_AMT END ),0)                                                  AS BASE_AMT6
+              , NVL(SUM( CASE WHEN PREV_SEQ = '6' THEN PREV_DLY_AMT END ),0)                                                  AS P_M1_AMT6
+              ------------------------------------------------------------------------------------------9개월               
+              , NVL(SUM( CASE WHEN BASE_SEQ = '9' THEN BASE_RPRT_ACC_CNT END ),0)                                             AS ACC_CNT9         
+              , NVL(SUM( CASE WHEN BASE_SEQ = '9' THEN BASE_DLY_AMT END ),0)                                                  AS BASE_AMT9
+              , NVL(SUM( CASE WHEN PREV_SEQ = '9' THEN PREV_DLY_AMT END ),0)                                                  AS P_M1_AMT9
+              ------------------------------------------------------------------------------------------12개월           
+              , NVL(SUM( CASE WHEN BASE_SEQ = '12' THEN BASE_RPRT_ACC_CNT END ),0)                                            AS ACC_CNT12          
+              , NVL(SUM( CASE WHEN BASE_SEQ = '12' THEN BASE_DLY_AMT END ),0)                                                 AS BASE_AMT12
+              , NVL(SUM( CASE WHEN PREV_SEQ = '12' THEN PREV_DLY_AMT END ),0)                                                 AS P_M1_AMT12
+              ------------------------------------------------------------------------------------------18개월          
+              , NVL(SUM( CASE WHEN BASE_SEQ = '18' THEN BASE_RPRT_ACC_CNT END ),0)                                            AS ACC_CNT18          
+              , NVL(SUM( CASE WHEN BASE_SEQ = '18' THEN BASE_DLY_AMT END ),0)                                                 AS BASE_AMT18
+              , NVL(SUM( CASE WHEN PREV_SEQ = '18' THEN PREV_DLY_AMT END ),0)                                                 AS P_M1_AMT18
+              ------------------------------------------------------------------------------------------2년        
+              , NVL(SUM( CASE WHEN BASE_SEQ = '24' THEN BASE_RPRT_ACC_CNT END ),0)                                            AS ACC_CNT24         
+              , NVL(SUM( CASE WHEN BASE_SEQ = '24' THEN BASE_DLY_AMT END ),0)                                                 AS BASE_AMT24
+              , NVL(SUM( CASE WHEN PREV_SEQ = '24' THEN PREV_DLY_AMT END ),0)                                                 AS P_M1_AMT24
+              ------------------------------------------------------------------------------------------2년초과         
+              , NVL(SUM( CASE WHEN BASE_SEQ = '25' THEN BASE_RPRT_ACC_CNT END ),0)                                            AS ACC_CNT25        
+              , NVL(SUM( CASE WHEN BASE_SEQ = '25' THEN BASE_DLY_AMT END ),0)                                                 AS BASE_AMT25
+              , NVL(SUM( CASE WHEN PREV_SEQ = '25' THEN PREV_DLY_AMT END ),0)                                                 AS P_M1_AMT25
+              ------------------------------------------------------------------------------------------연체합산(미연체 제외) 
+              , NVL(SUM( CASE WHEN BASE_SEQ != '0' THEN BASE_RPRT_ACC_CNT END ),0)                                            AS ACC_CNT_N0        
+              , NVL(SUM( CASE WHEN BASE_SEQ != '0' THEN BASE_DLY_AMT END ),0)                                                 AS BASE_AMT_N0
+              , NVL(SUM( CASE WHEN PREV_SEQ != '0' THEN PREV_DLY_AMT END ),0)                                                 AS P_M1_AMT_N0
+              ------------------------------------------------------------------------------------------                               
+              , MAX(PRNT_ORD1)                                                                                                AS PRNT_ORD1
+		    <if test="LVL == 2">
+              , MAX(PRNT_ORD2)                                                                                                AS PRNT_ORD2
+		    </if>
+		    <if test="LVL == 3">
+              , MAX(PRNT_ORD2)                                                                                                AS PRNT_ORD2
+              , MAX(PRNT_ORD3)                                                                                                AS PRNT_ORD3 
+		    </if>
+		    <if test="LVL == 4">
+              , MAX(PRNT_ORD2)                                                                                                AS PRNT_ORD2
+              , MAX(PRNT_ORD3)                                                                                                AS PRNT_ORD3 
+              , MAX(PRNT_ORD4)                                                                                                AS PRNT_ORD4
+		    </if>                                                                                                                                                                                                                                                                                         
+      FROM   
+         (
+         SELECT 
+                B.LVL1
+              , B.LVL2
+              , B.LVL3
+              , B.LVL4
+              , B.LVL5
+              , A.BASE_SEQ               AS BASE_SEQ            -- 연체기간
+              , A.BASE_BKPR_AMT          AS BASE_BKPR_AMT       -- 장부가금액(기준월 전체 잔액)
+              , A.BASE_RPRT_ACC_CNT      AS BASE_RPRT_ACC_CNT   -- 건수 
+              , A.BASE_DLY_AMT           AS BASE_DLY_AMT        -- 연체금액
+              , A.PREV_SEQ               AS PREV_SEQ            -- 전월 대비 , 
+              , A.PREV_DLY_AMT           AS PREV_DLY_AMT        -- 잔액 증감률 을 위한 컬럼
+              , B.PRNT_ORD1
+              , B.PRNT_ORD2
+              , B.PRNT_ORD3
+              , B.PRNT_ORD4
+              , B.PRNT_ORD5
+          FROM  DLY_TRM A
+          ,(
+            SELECT 
+                  LEVEL AS LVL
+                , SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%') AS STAT_RPRT_ITEM_NM_PATH
+                , REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 1 )                              AS LVL1
+                , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 2 ),TRIM(STAT_RPRT_ITEM_NM)) AS LVL2
+                , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 3 ),TRIM(STAT_RPRT_ITEM_NM)) AS LVL3
+                , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 4 ),TRIM(STAT_RPRT_ITEM_NM)) AS LVL4
+                , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(STAT_RPRT_ITEM_NM), '%'),'[^%]+' , 1 , 5 ),TRIM(STAT_RPRT_ITEM_NM)) AS LVL5
+                , STAT_RPRT_ITEM_NM
+                , ORG_CLAS_C
+                , STAT_RPRT_ID
+                , STAT_RPRT_ITEM_ID
+                , TO_NUMBER(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 1 ) )                           AS PRNT_ORD1
+                , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 2 ),TRIM(PRNT_ORD)))        AS PRNT_ORD2
+                , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 3 ),TRIM(PRNT_ORD)))        AS PRNT_ORD3
+                , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 4 ),TRIM(PRNT_ORD)))        AS PRNT_ORD4
+                , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 5 ),TRIM(PRNT_ORD)))        AS PRNT_ORD5
+            FROM (
+                    SELECT ORG_CLAS_C
+                        , STAT_RPRT_ID
+                        , STAT_RPRT_ITEM_ID
+                        <if test="TAB_TC != 3">
+                        , CASE  WHEN STAT_RPRT_LVL = 1 THEN '-'
+                                WHEN STAT_RPRT_LVL = 2 THEN SUBSTR(STAT_RPRT_ITEM_ID, 0, STAT_RPRT_LVL -1) 
+                                WHEN STAT_RPRT_LVL = 3 AND ORG_CLAS_C = '10' THEN SUBSTR(STAT_RPRT_ITEM_ID, 0, STAT_RPRT_LVL) -- 중앙회 데이터가 없기에 일단 킵
+                                WHEN STAT_RPRT_LVL = 3 AND ORG_CLAS_C = '30' THEN SUBSTR(STAT_RPRT_ITEM_ID, 0, STAT_RPRT_LVL -1)
+                                WHEN STAT_RPRT_LVL = 4 THEN SUBSTR(STAT_RPRT_ITEM_ID, 0, STAT_RPRT_LVL)
+                          END 																									 AS UP_STAT_RPRT_ITEM_ID
+                        </if>
+                        <if test="TAB_TC == 3">
+                        , CASE  WHEN STAT_RPRT_LVL = 1 THEN '-'
+                                WHEN STAT_RPRT_LVL = 2 THEN SUBSTR(STAT_RPRT_ITEM_ID, 0, STAT_RPRT_LVL +1) 
+                                WHEN STAT_RPRT_LVL = 3 AND ORG_CLAS_C = '10' THEN SUBSTR(STAT_RPRT_ITEM_ID, 0, STAT_RPRT_LVL) -- 중앙회 데이터가 없기에 일단 킵
+                                WHEN STAT_RPRT_LVL = 3 AND ORG_CLAS_C = '30' THEN SUBSTR(STAT_RPRT_ITEM_ID, 0, STAT_RPRT_LVL +1)
+                                WHEN STAT_RPRT_LVL = 4 THEN SUBSTR(STAT_RPRT_ITEM_ID, 0, STAT_RPRT_LVL)
+                          END 																									 AS UP_STAT_RPRT_ITEM_ID
+                        </if>
+                        , STAT_RPRT_ITEM_NM
+                        , STAT_RPRT_LVL
+                        , TOT_ITEM_YN
+                        , PRNT_ORD
+                    FROM  TII_STAT_ANAL_RPRT_INFO
+                   WHERE  STAT_RPRT_ID = 'P4' || #{TAB_TC} || '0'
+                     AND  ORG_CLAS_C   = #{ORG_CLAS_C}
+                ) 
+            START WITH UP_STAT_RPRT_ITEM_ID    = '-'
+            CONNECT BY PRIOR STAT_RPRT_ITEM_ID = UP_STAT_RPRT_ITEM_ID 
+                   AND PRIOR ORG_CLAS_C        = ORG_CLAS_C
+                   AND PRIOR STAT_RPRT_ID      = STAT_RPRT_ID
+          )B
+          WHERE
+                A.ORG_CLAS_C        = B.ORG_CLAS_C
+            AND A.STAT_RPRT_ID      = B.STAT_RPRT_ID
+            AND A.STAT_RPRT_ITEM_ID = B.STAT_RPRT_ITEM_ID
+	    )     
+	    GROUP BY 
+                LVL1 
+		    <if test="LVL == 2">
+		      , LVL2
+		    </if>
+		    <if test="LVL == 3">
+		      , LVL2
+		      , LVL3
+		    </if>
+		    <if test="LVL == 4">
+		      , LVL2
+		      , LVL3
+		      , LVL4
+		    </if>
+   )----------------------------------------------------------------------------------최종 SELECT문     
+    GROUP BY 
+          LVL1          
+   <if test="LVL == 1">
+	ORDER BY
+          MAX(PRNT_ORD1)
+   </if>      
+   <if test="LVL == 2">
+   		, ROLLUP(LVL2)
+	ORDER BY
+          MAX(PRNT_ORD1)
+        , MAX(PRNT_ORD2)
+        , GRP_ID
+   </if>
+   <if test="LVL == 3">
+        , ROLLUP(LVL2,LVL3)
+	ORDER BY
+          MAX(PRNT_ORD1)
+        , MAX(PRNT_ORD2)
+        , MAX(PRNT_ORD3)
+        , GRP_ID
+   </if>
+   <if test="LVL == 4">
+   	    , ROLLUP(LVL2,LVL3,LVL4)
+	ORDER BY
+          MAX(PRNT_ORD1)
+        , MAX(PRNT_ORD2)
+        , MAX(PRNT_ORD3)
+        , MAX(PRNT_ORD4)
+        , GRP_ID
+   </if>
+
+	
+	</select>
+
+
+  
+
+
+</mapper>

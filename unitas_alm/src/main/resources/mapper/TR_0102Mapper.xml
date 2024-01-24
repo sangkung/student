@@ -1,0 +1,848 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_0102Mapper">
+
+	<!-- 재무지표현황 정태비율  -->
+	<select id="selectTr_0102List" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT
+		    A.STAT_RPRT_ID
+		    , A.STAT_RPRT_ITEM_ID
+		    , A.STAT_RPRT_ITEM_NM 
+		    , B.RPRT_RTO0
+		    , B.RPRT_RTO1
+		    , B.RPRT_RTO2
+		    , B.RPRT_RTO3
+		    , RTO_IDRT1
+		    , RTO_IDRT2
+		    , RTO_IDRT3
+		    , B.AVG_RTO1
+		    , B.AVG_RTO2
+		    , B.AVG_RTO3
+		FROM TII_STAT_ANAL_RPRT_INFO A
+		LEFT JOIN (
+		    SELECT 
+		        A.STAT_RPRT_ID
+		        , A.STAT_RPRT_ITEM_ID
+		        , ROUND(A.RPRT_RTO0, 4)*100 AS RPRT_RTO0
+			    , ROUND(A.RPRT_RTO1, 4)*100 AS RPRT_RTO1
+			    , ROUND(A.RPRT_RTO2, 4)*100 AS RPRT_RTO2
+			    , ROUND(A.RPRT_RTO3, 4)*100 AS RPRT_RTO3
+			    , CASE WHEN ROUND(A.RPRT_RTO1, 4) != 0 THEN ROUND((ROUND(A.RPRT_RTO0, 4) - ROUND(A.RPRT_RTO1, 4))/ROUND(A.RPRT_RTO1, 4), 4)*100 ELSE 0 END AS RTO_IDRT1
+			    , CASE WHEN ROUND(A.RPRT_RTO2, 4) != 0 THEN ROUND((ROUND(A.RPRT_RTO0, 4) - ROUND(A.RPRT_RTO2, 4))/ROUND(A.RPRT_RTO2, 4), 4)*100 ELSE 0 END AS RTO_IDRT2
+			    , CASE WHEN ROUND(A.RPRT_RTO3, 4) != 0 THEN ROUND((ROUND(A.RPRT_RTO0, 4) - ROUND(A.RPRT_RTO3, 4))/ROUND(A.RPRT_RTO3, 4), 4)*100 ELSE 0 END AS RTO_IDRT3
+			    , ROUND(B.AVG_RTO1, 4)*100 AS AVG_RTO1
+			    , ROUND(C.AVG_RTO2, 4)*100 AS AVG_RTO2
+			    , ROUND(D.AVG_RTO3, 4)*100 AS AVG_RTO3
+		    FROM (
+		        SELECT 
+		            STAT_RPRT_ID
+		            , STAT_RPRT_ITEM_ID
+		            , NVL(SUM(RPRT_RTO0), 0) AS RPRT_RTO0
+		            , NVL(SUM(RPRT_RTO1), 0) AS RPRT_RTO1
+		            , NVL(SUM(RPRT_RTO2), 0) AS RPRT_RTO2
+		            , NVL(SUM(RPRT_RTO3), 0) AS RPRT_RTO3
+		        FROM (
+		            SELECT
+		                BASE_DATE
+		                , ALM_WORK_TC
+		                , ORG_CLAS_C
+		                , BR_C
+		                , CUR_C
+		                , AC_BUSI_TC
+		                , STAT_RPRT_ID
+		                , STAT_RPRT_ITEM_ID
+		                , RPRT_FACN_AMT
+		                , RPRT_DVSR_AMT
+		                , RPRT_RTO
+		                , DECODE(BASE_DATE, #{sch_base_date}, RPRT_RTO, 0) AS RPRT_RTO0
+		                , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -1), 'YYYYMMDD'), RPRT_RTO, 0) AS RPRT_RTO1
+		                , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -12), 'YYYY')||'1231', RPRT_RTO, 0) AS RPRT_RTO2
+		                , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -12), 'YYYYMMDD'), RPRT_RTO, 0) AS RPRT_RTO3
+		            FROM TSR_MNG_STAT_RPRT
+		            WHERE STAT_RPRT_ID = 'M200' --재무지표현황
+		            AND STAT_RPRT_ITEM_ID IN ('A1', 'A2') --비율
+		            AND BASE_DATE IN (
+		                #{sch_base_date}
+		                , TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -1), 'YYYYMMDD')
+		                , TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -12), 'YYYY')||'1231'
+		                , TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -12), 'YYYYMMDD')
+		            )
+		            AND ALM_WORK_TC = 'M'
+		            --AND AC_BUSI_TC = '2102'
+		            AND BR_C = #{sch_br_c}
+					AND MNBR_TOT_YN = #{sch_sub_yn}
+		        )
+		        GROUP BY
+		            STAT_RPRT_ID
+		            , STAT_RPRT_ITEM_ID
+		    ) A
+		    LEFT JOIN (
+		        SELECT
+		            A.STAT_RPRT_ID
+		            , A.STAT_RPRT_ITEM_ID
+		            , AVG(RPRT_RTO) AS AVG_RTO1
+		        FROM TSR_MNG_STAT_RPRT A
+		        JOIN TTL_BR_C_INFO B ON B.BR_C = A.BR_C
+		        WHERE STAT_RPRT_ID = 'M200' --재무지표현황
+		        AND STAT_RPRT_ITEM_ID IN ('A1', 'A2') --비율
+		        AND BASE_DATE = #{sch_base_date}
+		        AND B.BLNG_HQ_BR_C = (SELECT BLNG_HQ_BR_C FROM TTL_BR_C_INFO WHERE BR_C = #{sch_br_c}) --도지회
+		        AND MNBR_TOT_YN = 'Y'
+		        GROUP BY 
+		            A.STAT_RPRT_ID
+		            , A.STAT_RPRT_ITEM_ID
+		    ) B ON B.STAT_RPRT_ID = A.STAT_RPRT_ID AND B.STAT_RPRT_ITEM_ID = A.STAT_RPRT_ITEM_ID
+		    LEFT JOIN (
+		        SELECT
+		            A.STAT_RPRT_ID
+		            , A.STAT_RPRT_ITEM_ID
+		            , AVG(RPRT_RTO) AS AVG_RTO2
+		        FROM TSR_MNG_STAT_RPRT A
+		        JOIN TTL_BR_C_INFO B ON B.BR_C = A.BR_C
+		        WHERE STAT_RPRT_ID = 'M200' --재무지표현황
+		        AND STAT_RPRT_ITEM_ID IN ('A1', 'A2') --비율
+		        AND BASE_DATE = #{sch_base_date}
+		        AND ZONE_TC IN ( --동일권역                            
+                    SELECT DTL_CLAS_VAL
+                    FROM TSY_CO_MNG -- 시스템_공통관리
+                    WHERE CO_C = 'ZONE_TC'
+                    AND CO_C_1_VAL IN (
+                        SELECT CO_C_1_VAL 
+                        FROM TTL_BR_C_INFO 
+                            , TSY_CO_MNG
+                        WHERE CO_C = 'ZONE_TC'
+                        AND BR_C = #{sch_br_c} 
+                        AND DTL_CLAS_VAL = ZONE_TC
+                    )
+                )
+		        AND MNBR_TOT_YN = 'Y'
+		        GROUP BY 
+		            A.STAT_RPRT_ID
+		            , A.STAT_RPRT_ITEM_ID
+		    ) C ON C.STAT_RPRT_ID = A.STAT_RPRT_ID AND C.STAT_RPRT_ITEM_ID = A.STAT_RPRT_ITEM_ID
+		    LEFT JOIN (
+		        SELECT
+		            STAT_RPRT_ID
+		            , STAT_RPRT_ITEM_ID
+		            , AVG(RPRT_RTO) AS AVG_RTO3
+		        FROM TSR_MNG_STAT_RPRT A
+		        WHERE STAT_RPRT_ID = 'M200' --재무지표현황
+		        AND STAT_RPRT_ITEM_ID IN ('A1', 'A2') --비율
+		        AND BASE_DATE = #{sch_base_date}
+		        AND BR_C != '001' --중앙회 제외 전국조합 
+		        AND MNBR_TOT_YN = 'Y'
+		        GROUP BY 
+		            STAT_RPRT_ID
+		            , STAT_RPRT_ITEM_ID
+		    ) D ON D.STAT_RPRT_ID = A.STAT_RPRT_ID AND D.STAT_RPRT_ITEM_ID = A.STAT_RPRT_ITEM_ID
+		    UNION ALL
+		    SELECT 
+		        A.STAT_RPRT_ID
+		        , A.STAT_RPRT_ITEM_ID
+		        , ROUND(A.RPRT_FACN_AMT0/TO_NUMBER(#{amt_unit}), 0) AS RPRT_FACN_AMT0
+		        , ROUND(A.RPRT_FACN_AMT1/TO_NUMBER(#{amt_unit}), 0) AS RPRT_FACN_AMT1
+		        , ROUND(A.RPRT_FACN_AMT2/TO_NUMBER(#{amt_unit}), 0) AS RPRT_FACN_AMT2
+		        , ROUND(A.RPRT_FACN_AMT3/TO_NUMBER(#{amt_unit}), 0) AS RPRT_FACN_AMT3
+		        , CASE WHEN ROUND(A.RPRT_FACN_AMT1/TO_NUMBER(#{amt_unit}), 0) != 0 THEN ROUND((ROUND(A.RPRT_FACN_AMT0/TO_NUMBER(#{amt_unit}), 0) - ROUND(A.RPRT_FACN_AMT1/TO_NUMBER(#{amt_unit}), 0))/ROUND(A.RPRT_FACN_AMT1/TO_NUMBER(#{amt_unit}), 0), 4)*100 ELSE 0 END AS RTO_IDRT1
+		        , CASE WHEN ROUND(A.RPRT_FACN_AMT2/TO_NUMBER(#{amt_unit}), 0) != 0 THEN ROUND((ROUND(A.RPRT_FACN_AMT0/TO_NUMBER(#{amt_unit}), 0) - ROUND(A.RPRT_FACN_AMT2/TO_NUMBER(#{amt_unit}), 0))/ROUND(A.RPRT_FACN_AMT2/TO_NUMBER(#{amt_unit}), 0), 4)*100 ELSE 0 END AS RTO_IDRT2
+		        , CASE WHEN ROUND(A.RPRT_FACN_AMT3/TO_NUMBER(#{amt_unit}), 0) != 0 THEN ROUND((ROUND(A.RPRT_FACN_AMT0/TO_NUMBER(#{amt_unit}), 0) - ROUND(A.RPRT_FACN_AMT3/TO_NUMBER(#{amt_unit}), 0))/ROUND(A.RPRT_FACN_AMT3/TO_NUMBER(#{amt_unit}), 0), 4)*100 ELSE 0 END AS RTO_IDRT3
+		        , ROUND(B.AVG_AMT1/TO_NUMBER(#{amt_unit}), 0) AS AVG_AMT1
+		        , ROUND(C.AVG_AMT2/TO_NUMBER(#{amt_unit}), 0) AS AVG_AMT2
+		        , ROUND(D.AVG_AMT3/TO_NUMBER(#{amt_unit}), 0) AS AVG_AMT3
+		    FROM (
+		        SELECT 
+		            STAT_RPRT_ID
+		            , STAT_RPRT_ITEM_ID
+		            , NVL(SUM(RPRT_FACN_AMT0), 0) AS RPRT_FACN_AMT0
+		            , NVL(SUM(RPRT_FACN_AMT1), 0) AS RPRT_FACN_AMT1
+		            , NVL(SUM(RPRT_FACN_AMT2), 0) AS RPRT_FACN_AMT2
+		            , NVL(SUM(RPRT_FACN_AMT3), 0) AS RPRT_FACN_AMT3
+		        FROM (
+		            SELECT
+		                BASE_DATE
+		                , ALM_WORK_TC
+		                , ORG_CLAS_C
+		                , BR_C
+		                , CUR_C
+		                , AC_BUSI_TC
+		                , STAT_RPRT_ID
+		                , STAT_RPRT_ITEM_ID
+		                , RPRT_FACN_AMT
+		                , RPRT_DVSR_AMT
+		                , RPRT_RTO
+		                , DECODE(BASE_DATE, #{sch_base_date}, RPRT_FACN_AMT, 0) AS RPRT_FACN_AMT0
+		                , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -1), 'YYYYMMDD'), RPRT_FACN_AMT, 0) AS RPRT_FACN_AMT1
+		                , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -12), 'YYYY')||'1231', RPRT_FACN_AMT, 0) AS RPRT_FACN_AMT2
+		                , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -12), 'YYYYMMDD'), RPRT_FACN_AMT, 0) AS RPRT_FACN_AMT3
+		            FROM TSR_MNG_STAT_RPRT
+		            WHERE STAT_RPRT_ID = 'M200' --재무지표현황
+		            AND STAT_RPRT_ITEM_ID IN ('A21', 'A22') --금액
+		            AND BASE_DATE IN (
+		                #{sch_base_date}
+		                , TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -1), 'YYYYMMDD')
+		                , TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -12), 'YYYY')||'1231'
+		                , TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -12), 'YYYYMMDD')
+		            )
+		            AND ALM_WORK_TC = 'M'
+		            --AND AC_BUSI_TC = '2102'
+		            AND BR_C = #{sch_br_c}
+		        	AND MNBR_TOT_YN = #{sch_sub_yn}
+		        )
+		        GROUP BY
+		            STAT_RPRT_ID
+		            , STAT_RPRT_ITEM_ID
+		    ) A
+		    LEFT JOIN (
+		        SELECT
+		            A.STAT_RPRT_ID
+		            , A.STAT_RPRT_ITEM_ID
+		            , AVG(RPRT_FACN_AMT) AS AVG_AMT1
+		        FROM TSR_MNG_STAT_RPRT A
+		        JOIN TTL_BR_C_INFO B ON B.BR_C = A.BR_C
+		        WHERE STAT_RPRT_ID = 'M200' --재무지표현황
+		        AND STAT_RPRT_ITEM_ID IN ('A21', 'A22') --금액
+		        AND BASE_DATE = #{sch_base_date}
+		        AND B.BLNG_HQ_BR_C = (SELECT BLNG_HQ_BR_C FROM TTL_BR_C_INFO WHERE BR_C = #{sch_br_c}) --도지회
+		        AND MNBR_TOT_YN = 'Y'
+		        GROUP BY 
+		            A.STAT_RPRT_ID
+		            , A.STAT_RPRT_ITEM_ID
+		    ) B ON B.STAT_RPRT_ID = A.STAT_RPRT_ID AND B.STAT_RPRT_ITEM_ID = A.STAT_RPRT_ITEM_ID
+		    LEFT JOIN (
+		        SELECT
+		            A.STAT_RPRT_ID
+		            , A.STAT_RPRT_ITEM_ID
+		            , AVG(RPRT_FACN_AMT) AS AVG_AMT2
+		        FROM TSR_MNG_STAT_RPRT A
+		        JOIN TTL_BR_C_INFO B ON B.BR_C = A.BR_C
+		        WHERE STAT_RPRT_ID = 'M200' --재무지표현황
+		        AND STAT_RPRT_ITEM_ID IN ('A21', 'A22') --금액
+		        AND BASE_DATE = #{sch_base_date}
+		        AND ZONE_TC IN ( --동일권역                            
+                    SELECT DTL_CLAS_VAL
+                    FROM TSY_CO_MNG -- 시스템_공통관리
+                    WHERE CO_C = 'ZONE_TC'
+                    AND CO_C_1_VAL IN (
+                        SELECT CO_C_1_VAL 
+                        FROM TTL_BR_C_INFO 
+                            , TSY_CO_MNG
+                        WHERE CO_C = 'ZONE_TC'
+                        AND BR_C = #{sch_br_c} 
+                        AND DTL_CLAS_VAL = ZONE_TC
+                    )
+                )
+		        AND MNBR_TOT_YN = 'Y'
+		        GROUP BY 
+		            A.STAT_RPRT_ID
+		            , A.STAT_RPRT_ITEM_ID
+		    ) C ON C.STAT_RPRT_ID = A.STAT_RPRT_ID AND C.STAT_RPRT_ITEM_ID = A.STAT_RPRT_ITEM_ID
+		    LEFT JOIN (
+		        SELECT
+		            STAT_RPRT_ID
+		            , STAT_RPRT_ITEM_ID
+		            , AVG(RPRT_FACN_AMT) AS AVG_AMT3
+		        FROM TSR_MNG_STAT_RPRT A
+		        WHERE STAT_RPRT_ID = 'M200' --재무지표현황
+		        AND STAT_RPRT_ITEM_ID IN ('A21', 'A22') --금액
+		        AND BASE_DATE = #{sch_base_date}
+		        AND BR_C != '001' --중앙회 제외 전국조합 
+		        AND MNBR_TOT_YN = 'Y'
+		        GROUP BY 
+		            STAT_RPRT_ID
+		            , STAT_RPRT_ITEM_ID
+		    ) D ON D.STAT_RPRT_ID = A.STAT_RPRT_ID AND D.STAT_RPRT_ITEM_ID = A.STAT_RPRT_ITEM_ID
+		) B ON B.STAT_RPRT_ID = A.STAT_RPRT_ID AND B.STAT_RPRT_ITEM_ID = A.STAT_RPRT_ITEM_ID
+		WHERE A.STAT_RPRT_ID = 'M200' 
+		AND A.STAT_RPRT_ITEM_ID IN ('A1', 'A2', 'A21', 'A22')
+		ORDER BY A.PRNT_ORD
+	</select>
+	
+	<!-- 재무지표현황 동태비율  -->
+	<select id="selectTr_0102List2" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT
+		    A.STAT_RPRT_ID
+		    , A.STAT_RPRT_ITEM_ID
+		    , A.STAT_RPRT_ITEM_NM 
+		    , B.RPRT_RTO0
+		    , B.RPRT_RTO1
+		    , B.RPRT_RTO2
+		    , B.RPRT_RTO3
+		    , RTO_IDRT1
+		    , RTO_IDRT2
+		    , RTO_IDRT3
+		    , B.AVG_RTO1
+		    , B.AVG_RTO2
+		    , B.AVG_RTO3
+		FROM TII_STAT_ANAL_RPRT_INFO A
+		LEFT JOIN (
+		    SELECT 
+		        A.STAT_RPRT_ID
+		        , A.STAT_RPRT_ITEM_ID
+		        , ROUND(A.RPRT_RTO0, 4)*100 AS RPRT_RTO0
+			    , ROUND(A.RPRT_RTO1, 4)*100 AS RPRT_RTO1
+			    , ROUND(A.RPRT_RTO2, 4)*100 AS RPRT_RTO2
+			    , ROUND(A.RPRT_RTO3, 4)*100 AS RPRT_RTO3
+			    , CASE WHEN ROUND(A.RPRT_RTO1, 4) != 0 THEN ROUND((ROUND(A.RPRT_RTO0, 4) - ROUND(A.RPRT_RTO1, 4))/ROUND(A.RPRT_RTO1, 4), 4)*100 ELSE 0 END AS RTO_IDRT1
+			    , CASE WHEN ROUND(A.RPRT_RTO2, 4) != 0 THEN ROUND((ROUND(A.RPRT_RTO0, 4) - ROUND(A.RPRT_RTO2, 4))/ROUND(A.RPRT_RTO2, 4), 4)*100 ELSE 0 END AS RTO_IDRT2
+			    , CASE WHEN ROUND(A.RPRT_RTO3, 4) != 0 THEN ROUND((ROUND(A.RPRT_RTO0, 4) - ROUND(A.RPRT_RTO3, 4))/ROUND(A.RPRT_RTO3, 4), 4)*100 ELSE 0 END AS RTO_IDRT3
+			    , ROUND(B.AVG_RTO1, 4)*100 AS AVG_RTO1
+			    , ROUND(C.AVG_RTO2, 4)*100 AS AVG_RTO2
+			    , ROUND(D.AVG_RTO3, 4)*100 AS AVG_RTO3
+		    FROM (
+		        SELECT 
+		            STAT_RPRT_ID
+		            , STAT_RPRT_ITEM_ID
+		            , NVL(SUM(RPRT_RTO0), 0) AS RPRT_RTO0
+		            , NVL(SUM(RPRT_RTO1), 0) AS RPRT_RTO1
+		            , NVL(SUM(RPRT_RTO2), 0) AS RPRT_RTO2
+		            , NVL(SUM(RPRT_RTO3), 0) AS RPRT_RTO3
+		        FROM (
+		            SELECT
+		                BASE_DATE
+		                , ALM_WORK_TC
+		                , ORG_CLAS_C
+		                , BR_C
+		                , CUR_C
+		                , AC_BUSI_TC
+		                , STAT_RPRT_ID
+		                , STAT_RPRT_ITEM_ID
+		                , RPRT_FACN_AMT
+		                , RPRT_DVSR_AMT
+		                , RPRT_RTO
+		                , DECODE(BASE_DATE, #{sch_base_date}, RPRT_RTO, 0) AS RPRT_RTO0
+		                , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -1), 'YYYYMMDD'), RPRT_RTO, 0) AS RPRT_RTO1
+		                , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -12), 'YYYY')||'1231', RPRT_RTO, 0) AS RPRT_RTO2
+		                , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -12), 'YYYYMMDD'), RPRT_RTO, 0) AS RPRT_RTO3
+		            FROM TSR_MNG_STAT_RPRT
+		            WHERE STAT_RPRT_ID = 'M200' --재무지표현황
+		            AND STAT_RPRT_ITEM_ID IN ('B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B21', 'B22') --비율
+		            AND BASE_DATE IN (
+		                #{sch_base_date}
+		                , TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -1), 'YYYYMMDD')
+		                , TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -12), 'YYYY')||'1231'
+		                , TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -12), 'YYYYMMDD')
+		            )
+		            AND ALM_WORK_TC = 'M'
+		            --AND AC_BUSI_TC = '2102'
+		            AND BR_C = #{sch_br_c}
+		            AND MNBR_TOT_YN = #{sch_sub_yn}
+		        )
+		        GROUP BY
+		            STAT_RPRT_ID
+		            , STAT_RPRT_ITEM_ID
+		    ) A
+		    LEFT JOIN (
+		        SELECT
+		            A.STAT_RPRT_ID
+		            , A.STAT_RPRT_ITEM_ID
+		            , AVG(RPRT_RTO) AS AVG_RTO1
+		        FROM TSR_MNG_STAT_RPRT A
+		        JOIN TTL_BR_C_INFO B ON B.BR_C = A.BR_C
+		        WHERE STAT_RPRT_ID = 'M200' --재무지표현황
+		        AND STAT_RPRT_ITEM_ID IN ('B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B21', 'B22') --비율
+		        AND BASE_DATE = #{sch_base_date}
+		        AND B.BLNG_HQ_BR_C = (SELECT BLNG_HQ_BR_C FROM TTL_BR_C_INFO WHERE BR_C = #{sch_br_c}) --도지회
+		        AND MNBR_TOT_YN = 'Y'
+		        GROUP BY 
+		            A.STAT_RPRT_ID
+		            , A.STAT_RPRT_ITEM_ID
+		    ) B ON B.STAT_RPRT_ID = A.STAT_RPRT_ID AND B.STAT_RPRT_ITEM_ID = A.STAT_RPRT_ITEM_ID
+		    LEFT JOIN (
+		        SELECT
+		            A.STAT_RPRT_ID
+		            , A.STAT_RPRT_ITEM_ID
+		            , AVG(RPRT_RTO) AS AVG_RTO2
+		        FROM TSR_MNG_STAT_RPRT A
+		        JOIN TTL_BR_C_INFO B ON B.BR_C = A.BR_C
+		        WHERE STAT_RPRT_ID = 'M200' --재무지표현황
+		        AND STAT_RPRT_ITEM_ID IN ('B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B21', 'B22') --비율
+		        AND BASE_DATE = #{sch_base_date}
+		        AND ZONE_TC IN ( --동일권역                            
+                    SELECT DTL_CLAS_VAL
+                    FROM TSY_CO_MNG -- 시스템_공통관리
+                    WHERE CO_C = 'ZONE_TC'
+                    AND CO_C_1_VAL IN (
+                        SELECT CO_C_1_VAL 
+                        FROM TTL_BR_C_INFO 
+                            , TSY_CO_MNG
+                        WHERE CO_C = 'ZONE_TC'
+                        AND BR_C = #{sch_br_c} 
+                        AND DTL_CLAS_VAL = ZONE_TC
+                    )
+                )
+		        AND MNBR_TOT_YN = 'Y'
+		        GROUP BY 
+		            A.STAT_RPRT_ID
+		            , A.STAT_RPRT_ITEM_ID
+		    ) C ON C.STAT_RPRT_ID = A.STAT_RPRT_ID AND C.STAT_RPRT_ITEM_ID = A.STAT_RPRT_ITEM_ID
+		    LEFT JOIN (
+		        SELECT
+		            STAT_RPRT_ID
+		            , STAT_RPRT_ITEM_ID
+		            , AVG(RPRT_RTO) AS AVG_RTO3
+		        FROM TSR_MNG_STAT_RPRT A
+		        WHERE STAT_RPRT_ID = 'M200' --재무지표현황
+		        AND STAT_RPRT_ITEM_ID IN ('B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B21', 'B22') --비율
+		        AND BASE_DATE = #{sch_base_date}
+		        AND BR_C != '001' --중앙회 제외 전국조합 
+		        AND MNBR_TOT_YN = 'Y'
+		        GROUP BY 
+		            STAT_RPRT_ID
+		            , STAT_RPRT_ITEM_ID
+		    ) D ON D.STAT_RPRT_ID = A.STAT_RPRT_ID AND D.STAT_RPRT_ITEM_ID = A.STAT_RPRT_ITEM_ID
+		) B ON B.STAT_RPRT_ID = A.STAT_RPRT_ID AND B.STAT_RPRT_ITEM_ID = A.STAT_RPRT_ITEM_ID
+		WHERE A.STAT_RPRT_ID = 'M200' 
+		AND A.STAT_RPRT_ITEM_ID IN ('B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B21', 'B22')
+		ORDER BY A.PRNT_ORD
+	</select>
+	
+	<!-- 재무지표현황 sub  -->
+	<select id="selectTr_0102SubList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		WITH DATA_TB AS (
+		    SELECT
+		        BASE_DATE
+		        , ALM_WORK_TC
+		        , A.ORG_CLAS_C
+		        , A.BR_C
+		        , MNBR_TOT_YN
+		        , CUR_C
+		        , AC_BUSI_TC
+		        , A.STAT_RPRT_ID
+		        , A.STAT_RPRT_ITEM_ID
+		        , RPRT_FACN_AMT
+		        , RPRT_DVSR_AMT
+		        , RPRT_RTO
+		        , B.BLNG_HQ_BR_C
+		        , B.ZONE_TC
+		        , C.RPRT_ITEM_CALE_CNTN
+		        , C.RPRT_ITEM_DESC_CNTN
+		    FROM TSR_MNG_STAT_RPRT A
+		    JOIN TTL_BR_C_INFO B ON B.BR_C = A.BR_C
+		    JOIN TII_STAT_ANAL_RPRT_INFO C ON C.STAT_RPRT_ID = A.STAT_RPRT_ID AND C.STAT_RPRT_ITEM_ID = A.STAT_RPRT_ITEM_ID
+		    WHERE A.STAT_RPRT_ID = 'M200' --재무지표현황
+		    AND A.STAT_RPRT_ITEM_ID = #{sch_rprt_item_id} 
+		    AND BASE_DATE BETWEEN TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -11), 'YYYYMMDD') AND #{sch_base_date}
+		    AND ALM_WORK_TC = 'M'
+		    --AND AC_BUSI_TC = '2102'
+		)
+		<choose>
+			<when test="sch_rprt_item_id == 'A21' or sch_rprt_item_id == 'A22'">
+		SELECT
+		    '조합' AS ITEM_TYPE
+		    , NVL(SUM(RPRT_FACN_AMT0), 0) AS RPRT_RTO0
+		    , NVL(SUM(RPRT_FACN_AMT1), 0) AS RPRT_RTO1
+		    , NVL(SUM(RPRT_FACN_AMT2), 0) AS RPRT_RTO2
+		    , NVL(SUM(RPRT_FACN_AMT3), 0) AS RPRT_RTO3
+		    , NVL(SUM(RPRT_FACN_AMT4), 0) AS RPRT_RTO4
+		    , NVL(SUM(RPRT_FACN_AMT5), 0) AS RPRT_RTO5
+		    , NVL(SUM(RPRT_FACN_AMT6), 0) AS RPRT_RTO6
+		    , NVL(SUM(RPRT_FACN_AMT7), 0) AS RPRT_RTO7
+		    , NVL(SUM(RPRT_FACN_AMT8), 0) AS RPRT_RTO8
+		    , NVL(SUM(RPRT_FACN_AMT9), 0) AS RPRT_RTO9
+		    , NVL(SUM(RPRT_FACN_AMT10), 0) AS RPRT_RTO10
+		    , NVL(SUM(RPRT_FACN_AMT11), 0) AS RPRT_RTO11
+		    , RPRT_ITEM_CALE_CNTN
+		    , RPRT_ITEM_DESC_CNTN
+		FROM (
+		    SELECT 
+		        DECODE(BASE_DATE, #{sch_base_date}, ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT0
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -1), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT1
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -2), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT2
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -3), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT3
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -4), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT4
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -5), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT5
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -6), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT6
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -7), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT7
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -8), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT8
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -9), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT9
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -10), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT10
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -11), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT11
+		        , RPRT_ITEM_CALE_CNTN
+		        , RPRT_ITEM_DESC_CNTN
+		    FROM (
+		        SELECT 
+		            DISTINCT BASE_DATE, ROUND(AVG(RPRT_FACN_AMT) OVER(PARTITION BY BASE_DATE), 4) AS RPRT_FACN_AMT
+		            , RPRT_ITEM_CALE_CNTN
+		            , RPRT_ITEM_DESC_CNTN
+		        FROM DATA_TB
+		        WHERE BR_C = #{sch_br_c}
+		        AND MNBR_TOT_YN = #{sch_sub_yn}
+		    )
+		)
+		GROUP BY 
+		    RPRT_ITEM_CALE_CNTN
+		    , RPRT_ITEM_DESC_CNTN
+		UNION ALL
+		SELECT
+		    '지역본부 평균' AS ITEM_TYPE
+		    , NVL(SUM(RPRT_FACN_AMT0), 0) AS RPRT_FACN_AMT0
+		    , NVL(SUM(RPRT_FACN_AMT1), 0) AS RPRT_FACN_AMT1
+		    , NVL(SUM(RPRT_FACN_AMT2), 0) AS RPRT_FACN_AMT2
+		    , NVL(SUM(RPRT_FACN_AMT3), 0) AS RPRT_FACN_AMT3
+		    , NVL(SUM(RPRT_FACN_AMT4), 0) AS RPRT_FACN_AMT4
+		    , NVL(SUM(RPRT_FACN_AMT5), 0) AS RPRT_FACN_AMT5
+		    , NVL(SUM(RPRT_FACN_AMT6), 0) AS RPRT_FACN_AMT6
+		    , NVL(SUM(RPRT_FACN_AMT7), 0) AS RPRT_FACN_AMT7
+		    , NVL(SUM(RPRT_FACN_AMT8), 0) AS RPRT_FACN_AMT8
+		    , NVL(SUM(RPRT_FACN_AMT9), 0) AS RPRT_FACN_AMT9
+		    , NVL(SUM(RPRT_FACN_AMT10), 0) AS RPRT_FACN_AMT10
+		    , NVL(SUM(RPRT_FACN_AMT11), 0) AS RPRT_FACN_AMT11
+		    , RPRT_ITEM_CALE_CNTN
+		    , RPRT_ITEM_DESC_CNTN
+		FROM (
+		    SELECT 
+		        DECODE(BASE_DATE, #{sch_base_date}, ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT0
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -1), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT1
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -2), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT2
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -3), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT3
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -4), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT4
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -5), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT5
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -6), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT6
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -7), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT7
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -8), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT8
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -9), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT9
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -10), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT10
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -11), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT11
+		        , RPRT_ITEM_CALE_CNTN
+		        , RPRT_ITEM_DESC_CNTN
+		    FROM (
+		        SELECT 
+		            DISTINCT BASE_DATE, ROUND(AVG(RPRT_FACN_AMT) OVER(PARTITION BY BASE_DATE), 4) AS RPRT_FACN_AMT
+		            , RPRT_ITEM_CALE_CNTN
+		            , RPRT_ITEM_DESC_CNTN
+		        FROM DATA_TB
+		        WHERE BLNG_HQ_BR_C = (SELECT BLNG_HQ_BR_C FROM TTL_BR_C_INFO WHERE BR_C = #{sch_br_c})
+		        AND MNBR_TOT_YN = 'Y'
+		    )
+		)
+		GROUP BY 
+		    RPRT_ITEM_CALE_CNTN
+		    , RPRT_ITEM_DESC_CNTN
+		UNION ALL
+		SELECT
+		    '동일권역 평균' AS ITEM_TYPE
+		    , NVL(SUM(RPRT_FACN_AMT0), 0) AS RPRT_FACN_AMT0
+		    , NVL(SUM(RPRT_FACN_AMT1), 0) AS RPRT_FACN_AMT1
+		    , NVL(SUM(RPRT_FACN_AMT2), 0) AS RPRT_FACN_AMT2
+		    , NVL(SUM(RPRT_FACN_AMT3), 0) AS RPRT_FACN_AMT3
+		    , NVL(SUM(RPRT_FACN_AMT4), 0) AS RPRT_FACN_AMT4
+		    , NVL(SUM(RPRT_FACN_AMT5), 0) AS RPRT_FACN_AMT5
+		    , NVL(SUM(RPRT_FACN_AMT6), 0) AS RPRT_FACN_AMT6
+		    , NVL(SUM(RPRT_FACN_AMT7), 0) AS RPRT_FACN_AMT7
+		    , NVL(SUM(RPRT_FACN_AMT8), 0) AS RPRT_FACN_AMT8
+		    , NVL(SUM(RPRT_FACN_AMT9), 0) AS RPRT_FACN_AMT9
+		    , NVL(SUM(RPRT_FACN_AMT10), 0) AS RPRT_FACN_AMT10
+		    , NVL(SUM(RPRT_FACN_AMT11), 0) AS RPRT_FACN_AMT11
+		    , RPRT_ITEM_CALE_CNTN
+		    , RPRT_ITEM_DESC_CNTN
+		FROM (
+		    SELECT 
+		        DECODE(BASE_DATE, #{sch_base_date}, ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT0
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -1), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT1
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -2), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT2
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -3), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT3
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -4), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT4
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -5), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT5
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -6), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT6
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -7), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT7
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -8), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT8
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -9), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT9
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -10), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT10
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -11), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT11
+		        , RPRT_ITEM_CALE_CNTN
+		        , RPRT_ITEM_DESC_CNTN
+		    FROM ( 
+		        SELECT 
+		            DISTINCT BASE_DATE, ROUND(AVG(RPRT_FACN_AMT) OVER(PARTITION BY BASE_DATE), 4) AS RPRT_FACN_AMT
+		            , RPRT_ITEM_CALE_CNTN
+		            , RPRT_ITEM_DESC_CNTN
+		        FROM DATA_TB
+		        WHERE ZONE_TC IN ( --동일권역                            
+                    SELECT DTL_CLAS_VAL
+                    FROM TSY_CO_MNG -- 시스템_공통관리
+                    WHERE CO_C = 'ZONE_TC'
+                    AND CO_C_1_VAL IN (
+                        SELECT CO_C_1_VAL 
+                        FROM TTL_BR_C_INFO 
+                            , TSY_CO_MNG
+                        WHERE CO_C = 'ZONE_TC'
+                        AND BR_C = #{sch_br_c} 
+                        AND DTL_CLAS_VAL = ZONE_TC
+                    )
+                )
+		        AND MNBR_TOT_YN = 'Y'
+		    )
+		)
+		GROUP BY 
+		    RPRT_ITEM_CALE_CNTN
+		    , RPRT_ITEM_DESC_CNTN
+		UNION ALL
+		SELECT
+		    '전국 평균' AS ITEM_TYPE
+		    , NVL(SUM(RPRT_FACN_AMT0), 0) AS RPRT_FACN_AMT0
+		    , NVL(SUM(RPRT_FACN_AMT1), 0) AS RPRT_FACN_AMT1
+		    , NVL(SUM(RPRT_FACN_AMT2), 0) AS RPRT_FACN_AMT2
+		    , NVL(SUM(RPRT_FACN_AMT3), 0) AS RPRT_FACN_AMT3
+		    , NVL(SUM(RPRT_FACN_AMT4), 0) AS RPRT_FACN_AMT4
+		    , NVL(SUM(RPRT_FACN_AMT5), 0) AS RPRT_FACN_AMT5
+		    , NVL(SUM(RPRT_FACN_AMT6), 0) AS RPRT_FACN_AMT6
+		    , NVL(SUM(RPRT_FACN_AMT7), 0) AS RPRT_FACN_AMT7
+		    , NVL(SUM(RPRT_FACN_AMT8), 0) AS RPRT_FACN_AMT8
+		    , NVL(SUM(RPRT_FACN_AMT9), 0) AS RPRT_FACN_AMT9
+		    , NVL(SUM(RPRT_FACN_AMT10), 0) AS RPRT_FACN_AMT10
+		    , NVL(SUM(RPRT_FACN_AMT11), 0) AS RPRT_FACN_AMT11
+		    , RPRT_ITEM_CALE_CNTN
+		    , RPRT_ITEM_DESC_CNTN
+		FROM (
+		    SELECT 
+		        DECODE(BASE_DATE, #{sch_base_date}, ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT0
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -1), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT1
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -2), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT2
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -3), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT3
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -4), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT4
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -5), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT5
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -6), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT6
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -7), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT7
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -8), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT8
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -9), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT9
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -10), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT10
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -11), 'YYYYMMDD'), ROUND(RPRT_FACN_AMT/TO_NUMBER(#{amt_unit}), 0), 0) AS RPRT_FACN_AMT11
+		        , RPRT_ITEM_CALE_CNTN
+		        , RPRT_ITEM_DESC_CNTN
+		    FROM (
+		        SELECT 
+		            DISTINCT BASE_DATE, ROUND(AVG(RPRT_FACN_AMT) OVER(PARTITION BY BASE_DATE), 4) AS RPRT_FACN_AMT
+		            , RPRT_ITEM_CALE_CNTN
+		            , RPRT_ITEM_DESC_CNTN
+		        FROM DATA_TB
+		        WHERE BR_C != '001'
+		        AND MNBR_TOT_YN = 'Y'
+		    )
+		)
+		GROUP BY 
+		    RPRT_ITEM_CALE_CNTN
+		    , RPRT_ITEM_DESC_CNTN
+			</when>
+			<otherwise>
+		SELECT
+		    '조합' AS ITEM_TYPE
+		    , NVL(SUM(RPRT_RTO0), 0) AS RPRT_RTO0
+		    , NVL(SUM(RPRT_RTO1), 0) AS RPRT_RTO1
+		    , NVL(SUM(RPRT_RTO2), 0) AS RPRT_RTO2
+		    , NVL(SUM(RPRT_RTO3), 0) AS RPRT_RTO3
+		    , NVL(SUM(RPRT_RTO4), 0) AS RPRT_RTO4
+		    , NVL(SUM(RPRT_RTO5), 0) AS RPRT_RTO5
+		    , NVL(SUM(RPRT_RTO6), 0) AS RPRT_RTO6
+		    , NVL(SUM(RPRT_RTO7), 0) AS RPRT_RTO7
+		    , NVL(SUM(RPRT_RTO8), 0) AS RPRT_RTO8
+		    , NVL(SUM(RPRT_RTO9), 0) AS RPRT_RTO9
+		    , NVL(SUM(RPRT_RTO10), 0) AS RPRT_RTO10
+		    , NVL(SUM(RPRT_RTO11), 0) AS RPRT_RTO11
+		    , RPRT_ITEM_CALE_CNTN
+		    , RPRT_ITEM_DESC_CNTN
+		FROM (
+		    SELECT 
+		        DECODE(BASE_DATE, #{sch_base_date}, ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO0
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -1), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO1
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -2), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO2
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -3), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO3
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -4), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO4
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -5), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO5
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -6), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO6
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -7), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO7
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -8), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO8
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -9), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO9
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -10), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO10
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -11), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO11
+		        , RPRT_ITEM_CALE_CNTN
+		        , RPRT_ITEM_DESC_CNTN
+		    FROM (
+		        SELECT 
+		            DISTINCT BASE_DATE, ROUND(AVG(RPRT_RTO) OVER(PARTITION BY BASE_DATE), 4) AS RPRT_RTO
+		            , RPRT_ITEM_CALE_CNTN
+		            , RPRT_ITEM_DESC_CNTN
+		        FROM DATA_TB
+		        WHERE BR_C = #{sch_br_c}
+		        AND MNBR_TOT_YN = #{sch_sub_yn}
+		    )
+		)
+		GROUP BY 
+		    RPRT_ITEM_CALE_CNTN
+		    , RPRT_ITEM_DESC_CNTN
+		UNION ALL
+		SELECT
+		    '지역본부 평균' AS ITEM_TYPE
+		    , NVL(SUM(RPRT_RTO0), 0) AS RPRT_RTO0
+		    , NVL(SUM(RPRT_RTO1), 0) AS RPRT_RTO1
+		    , NVL(SUM(RPRT_RTO2), 0) AS RPRT_RTO2
+		    , NVL(SUM(RPRT_RTO3), 0) AS RPRT_RTO3
+		    , NVL(SUM(RPRT_RTO4), 0) AS RPRT_RTO4
+		    , NVL(SUM(RPRT_RTO5), 0) AS RPRT_RTO5
+		    , NVL(SUM(RPRT_RTO6), 0) AS RPRT_RTO6
+		    , NVL(SUM(RPRT_RTO7), 0) AS RPRT_RTO7
+		    , NVL(SUM(RPRT_RTO8), 0) AS RPRT_RTO8
+		    , NVL(SUM(RPRT_RTO9), 0) AS RPRT_RTO9
+		    , NVL(SUM(RPRT_RTO10), 0) AS RPRT_RTO10
+		    , NVL(SUM(RPRT_RTO11), 0) AS RPRT_RTO11
+		    , RPRT_ITEM_CALE_CNTN
+		    , RPRT_ITEM_DESC_CNTN
+		FROM (
+		    SELECT 
+		        DECODE(BASE_DATE, #{sch_base_date}, ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO0
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -1), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO1
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -2), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO2
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -3), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO3
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -4), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO4
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -5), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO5
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -6), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO6
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -7), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO7
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -8), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO8
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -9), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO9
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -10), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO10
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -11), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO11
+		        , RPRT_ITEM_CALE_CNTN
+		        , RPRT_ITEM_DESC_CNTN
+		    FROM (
+		        SELECT 
+		            DISTINCT BASE_DATE, ROUND(AVG(RPRT_RTO) OVER(PARTITION BY BASE_DATE), 4) AS RPRT_RTO
+		            , RPRT_ITEM_CALE_CNTN
+		            , RPRT_ITEM_DESC_CNTN
+		        FROM DATA_TB
+		        WHERE BLNG_HQ_BR_C = (SELECT BLNG_HQ_BR_C FROM TTL_BR_C_INFO WHERE BR_C = #{sch_br_c})
+		        AND MNBR_TOT_YN = 'Y'
+		    )
+		)
+		GROUP BY 
+		    RPRT_ITEM_CALE_CNTN
+		    , RPRT_ITEM_DESC_CNTN
+		UNION ALL
+		SELECT
+		    '동일권역 평균' AS ITEM_TYPE
+		    , NVL(SUM(RPRT_RTO0), 0) AS RPRT_RTO0
+		    , NVL(SUM(RPRT_RTO1), 0) AS RPRT_RTO1
+		    , NVL(SUM(RPRT_RTO2), 0) AS RPRT_RTO2
+		    , NVL(SUM(RPRT_RTO3), 0) AS RPRT_RTO3
+		    , NVL(SUM(RPRT_RTO4), 0) AS RPRT_RTO4
+		    , NVL(SUM(RPRT_RTO5), 0) AS RPRT_RTO5
+		    , NVL(SUM(RPRT_RTO6), 0) AS RPRT_RTO6
+		    , NVL(SUM(RPRT_RTO7), 0) AS RPRT_RTO7
+		    , NVL(SUM(RPRT_RTO8), 0) AS RPRT_RTO8
+		    , NVL(SUM(RPRT_RTO9), 0) AS RPRT_RTO9
+		    , NVL(SUM(RPRT_RTO10), 0) AS RPRT_RTO10
+		    , NVL(SUM(RPRT_RTO11), 0) AS RPRT_RTO11
+		    , RPRT_ITEM_CALE_CNTN
+		    , RPRT_ITEM_DESC_CNTN
+		FROM (
+		    SELECT 
+		        DECODE(BASE_DATE, #{sch_base_date}, ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO0
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -1), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO1
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -2), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO2
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -3), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO3
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -4), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO4
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -5), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO5
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -6), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO6
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -7), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO7
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -8), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO8
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -9), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO9
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -10), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO10
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -11), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO11
+		        , RPRT_ITEM_CALE_CNTN
+		        , RPRT_ITEM_DESC_CNTN
+		    FROM (
+		        SELECT 
+		            DISTINCT BASE_DATE, ROUND(AVG(RPRT_RTO) OVER(PARTITION BY BASE_DATE), 4) AS RPRT_RTO
+		            , RPRT_ITEM_CALE_CNTN
+		            , RPRT_ITEM_DESC_CNTN
+		        FROM DATA_TB
+		        WHERE ZONE_TC IN ( --동일권역                            
+                    SELECT DTL_CLAS_VAL
+                    FROM TSY_CO_MNG -- 시스템_공통관리
+                    WHERE CO_C = 'ZONE_TC'
+                    AND CO_C_1_VAL IN (
+                        SELECT CO_C_1_VAL 
+                        FROM TTL_BR_C_INFO 
+                            , TSY_CO_MNG
+                        WHERE CO_C = 'ZONE_TC'
+                        AND BR_C = #{sch_br_c} 
+                        AND DTL_CLAS_VAL = ZONE_TC
+                    )
+                )
+		        AND MNBR_TOT_YN = 'Y'
+		    )
+		)
+		GROUP BY 
+		    RPRT_ITEM_CALE_CNTN
+		    , RPRT_ITEM_DESC_CNTN
+		UNION ALL
+		SELECT
+		    '전국 평균' AS ITEM_TYPE
+		    , NVL(SUM(RPRT_RTO0), 0) AS RPRT_RTO0
+		    , NVL(SUM(RPRT_RTO1), 0) AS RPRT_RTO1
+		    , NVL(SUM(RPRT_RTO2), 0) AS RPRT_RTO2
+		    , NVL(SUM(RPRT_RTO3), 0) AS RPRT_RTO3
+		    , NVL(SUM(RPRT_RTO4), 0) AS RPRT_RTO4
+		    , NVL(SUM(RPRT_RTO5), 0) AS RPRT_RTO5
+		    , NVL(SUM(RPRT_RTO6), 0) AS RPRT_RTO6
+		    , NVL(SUM(RPRT_RTO7), 0) AS RPRT_RTO7
+		    , NVL(SUM(RPRT_RTO8), 0) AS RPRT_RTO8
+		    , NVL(SUM(RPRT_RTO9), 0) AS RPRT_RTO9
+		    , NVL(SUM(RPRT_RTO10), 0) AS RPRT_RTO10
+		    , NVL(SUM(RPRT_RTO11), 0) AS RPRT_RTO11
+		    , RPRT_ITEM_CALE_CNTN
+		    , RPRT_ITEM_DESC_CNTN
+		FROM (
+		    SELECT 
+		        DECODE(BASE_DATE, #{sch_base_date}, ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO0
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -1), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO1
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -2), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO2
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -3), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO3
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -4), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO4
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -5), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO5
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -6), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO6
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -7), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO7
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -8), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO8
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -9), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO9
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -10), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO10
+		        , DECODE(BASE_DATE, TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -11), 'YYYYMMDD'), ROUND(RPRT_RTO, 4)*100, 0) AS RPRT_RTO11
+		        , RPRT_ITEM_CALE_CNTN
+		        , RPRT_ITEM_DESC_CNTN
+		    FROM (
+		        SELECT 
+		            DISTINCT BASE_DATE, ROUND(AVG(RPRT_RTO) OVER(PARTITION BY BASE_DATE), 4) AS RPRT_RTO
+		            , RPRT_ITEM_CALE_CNTN
+		            , RPRT_ITEM_DESC_CNTN
+		        FROM DATA_TB
+		        WHERE BR_C != '001'
+		        AND MNBR_TOT_YN = 'Y'
+		    )
+		)
+		GROUP BY 
+		    RPRT_ITEM_CALE_CNTN
+		    , RPRT_ITEM_DESC_CNTN
+			</otherwise>
+		</choose>	
+	</select>
+	
+	<select id="selectBaseDateSchCbList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT 
+			TO_CHAR(TO_DATE(MAX(BASE_DATE), 'YYYYMMDD'), 'YYYY-MM-DD') AS BASE_DATE 
+		FROM TSR_MNG_STAT_RPRT
+	</select>
+	
+	<select id="selectRprtDescList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		    SELECT
+		        RPRT_ITEM_CALE_CNTN
+		        , CASE
+                    WHEN INSTR(RPRT_ITEM_DESC_CNTN, '*') = 1 
+                    THEN '*'||REPLACE(SUBSTR(RPRT_ITEM_DESC_CNTN, 2), '*', CHR(10)||CHR(13)||'*')
+                    ELSE REPLACE(RPRT_ITEM_DESC_CNTN, '*', CHR(10)||CHR(13)||'*')
+		        END AS RPRT_ITEM_DESC_CNTN
+		        , STAT_RPRT_ID
+		        , ORG_CLAS_C
+		        , STAT_RPRT_ITEM_ID
+		    FROM TII_STAT_ANAL_RPRT_INFO
+            WHERE STAT_RPRT_ID = 'M200'
+		    AND STAT_RPRT_ITEM_ID = #{sch_rprt_item_id}
+	</select>
+
+</mapper>

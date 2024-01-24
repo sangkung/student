@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_4203Mapper">
+
+	<!-- 금리분석 조회  -->
+	<select id="selectTr4203List" parameterType="java.util.Map" resultType="java.util.HashMap">	
+		SELECT 
+		    A.BASE_DATE, SUBSTR(A.BASE_DATE, 1,6) AS BASE_YM, SUBSTR(BASE_DATE, 1,4)||'년'||SUBSTR(BASE_DATE,5,2)||'월' AS BASE_YM_NM
+		    , A.ALM_BASE_RATE_C, A.ALM_BASE_RATE_TRM_CNT
+		    , A.ALM_BASE_RATE_C || '_' || A.ALM_BASE_RATE_TRM_CNT AS ALM_BASE_RATE_C_TRM_CNT
+		    , B.ALM_BASE_RATE_NM, B.ALM_REP_RATE_YN
+		    , A.RATE_TOT_TC
+		    , C.DTL_CLAS_NM AS RATE_TOT_NM
+		    , A.CRCF_VAL
+		    , A.RGCF_VAL
+		    , A.ITCT_VAL
+		    , A.AVG_VAL
+		    , A.SPRD_VAL
+		    , A.SPRD_C
+		    , A.SPRD_TRM_CNT
+		    , A.SPRD_C || '_' || A.SPRD_TRM_CNT AS SPRD_C_TRM_CNT
+		    , A.SELF_RGCF_VAL
+		    , A.SELF_ITCT_VAL
+		FROM TST_RATE_STTS_IDX A
+		JOIN TSY_ALM_BASE_RATE_MNG B ON B.ALM_BASE_RATE_C = A.ALM_BASE_RATE_C AND B.ALM_BASE_RATE_TRM_CNT = A.ALM_BASE_RATE_TRM_CNT AND B.USE_YN = 'Y'
+		JOIN TSY_CO_MNG C ON C.CO_C = 'RATE_TOT_TC' AND C.DTL_CLAS_VAL = A.RATE_TOT_TC
+		WHERE A.BASE_DATE = #{sch_base_date} 
+		AND (A.BR_C = #{sch_br_c} OR A.ALM_BASE_RATE_C LIKE '11%') 
+		ORDER BY
+            CASE WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '12' THEN 1  -- 여신금리
+                 WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '13' THEN 2  -- 수신금리
+                 WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '21' THEN 3  -- 상품금리
+                 WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '22' THEN 4  -- 수익률
+                 WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '23' THEN 5  -- 유가증권
+                 WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '11' THEN 6  -- 시장금리
+                 WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '00' THEN 7 
+            END
+            , A.ALM_BASE_RATE_C, A.ALM_BASE_RATE_TRM_CNT, A.RATE_TOT_TC
+	</select>
+	
+	<select id="selectTr4203SchCbList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT 
+			TO_CHAR(TO_DATE(MAX(BASE_DATE), 'YYYYMMDD'), 'YYYY-MM') AS BASE_DATE 
+		FROM TST_RATE_STTS_IDX
+	</select>
+	
+	<select id="selectTr4203SchInfoList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT 
+			ALM_BASE_RATE_C || '_' || ALM_BASE_RATE_TRM_CNT AS ALM_BASE_RATE_C_TRM_CNT
+			, ALM_BASE_RATE_NM
+			, '36' AS RSLT_CNT /*실적기간*/
+			, '36' AS PEST_CNT /*예측기간*/
+		FROM TSY_ALM_BASE_RATE_MNG
+		WHERE ALM_REP_RATE_YN = 'Y'
+		AND USE_YN = 'Y'
+	</select>
+
+</mapper>
+
+
+
+
+
+

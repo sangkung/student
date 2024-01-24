@@ -1,0 +1,469 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_5103Mapper">
+
+    <!-- 자금량 시나리오 코드 조회 -->
+    <select id="selectCapQtySnroNo" parameterType="java.lang.String" resultType="java.util.LinkedHashMap">
+    SELECT SNRO_NO     AS CODE
+         , SNRO_NM     AS TEXT
+         , ORG_CLAS_C  AS ORG_CLAS_C
+      FROM TSY_SNRO_SET_MNG
+     WHERE SNRO_KIND_C  = '02'
+       AND USE_YN = 'Y'
+    </select>
+    
+    <!-- 금리 시나리오 코드 조회 -->
+    <select id="selectSnroSetMng" parameterType="java.lang.String" resultType="java.util.LinkedHashMap">
+	SELECT ORG_CLAS_C   AS ORG_CLAS_C
+	     , SNRO_NO      AS  CODE
+	     , SNRO_NM      AS  TEXT
+	FROM TSY_SNRO_SET_MNG 
+	WHERE SNRO_KIND_C = '01' 
+	AND SNRO_NO IN ('1','2','3','4','5','12')
+	AND USE_YN = 'Y'
+	ORDER BY ORG_CLAS_C,TO_NUMBER(SNRO_NO)
+    </select>
+    
+	<!-- 미래Cashflow보고서 조회  -->
+	<select id="selectMainList" parameterType="java.util.Map" resultType="java.util.HashMap">
+WITH TEMP AS
+(
+SELECT ORG_CLAS_C                   AS ORG_CLAS_C
+     , AC_BUSI_TC                   AS AC_BUSI_TC
+     , ACCT_C                       AS ACCT_C
+     , SUM(S0_RMBR_PAY_PRIN_AMT   ) AS S0_RMBR_PAY_PRIN_AMT
+     , SUM(S1_RMBR_PAY_PRIN_AMT   ) AS S1_RMBR_PAY_PRIN_AMT
+     , SUM(S2_RMBR_PAY_PRIN_AMT   ) AS S2_RMBR_PAY_PRIN_AMT
+     , SUM(S3_RMBR_PAY_PRIN_AMT   ) AS S3_RMBR_PAY_PRIN_AMT
+     , SUM(S4_RMBR_PAY_PRIN_AMT   ) AS S4_RMBR_PAY_PRIN_AMT
+     , SUM(S5_RMBR_PAY_PRIN_AMT   ) AS S5_RMBR_PAY_PRIN_AMT
+     , SUM(S6_RMBR_PAY_PRIN_AMT   ) AS S6_RMBR_PAY_PRIN_AMT
+     , SUM(S7_RMBR_PAY_PRIN_AMT   ) AS S7_RMBR_PAY_PRIN_AMT
+     , SUM(S8_RMBR_PAY_PRIN_AMT   ) AS S8_RMBR_PAY_PRIN_AMT
+     , SUM(S0_RMBR_PAY_INT_AMT    ) AS S0_RMBR_PAY_INT_AMT
+     , SUM(S1_RMBR_PAY_INT_AMT    ) AS S1_RMBR_PAY_INT_AMT
+     , SUM(S2_RMBR_PAY_INT_AMT    ) AS S2_RMBR_PAY_INT_AMT
+     , SUM(S3_RMBR_PAY_INT_AMT    ) AS S3_RMBR_PAY_INT_AMT
+     , SUM(S4_RMBR_PAY_INT_AMT    ) AS S4_RMBR_PAY_INT_AMT
+     , SUM(S5_RMBR_PAY_INT_AMT    ) AS S5_RMBR_PAY_INT_AMT
+     , SUM(S6_RMBR_PAY_INT_AMT    ) AS S6_RMBR_PAY_INT_AMT
+     , SUM(S7_RMBR_PAY_INT_AMT    ) AS S7_RMBR_PAY_INT_AMT
+     , SUM(S8_RMBR_PAY_INT_AMT    ) AS S8_RMBR_PAY_INT_AMT
+     , SUM(S0_NEW_AMT             ) AS S0_NEW_AMT
+     , SUM(S1_NEW_AMT             ) AS S1_NEW_AMT
+     , SUM(S2_NEW_AMT             ) AS S2_NEW_AMT
+     , SUM(S3_NEW_AMT             ) AS S3_NEW_AMT
+     , SUM(S4_NEW_AMT             ) AS S4_NEW_AMT
+     , SUM(S5_NEW_AMT             ) AS S5_NEW_AMT
+     , SUM(S6_NEW_AMT             ) AS S6_NEW_AMT
+     , SUM(S7_NEW_AMT             ) AS S7_NEW_AMT
+     , SUM(S8_NEW_AMT             ) AS S8_NEW_AMT
+     , DIMS_CDNM1                   AS DIMS_CDNM1
+     , DIMS_C1                      AS DIMS_C1
+     , DIMS_CDNM2                   AS DIMS_CDNM2
+     , DIMS_C2                      AS DIMS_C2
+  FROM (
+        SELECT ORG_CLAS_C
+			<if test='sch_ac_busi_tc == "0000"'>
+             , '1105' AS AC_BUSI_TC
+			</if>
+			<if test='sch_ac_busi_tc != "0000"'>
+             , AC_BUSI_TC
+			</if>
+             , ACCT_C
+             /* 상환금액 */
+             , CASE WHEN MTRT_SECT_SEQ = 1                                                   AND ASTS_SDTP_CLAS_C = '10' THEN RMBR_PAY_PRIN_AMT ELSE 0 END AS S0_RMBR_PAY_PRIN_AMT /*상환지급원금금액*/
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 2  AND MTRT_SECT_SEQ <![CDATA[<=]]> 3  AND ASTS_SDTP_CLAS_C = '10' THEN RMBR_PAY_PRIN_AMT ELSE 0 END AS S1_RMBR_PAY_PRIN_AMT
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 4  AND MTRT_SECT_SEQ <![CDATA[<=]]> 6  AND ASTS_SDTP_CLAS_C = '10' THEN RMBR_PAY_PRIN_AMT ELSE 0 END AS S2_RMBR_PAY_PRIN_AMT
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 7  AND MTRT_SECT_SEQ <![CDATA[<=]]> 12 AND ASTS_SDTP_CLAS_C = '10' THEN RMBR_PAY_PRIN_AMT ELSE 0 END AS S3_RMBR_PAY_PRIN_AMT
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 13 AND MTRT_SECT_SEQ <![CDATA[<=]]> 18 AND ASTS_SDTP_CLAS_C = '10' THEN RMBR_PAY_PRIN_AMT ELSE 0 END AS S4_RMBR_PAY_PRIN_AMT
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 19 AND MTRT_SECT_SEQ <![CDATA[<=]]> 24 AND ASTS_SDTP_CLAS_C = '10' THEN RMBR_PAY_PRIN_AMT ELSE 0 END AS S5_RMBR_PAY_PRIN_AMT
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 25 AND MTRT_SECT_SEQ <![CDATA[<=]]> 26 AND ASTS_SDTP_CLAS_C = '10' THEN RMBR_PAY_PRIN_AMT ELSE 0 END AS S6_RMBR_PAY_PRIN_AMT
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 27 AND MTRT_SECT_SEQ <![CDATA[<=]]> 28 AND ASTS_SDTP_CLAS_C = '10' THEN RMBR_PAY_PRIN_AMT ELSE 0 END AS S7_RMBR_PAY_PRIN_AMT
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 29                                     AND ASTS_SDTP_CLAS_C = '10' THEN RMBR_PAY_PRIN_AMT ELSE 0 END AS S8_RMBR_PAY_PRIN_AMT
+             /* 이자금액 */
+             , CASE WHEN MTRT_SECT_SEQ = 1                                                   AND ASTS_SDTP_CLAS_C = '10' THEN RMBR_PAY_INT_AMT  ELSE 0 END AS S0_RMBR_PAY_INT_AMT /*상환지급이자금액*/
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 2  AND MTRT_SECT_SEQ <![CDATA[<=]]> 3  AND ASTS_SDTP_CLAS_C = '10' THEN RMBR_PAY_INT_AMT  ELSE 0 END AS S1_RMBR_PAY_INT_AMT
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 4  AND MTRT_SECT_SEQ <![CDATA[<=]]> 6  AND ASTS_SDTP_CLAS_C = '10' THEN RMBR_PAY_INT_AMT  ELSE 0 END AS S2_RMBR_PAY_INT_AMT
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 7  AND MTRT_SECT_SEQ <![CDATA[<=]]> 12 AND ASTS_SDTP_CLAS_C = '10' THEN RMBR_PAY_INT_AMT  ELSE 0 END AS S3_RMBR_PAY_INT_AMT
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 13 AND MTRT_SECT_SEQ <![CDATA[<=]]> 18 AND ASTS_SDTP_CLAS_C = '10' THEN RMBR_PAY_INT_AMT  ELSE 0 END AS S4_RMBR_PAY_INT_AMT
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 19 AND MTRT_SECT_SEQ <![CDATA[<=]]> 24 AND ASTS_SDTP_CLAS_C = '10' THEN RMBR_PAY_INT_AMT  ELSE 0 END AS S5_RMBR_PAY_INT_AMT
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 25 AND MTRT_SECT_SEQ <![CDATA[<=]]> 26 AND ASTS_SDTP_CLAS_C = '10' THEN RMBR_PAY_INT_AMT  ELSE 0 END AS S6_RMBR_PAY_INT_AMT
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 27 AND MTRT_SECT_SEQ <![CDATA[<=]]> 28 AND ASTS_SDTP_CLAS_C = '10' THEN RMBR_PAY_INT_AMT  ELSE 0 END AS S7_RMBR_PAY_INT_AMT
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 29                                     AND ASTS_SDTP_CLAS_C = '10' THEN RMBR_PAY_INT_AMT  ELSE 0 END AS S8_RMBR_PAY_INT_AMT
+             /* 신규금액 */
+             , CASE WHEN MTRT_SECT_SEQ = 1                                                   AND ASTS_SDTP_CLAS_C = '10' THEN NEW_AMT           ELSE 0 END AS S0_NEW_AMT /*신규금액*/
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 2  AND MTRT_SECT_SEQ <![CDATA[<=]]> 3  AND ASTS_SDTP_CLAS_C = '10' THEN NEW_AMT           ELSE 0 END AS S1_NEW_AMT
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 4  AND MTRT_SECT_SEQ <![CDATA[<=]]> 6  AND ASTS_SDTP_CLAS_C = '10' THEN NEW_AMT           ELSE 0 END AS S2_NEW_AMT
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 7  AND MTRT_SECT_SEQ <![CDATA[<=]]> 12 AND ASTS_SDTP_CLAS_C = '10' THEN NEW_AMT           ELSE 0 END AS S3_NEW_AMT
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 13 AND MTRT_SECT_SEQ <![CDATA[<=]]> 18 AND ASTS_SDTP_CLAS_C = '10' THEN NEW_AMT           ELSE 0 END AS S4_NEW_AMT
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 19 AND MTRT_SECT_SEQ <![CDATA[<=]]> 24 AND ASTS_SDTP_CLAS_C = '10' THEN NEW_AMT           ELSE 0 END AS S5_NEW_AMT
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 25 AND MTRT_SECT_SEQ <![CDATA[<=]]> 26 AND ASTS_SDTP_CLAS_C = '10' THEN NEW_AMT           ELSE 0 END AS S6_NEW_AMT
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 27 AND MTRT_SECT_SEQ <![CDATA[<=]]> 28 AND ASTS_SDTP_CLAS_C = '10' THEN NEW_AMT           ELSE 0 END AS S7_NEW_AMT
+             , CASE WHEN MTRT_SECT_SEQ <![CDATA[>=]]> 29                                     AND ASTS_SDTP_CLAS_C = '10' THEN NEW_AMT           ELSE 0 END AS S8_NEW_AMT
+        <if test="sch_dims_item_no != '' and sch_dims_item_no != null">
+             , B.DIMS_CDNM     AS DIMS_CDNM1
+             , (
+                CASE WHEN #{sch_dims_item_no} = '1' THEN TO_CHAR(FIX_VAR_TC)
+                     WHEN #{sch_dims_item_no} = '2' THEN TO_CHAR(RATE_VAR_CYCL)
+                     WHEN #{sch_dims_item_no} = '3' THEN TO_CHAR(ALM_BASE_RATE_C)
+                     WHEN #{sch_dims_item_no} = '4' THEN TO_CHAR(PRIN_RMBR_METH_C)
+                     WHEN #{sch_dims_item_no} = '5' THEN TO_CHAR(CONT_TRM_SECT_C)
+                     WHEN #{sch_dims_item_no} = '6' THEN TO_CHAR(ALM_MRTG_TC)
+                     WHEN #{sch_dims_item_no} = '7' THEN TO_CHAR(LN_DP_GD_C)
+                 END
+               )               AS DIMS_C1
+        </if>
+        <if test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null">
+             , C.DIMS_CDNM     AS DIMS_CDNM2
+             , (
+                CASE WHEN #{sch_dims_item_no2} = '1' THEN TO_CHAR(FIX_VAR_TC)
+                     WHEN #{sch_dims_item_no2} = '2' THEN TO_CHAR(RATE_VAR_CYCL)
+                     WHEN #{sch_dims_item_no2} = '3' THEN TO_CHAR(ALM_BASE_RATE_C)
+                     WHEN #{sch_dims_item_no2} = '4' THEN TO_CHAR(PRIN_RMBR_METH_C)
+                     WHEN #{sch_dims_item_no2} = '5' THEN TO_CHAR(CONT_TRM_SECT_C)
+                     WHEN #{sch_dims_item_no2} = '6' THEN TO_CHAR(ALM_MRTG_TC)
+                     WHEN #{sch_dims_item_no2} = '7' THEN TO_CHAR(LN_DP_GD_C)
+                 END
+               )               AS DIMS_C2
+        </if>
+        <if test="sch_dims_item_no == '' or sch_dims_item_no == null">
+             , ''  AS DIMS_CDNM1
+             , '0' AS DIMS_C1
+        </if>
+        <if test="sch_dims_item_no2 == '' or sch_dims_item_no2 == null">
+             , ''  AS DIMS_CDNM2
+             , '0' AS DIMS_C2
+        </if>
+        
+        <choose>
+			<when test='sch_br_c != "ALL"'>
+				<choose>
+					<when test="sch_br_c != '001' and (sch_blng_hq_br_c == '' or sch_blng_hq_br_c == null)">
+						FROM TRT_LQDT_GAP_SUM /*도지회별합산*/
+					</when>	
+					<otherwise>
+						FROM TRT_LQDT_GAP_TOT
+					</otherwise>
+				</choose>
+			</when>
+			<otherwise>
+				FROM TRT_LQDT_GAP_SUM /*전체조합*/
+			</otherwise>
+		</choose>
+          
+          
+          
+          <if test="sch_dims_item_no != '' and sch_dims_item_no != null">
+             , (
+                SELECT *
+                  FROM TSY_DIMS_ITEM_MNG
+                 WHERE DIMS_ITEM_NO = #{sch_dims_item_no}   
+               ) B
+         </if>
+        <if test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null">
+             , (
+                SELECT *
+                  FROM TSY_DIMS_ITEM_MNG
+                 WHERE DIMS_ITEM_NO = #{sch_dims_item_no2}   
+               ) C
+        </if>
+         WHERE BASE_DATE       = #{sch_base_date}  /*기준일자     */
+		   AND ALM_WORK_TC     = 'M'
+		   AND ORG_CLAS_C      = #{sch_org_clas_c} /*기관분류코드 */
+		   AND CS_BHOR_REFL_YN = #{sch_cs_bhor}    /*고객행동     */
+		   AND RATE_SNRO_NO    = #{sch_rate_snro}  /*금리시나리오 */
+		   AND NEW_CAP_QTY_TC  = #{sch_new_capq}   /*신규자금량구분코드*/
+		   AND FUTU_POT_SECT_CNT = 0               /*미래시점구간수*/
+		<if test='sch_new_capq == "1"'>
+           AND CAP_QTY_SNRO_NO = #{sch_cap_qty_snro}        /*자금량시나리오번호-신규자금량 포함일때 */
+		</if>
+		<choose>
+			<when test="sch_ac_busi_tc == '0000'">
+			AND AC_BUSI_TC IN ('1105', '1106', '1107') /*회계구분*/
+			</when>
+			<otherwise>
+			AND AC_BUSI_TC = #{sch_ac_busi_tc} /*회계구분*/
+			</otherwise>
+		</choose>
+		<if test='sch_br_c == "ALL"'>
+<!-- 			AND BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BR_TC = '03') /*전체조합*/ -->
+			AND BR_C = 'ALL'
+		</if>
+		<if test="sch_br_c != 'ALL'">
+			<if test="sch_br_c == '001'">
+			AND BR_C = '001' /*중앙회*/
+			</if>
+			<if test="sch_br_c != '001' and (sch_blng_hq_br_c == '' or sch_blng_hq_br_c == null)">
+<!-- 			AND BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{sch_br_c}) /*도지회별합산*/ -->
+				AND BR_C = #{sch_br_c}
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'Y'.toString()">
+			AND BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{sch_br_c}) /*단위조합별조회(지소포함)*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'N'.toString()">
+			AND BR_C = #{sch_br_c}
+			</if>
+		</if>
+		<if test="sch_dims_item_no != '' and sch_dims_item_no != null">
+           AND (
+                CASE WHEN #{sch_dims_item_no} = '1' THEN TO_CHAR(FIX_VAR_TC)
+                     WHEN #{sch_dims_item_no} = '2' THEN TO_CHAR(RATE_VAR_CYCL)
+                     WHEN #{sch_dims_item_no} = '3' THEN TO_CHAR(ALM_BASE_RATE_C)
+                     WHEN #{sch_dims_item_no} = '4' THEN TO_CHAR(PRIN_RMBR_METH_C)
+                     WHEN #{sch_dims_item_no} = '5' THEN TO_CHAR(CONT_TRM_SECT_C)
+                     WHEN #{sch_dims_item_no} = '6' THEN TO_CHAR(ALM_MRTG_TC)
+                     WHEN #{sch_dims_item_no} = '7' THEN TO_CHAR(LN_DP_GD_C)
+                 END
+               ) = B.DIMS_C_VAL
+		</if>
+		<if test="sch_dims_item_no2 != '' and sch_dims_item_no2 != null">
+           AND (
+                CASE WHEN #{sch_dims_item_no2} = '1' THEN TO_CHAR(FIX_VAR_TC)
+                     WHEN #{sch_dims_item_no2} = '2' THEN TO_CHAR(RATE_VAR_CYCL)
+                     WHEN #{sch_dims_item_no2} = '3' THEN TO_CHAR(ALM_BASE_RATE_C)
+                     WHEN #{sch_dims_item_no2} = '4' THEN TO_CHAR(PRIN_RMBR_METH_C)
+                     WHEN #{sch_dims_item_no2} = '5' THEN TO_CHAR(CONT_TRM_SECT_C)
+                     WHEN #{sch_dims_item_no2} = '6' THEN TO_CHAR(ALM_MRTG_TC)
+                     WHEN #{sch_dims_item_no2} = '7' THEN TO_CHAR(LN_DP_GD_C)
+                 END
+               ) = C.DIMS_C_VAL
+		</if>
+		
+        )
+  GROUP BY ORG_CLAS_C
+         , AC_BUSI_TC
+         , ACCT_C
+         , DIMS_CDNM1
+         , DIMS_C1
+         , DIMS_CDNM2
+         , DIMS_C2
+)
+SELECT LVL1
+       <if test="sch_acc_tc_lvl == 2">
+     , LVL2
+       </if>
+       <if test="sch_acc_tc_lvl == 3">
+     , LVL2
+	 , LVL3
+       </if>
+       <if test="sch_acc_tc_lvl == 4">
+     , LVL2
+	 , LVL3
+	 , LVL4
+       </if>
+       <if test="sch_acc_tc_lvl == 5">
+     , LVL2
+	 , LVL3
+	 , LVL4
+	 , LVL5
+       </if>
+       <if test="sch_acc_tc_lvl == 6">
+     , LVL2
+	 , LVL3
+	 , LVL4
+	 , LVL5
+	 , LVL6
+       </if>
+       <if test="sch_acc_tc_lvl == 7">
+     , LVL2
+	 , LVL3
+	 , LVL4
+	 , LVL5
+	 , LVL6
+	 , LVL7
+	   </if>
+     , DIMS_CDNM1
+	 , DIMS_CDNM2
+     , KIND_C
+     , ROUND(SUM(AMT_0)/ TO_NUMBER(#{sch_amt_unit}), 0)    AS AMT_0
+     , ROUND(SUM(AMT_1)/ TO_NUMBER(#{sch_amt_unit}), 0)    AS AMT_1
+     , ROUND(SUM(AMT_2)/ TO_NUMBER(#{sch_amt_unit}), 0)    AS AMT_2
+     , ROUND(SUM(AMT_3)/ TO_NUMBER(#{sch_amt_unit}), 0)    AS AMT_3
+     , ROUND(SUM(AMT_4)/ TO_NUMBER(#{sch_amt_unit}), 0)    AS AMT_4
+     , ROUND(SUM(AMT_5)/ TO_NUMBER(#{sch_amt_unit}), 0)    AS AMT_5
+     , ROUND(SUM(AMT_6)/ TO_NUMBER(#{sch_amt_unit}), 0)    AS AMT_6
+     , ROUND(SUM(AMT_7)/ TO_NUMBER(#{sch_amt_unit}), 0)    AS AMT_7
+     , ROUND(SUM(AMT_8)/ TO_NUMBER(#{sch_amt_unit}), 0)    AS AMT_8
+     , MAX(PRNT_ORD)                                       AS PRNT_ORD
+  FROM (
+        SELECT B.LVL1
+             , B.LVL2
+             , B.LVL3
+             , B.LVL4
+             , B.LVL5
+             , B.LVL6
+             , B.LVL7
+             , B.ACCT_C_NM
+             , A.DIMS_CDNM1
+             , A.DIMS_C1
+             , A.DIMS_CDNM2
+             , A.DIMS_C2
+             , A.KIND_C
+             , SUM(A.AMT_0) AS AMT_0
+             , SUM(A.AMT_1) AS AMT_1
+             , SUM(A.AMT_2) AS AMT_2
+             , SUM(A.AMT_3) AS AMT_3
+             , SUM(A.AMT_4) AS AMT_4
+             , SUM(A.AMT_5) AS AMT_5
+             , SUM(A.AMT_6) AS AMT_6
+             , SUM(A.AMT_7) AS AMT_7
+             , SUM(A.AMT_8) AS AMT_8
+             , MAX(B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||B.PRNT_ORD4||B.PRNT_ORD5||B.PRNT_ORD6||B.PRNT_ORD7)  AS PRNT_ORD
+          FROM (
+                SELECT ORG_CLAS_C                                                 AS ORG_CLAS_C
+                     , AC_BUSI_TC                                                 AS AC_BUSI_TC
+                     , ACCT_C                                                     AS ACCT_C
+                     , DIMS_CDNM1                                                 AS DIMS_CDNM1
+                     , DIMS_C1                                                    AS DIMS_C1
+                     , DIMS_CDNM2                                                 AS DIMS_CDNM2
+                     , DIMS_C2                                                    AS DIMS_C2
+                     , 'Cash In'                                                  AS KIND_C
+                     , NVL(S0_RMBR_PAY_PRIN_AMT, 0) + NVL(S0_RMBR_PAY_INT_AMT, 0) AS AMT_0
+                     , NVL(S1_RMBR_PAY_PRIN_AMT, 0) + NVL(S1_RMBR_PAY_INT_AMT, 0) AS AMT_1
+                     , NVL(S2_RMBR_PAY_PRIN_AMT, 0) + NVL(S2_RMBR_PAY_INT_AMT, 0) AS AMT_2
+                     , NVL(S3_RMBR_PAY_PRIN_AMT, 0) + NVL(S3_RMBR_PAY_INT_AMT, 0) AS AMT_3
+                     , NVL(S4_RMBR_PAY_PRIN_AMT, 0) + NVL(S4_RMBR_PAY_INT_AMT, 0) AS AMT_4
+                     , NVL(S5_RMBR_PAY_PRIN_AMT, 0) + NVL(S5_RMBR_PAY_INT_AMT, 0) AS AMT_5
+                     , NVL(S6_RMBR_PAY_PRIN_AMT, 0) + NVL(S6_RMBR_PAY_INT_AMT, 0) AS AMT_6
+                     , NVL(S7_RMBR_PAY_PRIN_AMT, 0) + NVL(S7_RMBR_PAY_INT_AMT, 0) AS AMT_7
+                     , NVL(S8_RMBR_PAY_PRIN_AMT, 0) + NVL(S8_RMBR_PAY_INT_AMT, 0) AS AMT_8
+                  FROM TEMP
+                 WHERE ACCT_C LIKE '1%' /*자산 Cash In*/
+                 UNION ALL
+                SELECT ORG_CLAS_C                                                 AS ORG_CLAS_C
+                     , AC_BUSI_TC                                                 AS AC_BUSI_TC
+                     , ACCT_C                                                     AS ACCT_C
+                     , DIMS_CDNM1                                                 AS DIMS_CDNM1
+                     , DIMS_C1                                                    AS DIMS_C1
+                     , DIMS_CDNM2                                                 AS DIMS_CDNM2
+                     , DIMS_C2                                                    AS DIMS_C2
+                     , 'Cash Out'                                                 AS KIND_C
+                     , NVL(S0_NEW_AMT, 0)                                         AS AMT_0
+                     , NVL(S1_NEW_AMT, 0)                                         AS AMT_1
+                     , NVL(S2_NEW_AMT, 0)                                         AS AMT_2
+                     , NVL(S3_NEW_AMT, 0)                                         AS AMT_3
+                     , NVL(S4_NEW_AMT, 0)                                         AS AMT_4
+                     , NVL(S5_NEW_AMT, 0)                                         AS AMT_5
+                     , NVL(S6_NEW_AMT, 0)                                         AS AMT_6
+                     , NVL(S7_NEW_AMT, 0)                                         AS AMT_7
+                     , NVL(S8_NEW_AMT, 0)                                         AS AMT_8
+                  FROM TEMP
+                 WHERE ACCT_C LIKE '1%' /*자산 Cash Out*/
+                 UNION ALL
+                SELECT ORG_CLAS_C                                                 AS ORG_CLAS_C
+                     , AC_BUSI_TC                                                 AS AC_BUSI_TC
+                     , ACCT_C                                                     AS ACCT_C
+                     , DIMS_CDNM1                                                 AS DIMS_CDNM1
+                     , DIMS_C1                                                    AS DIMS_C1
+                     , DIMS_CDNM2                                                 AS DIMS_CDNM2
+                     , DIMS_C2                                                    AS DIMS_C2
+                     , 'Cash In'                                                  AS KIND_C
+                     , NVL(S0_NEW_AMT, 0)                                         AS AMT_0
+                     , NVL(S1_NEW_AMT, 0)                                         AS AMT_1
+                     , NVL(S2_NEW_AMT, 0)                                         AS AMT_2
+                     , NVL(S3_NEW_AMT, 0)                                         AS AMT_3
+                     , NVL(S4_NEW_AMT, 0)                                         AS AMT_4
+                     , NVL(S5_NEW_AMT, 0)                                         AS AMT_5
+                     , NVL(S6_NEW_AMT, 0)                                         AS AMT_6
+                     , NVL(S7_NEW_AMT, 0)                                         AS AMT_7
+                     , NVL(S8_NEW_AMT, 0)                                         AS AMT_8
+                  FROM TEMP
+                 WHERE ACCT_C LIKE '2%' /*부채 Cash In*/
+                 UNION ALL
+                SELECT ORG_CLAS_C                                                 AS ORG_CLAS_C
+                     , AC_BUSI_TC                                                 AS AC_BUSI_TC
+                     , ACCT_C                                                     AS ACCT_C
+                     , DIMS_CDNM1                                                 AS DIMS_CDNM1
+                     , DIMS_C1                                                    AS DIMS_C1
+                     , DIMS_CDNM2                                                 AS DIMS_CDNM2
+                     , DIMS_C2                                                    AS DIMS_C2
+                     , 'Cash Out'                                                 AS KIND_C
+                     , NVL(S0_RMBR_PAY_PRIN_AMT, 0) + NVL(S0_RMBR_PAY_INT_AMT, 0) AS AMT_0
+                     , NVL(S1_RMBR_PAY_PRIN_AMT, 0) + NVL(S1_RMBR_PAY_INT_AMT, 0) AS AMT_1
+                     , NVL(S2_RMBR_PAY_PRIN_AMT, 0) + NVL(S2_RMBR_PAY_INT_AMT, 0) AS AMT_2
+                     , NVL(S3_RMBR_PAY_PRIN_AMT, 0) + NVL(S3_RMBR_PAY_INT_AMT, 0) AS AMT_3
+                     , NVL(S4_RMBR_PAY_PRIN_AMT, 0) + NVL(S4_RMBR_PAY_INT_AMT, 0) AS AMT_4
+                     , NVL(S5_RMBR_PAY_PRIN_AMT, 0) + NVL(S5_RMBR_PAY_INT_AMT, 0) AS AMT_5
+                     , NVL(S6_RMBR_PAY_PRIN_AMT, 0) + NVL(S6_RMBR_PAY_INT_AMT, 0) AS AMT_6
+                     , NVL(S7_RMBR_PAY_PRIN_AMT, 0) + NVL(S7_RMBR_PAY_INT_AMT, 0) AS AMT_7
+                     , NVL(S8_RMBR_PAY_PRIN_AMT, 0) + NVL(S8_RMBR_PAY_INT_AMT, 0) AS AMT_8
+                  FROM TEMP
+                 WHERE ACCT_C LIKE '2%' /*부채 Cash Out*/
+               ) A
+          JOIN (
+                SELECT LEVEL
+                     , BASE_DATE, SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%')                                                   AS ACCT_PATH
+                     , REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 1 )                              AS LVL1
+                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 2 ),TRIM(ACCT_C_NM))         AS LVL2
+                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 3 ),TRIM(ACCT_C_NM))         AS LVL3
+                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 4 ),TRIM(ACCT_C_NM))         AS LVL4
+                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 5 ),TRIM(ACCT_C_NM))         AS LVL5
+                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 6 ),TRIM(ACCT_C_NM))         AS LVL6
+                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 7 ),TRIM(ACCT_C_NM))         AS LVL7
+                     , TRIM(ACCT_C_NM)                                                                                        AS ACCT_C_NM
+                     , BS_PL_TC                                                                                               AS BS_PL_TC
+                     , ORG_CLAS_C                                                                                             AS ORG_CLAS_C
+                     , AC_BUSI_TC                                                                                             AS AC_BUSI_TC
+                     , ACCT_C                                                                                                 AS ACCT_C
+                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 1 ),'9999') AS PRNT_ORD1
+                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 2 ),'9999') AS PRNT_ORD2
+                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 3 ),'9999') AS PRNT_ORD3
+                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 4 ),'9999') AS PRNT_ORD4
+                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 5 ),'9999') AS PRNT_ORD5
+                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 6 ),'9999') AS PRNT_ORD6
+                     , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 7 ),'9999') AS PRNT_ORD7
+			      FROM TSY_ACCT_MSTR_MNG
+			     WHERE BASE_DATE = (SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE &lt;= #{sch_base_date})
+				<choose>
+					<when test="sch_ac_busi_tc == '0000'">
+							AND AC_BUSI_TC = '1105' /*회계구분*/
+							START WITH UP_ACCT_C = '0000000'
+							CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+						) B ON B.ACCT_C = A.ACCT_C AND B.ORG_CLAS_C = A.ORG_CLAS_C
+					</when>
+					<otherwise>
+							AND AC_BUSI_TC = #{sch_ac_busi_tc} /*회계구분*/
+							START WITH UP_ACCT_C = '0000000'
+							CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+						) B ON B.ACCT_C = A.ACCT_C AND B.ORG_CLAS_C = A.ORG_CLAS_C AND B.AC_BUSI_TC = A.AC_BUSI_TC
+					</otherwise>
+				</choose>
+        GROUP BY B.LVL1, B.ACCT_C
+               , B.LVL2
+               , B.LVL3
+               , B.LVL4
+               , B.LVL5
+               , B.LVL6
+               , B.LVL7
+               , B.ACCT_C_NM
+               , A.DIMS_CDNM1
+               , A.DIMS_C1
+               , A.DIMS_CDNM2
+               , A.DIMS_C2
+               , A.KIND_C
+    )
+GROUP BY LVL1
+         <if test="sch_acc_tc_lvl == 2">
+       , LVL2
+         </if>
+         <if test="sch_acc_tc_lvl == 3">
+       , LVL2, lvl3
+         </if>
+         <if test="sch_acc_tc_lvl == 4">
+       , LVL2, lvl3, lvl4
+         </if>
+         <if test="sch_acc_tc_lvl == 5">
+       , LVL2, lvl3, lvl4, lvl5
+         </if>
+         <if test="sch_acc_tc_lvl == 6">
+       , LVL2, lvl3, lvl4, lvl5, lvl6
+         </if>
+         <if test="sch_acc_tc_lvl == 7">
+       , LVL2, lvl3, lvl4, lvl5, lvl6, lvl7
+         </if>
+       , DIMS_CDNM1, DIMS_CDNM2, KIND_C
+ORDER BY PRNT_ORD, KIND_C
+	</select>
+
+</mapper>

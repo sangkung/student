@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_3107Mapper">
+
+	<!-- 전체조합 유동성비율 조회  -->
+	<select id="selectTotAscnLqdtRtoList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT
+		    C.UP_BR_C
+		    , C.UP_BR_NM
+		    , C.BR_C
+		    , C.BR_NM
+		    , ROUND(ASTS1/${sch_amt_unit}, 0) AS ASTS1
+		    , ROUND(ASTS2/${sch_amt_unit}, 0) AS ASTS2
+		    , ROUND(ASTS3/${sch_amt_unit}, 0) AS ASTS3
+		    , ROUND(ASTS4/${sch_amt_unit}, 0) AS ASTS4
+		    , ROUND(ASTS5/${sch_amt_unit}, 0) AS ASTS5
+		    , ROUND(ASTS6/${sch_amt_unit}, 0) AS ASTS6
+		    , ROUND(ASTS7/${sch_amt_unit}, 0) AS ASTS7
+		    , ROUND(ASTS8/${sch_amt_unit}, 0) AS ASTS8
+		    , ROUND(ASTS9/${sch_amt_unit}, 0) AS ASTS9
+		    , ROUND(ASTS10/${sch_amt_unit}, 0) AS ASTS10
+		    , ROUND(ASTS11/${sch_amt_unit}, 0) AS ASTS11
+		    , ROUND(ASTS12/${sch_amt_unit}, 0) AS ASTS12
+		    , ROUND(ASTS13/${sch_amt_unit}, 0) AS ASTS13
+		    , ROUND(ASTS14/${sch_amt_unit}, 0) AS ASTS14
+		    , ROUND(ASTS15/${sch_amt_unit}, 0) AS ASTS15
+		    , ROUND(ASTS16/${sch_amt_unit}, 0) AS ASTS16
+		    , ROUND(ASTS17/${sch_amt_unit}, 0) AS ASTS17
+		    , ROUND(ASTS18/${sch_amt_unit}, 0) AS ASTS18
+		    , ROUND(ASTS19/${sch_amt_unit}, 0) AS ASTS19
+		    , ROUND(ASTS20/${sch_amt_unit}, 0) AS ASTS20
+		    , ROUND(ASTS21/${sch_amt_unit}, 0) AS ASTS21
+		    , ROUND(ASTS22/${sch_amt_unit}, 0) AS ASTS22
+		    , ROUND(ASTS23/${sch_amt_unit}, 0) AS ASTS23
+		    , ROUND(ASTS24/${sch_amt_unit}, 0) AS ASTS24
+		    , ROUND(ASTS25/${sch_amt_unit}, 0) AS ASTS25
+		    , ROUND(ASTS26/${sch_amt_unit}, 0) AS ASTS26
+		    , ROUND(ASTS27/${sch_amt_unit}, 0) AS ASTS27
+		    , ROUND(ASTS28/${sch_amt_unit}, 0) AS ASTS28
+		    , ROUND(ASTS29/${sch_amt_unit}, 0) AS ASTS29
+		    , ROUND(ASTS30/${sch_amt_unit}, 0) AS ASTS30
+		    , ROUND(ASTS31/${sch_amt_unit}, 0) AS ASTS31
+		    , ROUND(ASTS32/${sch_amt_unit}, 0) AS ASTS32
+		    , ROUND(ASTS33/${sch_amt_unit}, 0) AS ASTS33
+		    , ROUND(ASTS34/${sch_amt_unit}, 0) AS ASTS34
+		    , ROUND(ASTS35/${sch_amt_unit}, 0) AS ASTS35
+		
+		
+		    , ROUND(DEBT1/${sch_amt_unit}, 0) AS DEBT1
+		    , ROUND(DEBT2/${sch_amt_unit}, 0) AS DEBT2
+		    , ROUND(DEBT3/${sch_amt_unit}, 0) AS DEBT3
+		    , ROUND(DEBT4/${sch_amt_unit}, 0) AS DEBT4
+		    , ROUND(DEBT5/${sch_amt_unit}, 0) AS DEBT5
+		    , ROUND(DEBT6/${sch_amt_unit}, 0) AS DEBT6
+		    , ROUND(DEBT7/${sch_amt_unit}, 0) AS DEBT7
+		    , ROUND(DEBT8/${sch_amt_unit}, 0) AS DEBT8
+		    , ROUND(DEBT9/${sch_amt_unit}, 0) AS DEBT9
+		    , ROUND(DEBT10/${sch_amt_unit}, 0) AS DEBT10
+		    , ROUND(DEBT11/${sch_amt_unit}, 0) AS DEBT11
+		    , ROUND(DEBT12/${sch_amt_unit}, 0) AS DEBT12
+		    , ROUND(DEBT13/${sch_amt_unit}, 0) AS DEBT13
+		    , ROUND(DEBT14/${sch_amt_unit}, 0) AS DEBT14
+		    , ROUND(DEBT15/${sch_amt_unit}, 0) AS DEBT15
+		    , ROUND(DEBT16/${sch_amt_unit}, 0) AS DEBT16
+		    , ROUND(DEBT17/${sch_amt_unit}, 0) AS DEBT17
+		    , ROUND(DEBT18/${sch_amt_unit}, 0) AS DEBT18
+		    , ROUND(DEBT19/${sch_amt_unit}, 0) AS DEBT19
+		    , ROUND(DEBT20/${sch_amt_unit}, 0) AS DEBT20
+		    , ROUND(DEBT21/${sch_amt_unit}, 0) AS DEBT21
+		    , ROUND(DEBT22/${sch_amt_unit}, 0) AS DEBT22
+		    , ROUND(DEBT23/${sch_amt_unit}, 0) AS DEBT23
+		    , ROUND(DEBT24/${sch_amt_unit}, 0) AS DEBT24
+		    , ROUND(DEBT25/${sch_amt_unit}, 0) AS DEBT25
+		    , ROUND(DEBT26/${sch_amt_unit}, 0) AS DEBT26
+		    , ROUND(DEBT27/${sch_amt_unit}, 0) AS DEBT27
+		    , ROUND(DEBT28/${sch_amt_unit}, 0) AS DEBT28
+		
+		
+		    , ROUND(LQDT1/${sch_amt_unit}, 0) AS LQDT1
+		    , ROUND(LQDT2/${sch_amt_unit}, 0) AS LQDT2
+		    , CASE WHEN LQDT2 != 0 THEN ROUND(100*LQDT1/LQDT2, 2) ELSE 0 END AS LQDT_RTO
+		    , ROUND( B.TOT_ASTS_AMT/${sch_amt_unit}, 0) AS TOT_ASTS_AMT
+		    , B.RGLT_RTO 
+		FROM (
+		    SELECT 
+		        A.BASE_DATE
+		        , A.BR_C
+		        , ROUND(SUM(ASTS1), 0) AS ASTS1
+		        , ROUND(SUM(ASTS2), 0) AS ASTS2
+		        , ROUND(SUM(ASTS3), 0) AS ASTS3
+		        , ROUND(SUM(ASTS4), 0) AS ASTS4
+		        , ROUND(SUM(ASTS5), 0) AS ASTS5
+		        , ROUND(SUM(ASTS6), 0) AS ASTS6
+		        , ROUND(SUM(ASTS7), 0) AS ASTS7
+		        , ROUND(SUM(ASTS8), 0) AS ASTS8
+		        , ROUND(SUM(ASTS9), 0) AS ASTS9
+		        , ROUND(SUM(ASTS10), 0) AS ASTS10
+		        , ROUND(SUM(ASTS11), 0) AS ASTS11
+		        , ROUND(SUM(ASTS12), 0) AS ASTS12
+		        , ROUND(SUM(ASTS13), 0) AS ASTS13
+		        , ROUND(SUM(ASTS14), 0) AS ASTS14
+		        , ROUND(SUM(ASTS15), 0) AS ASTS15
+		        , ROUND(SUM(ASTS16), 0) AS ASTS16
+		        , ROUND(SUM(ASTS17), 0) AS ASTS17
+		        , ROUND(SUM(ASTS18)+SUM(ASTS18_SUM), 0) AS ASTS18
+		        , ROUND(SUM(ASTS19), 0) AS ASTS19
+		        , ROUND(SUM(ASTS20), 0) AS ASTS20
+		        , ROUND(SUM(ASTS21)+SUM(ASTS18_SUM), 0) AS ASTS21
+		        , ROUND(SUM(ASTS22), 0) AS ASTS22
+		        , ROUND(SUM(ASTS23), 0) AS ASTS23
+		        , ROUND(SUM(ASTS24), 0) AS ASTS24
+		        , ROUND(SUM(ASTS25)-SUM(ASTS25_DIFF), 0) AS ASTS25
+		        , ROUND(SUM(ASTS26), 0) AS ASTS26
+		        , ROUND(SUM(ASTS27), 0) AS ASTS27
+                , ROUND(SUM(ASTS28)-SUM(ASTS25_DIFF), 0) AS ASTS28
+		        , ROUND(SUM(ASTS29), 0) AS ASTS29
+		        , ROUND(SUM(ASTS30), 0) AS ASTS30
+		        , ROUND(SUM(ASTS31), 0) AS ASTS31
+		        , ROUND(SUM(ASTS32), 0) AS ASTS32
+		        , ROUND(SUM(ASTS33), 0) AS ASTS33
+		        , ROUND(SUM(ASTS34), 0) AS ASTS34
+		        , ROUND(SUM(ASTS35), 0) AS ASTS35
+		        
+		        , ROUND(SUM(DEBT1), 0) AS DEBT1
+		        , ROUND(SUM(DEBT2), 0) AS DEBT2
+		        , ROUND(SUM(DEBT3), 0) AS DEBT3
+		        , ROUND(SUM(DEBT4), 0) AS DEBT4
+		        , ROUND(SUM(DEBT5), 0) AS DEBT5
+		        , ROUND(SUM(DEBT6), 0) AS DEBT6
+		        , ROUND(SUM(DEBT7), 0) AS DEBT7
+		        , ROUND(SUM(DEBT8), 0) AS DEBT8
+		        , ROUND(SUM(DEBT9), 0) AS DEBT9
+		        , ROUND(SUM(DEBT10), 0) AS DEBT10
+		        , ROUND(SUM(DEBT11), 0) AS DEBT11
+		        , ROUND(SUM(DEBT12), 0) AS DEBT12
+		        , ROUND(SUM(DEBT13), 0) AS DEBT13
+		        , ROUND(SUM(DEBT14), 0) AS DEBT14
+		        , ROUND(SUM(DEBT15), 0) AS DEBT15
+		        , ROUND(SUM(DEBT16), 0) AS DEBT16
+		        , ROUND(SUM(DEBT17), 0) AS DEBT17
+		        , ROUND(SUM(DEBT18), 0) AS DEBT18
+		        , ROUND(SUM(DEBT19), 0) AS DEBT19
+		        , ROUND(SUM(DEBT20), 0) AS DEBT20
+		        , ROUND(SUM(DEBT21), 0) AS DEBT21
+		        , ROUND(SUM(DEBT22), 0) AS DEBT22
+		        , ROUND(SUM(DEBT23), 0) AS DEBT23
+		        , ROUND(SUM(DEBT24), 0) AS DEBT24
+		        , ROUND(SUM(DEBT25), 0) AS DEBT25
+		        , ROUND(SUM(DEBT26), 0) AS DEBT26
+		        , ROUND(SUM(DEBT27), 0) AS DEBT27
+		        , ROUND(SUM(DEBT28), 0) AS DEBT28
+		
+		        , ROUND(SUM(LQDT1), 0) AS LQDT1
+		        , ROUND(SUM(LQDT2), 0) AS LQDT2
+		    FROM (
+		        SELECT 
+		            A.BASE_DATE
+		            , A.BR_C
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('A1', 'A2') AND MTRT_SECT_SEQ BETWEEN 1 AND 3 THEN KRW_PRIN_AMT ELSE 0 END AS ASTS1
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('A1', 'A2') AND MTRT_SECT_SEQ BETWEEN 4 AND 6 THEN KRW_PRIN_AMT ELSE 0 END AS ASTS2
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('A1', 'A2') AND MTRT_SECT_SEQ BETWEEN 7 AND 12 THEN KRW_PRIN_AMT ELSE 0 END AS ASTS3
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('A1', 'A2') AND MTRT_SECT_SEQ &gt; 12 THEN KRW_PRIN_AMT ELSE 0 END AS ASTS4
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('A1', 'A2') AND ASTS_SDTP_CLAS_C NOT IN ('10', '20') THEN KRW_PRIN_AMT ELSE 0 END AS ASTS5
+		            , '' AS ASTS6
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('A1', 'A2') THEN KRW_PRIN_AMT ELSE 0 END AS ASTS7
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'A3' AND MTRT_SECT_SEQ BETWEEN 1 AND 3 THEN KRW_PRIN_AMT ELSE 0 END AS ASTS8
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'A3' AND MTRT_SECT_SEQ BETWEEN 4 AND 6 THEN KRW_PRIN_AMT ELSE 0 END AS ASTS9
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'A3' AND MTRT_SECT_SEQ BETWEEN 7 AND 12 THEN KRW_PRIN_AMT ELSE 0 END AS ASTS10
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'A3' AND MTRT_SECT_SEQ &gt; 12 THEN KRW_PRIN_AMT ELSE 0 END AS ASTS11
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'A3' AND ASTS_SDTP_CLAS_C NOT IN ('10', '20') THEN KRW_PRIN_AMT ELSE 0 END AS ASTS12
+		            , '' AS ASTS13
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'A3' THEN KRW_PRIN_AMT ELSE 0 END AS ASTS14
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('A41', 'A42') AND ASTS_SDTP_CLAS_C IN ('10', '20') AND MTRT_SECT_SEQ BETWEEN 1 AND 3 THEN KRW_PRIN_AMT ELSE 0 END AS ASTS15
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('A41', 'A42') AND ASTS_SDTP_CLAS_C IN ('10', '20') AND MTRT_SECT_SEQ BETWEEN 4 AND 6 THEN KRW_PRIN_AMT ELSE 0 END AS ASTS16
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('A41', 'A42') AND ASTS_SDTP_CLAS_C IN ('10', '20') AND MTRT_SECT_SEQ BETWEEN 7 AND 12 THEN KRW_PRIN_AMT ELSE 0 END AS ASTS17
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('A41', 'A42') AND ASTS_SDTP_CLAS_C IN ('10', '20') AND MTRT_SECT_SEQ &gt; 12 THEN KRW_PRIN_AMT ELSE 0 END AS ASTS18
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('A41', 'A42') AND ASTS_SDTP_CLAS_C NOT IN ('10', '20') THEN KRW_PRIN_AMT ELSE 0 END AS ASTS19
+		            , '' AS ASTS20
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('A41', 'A42') THEN KRW_PRIN_AMT ELSE 0 END AS ASTS21
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'A5' AND MTRT_SECT_SEQ BETWEEN 1 AND 3 THEN KRW_PRIN_AMT ELSE 0 END AS ASTS22
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'A5' AND MTRT_SECT_SEQ BETWEEN 4 AND 6 THEN KRW_PRIN_AMT ELSE 0 END AS ASTS23
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'A5' AND MTRT_SECT_SEQ BETWEEN 7 AND 12 THEN KRW_PRIN_AMT ELSE 0 END AS ASTS24
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'A5' AND MTRT_SECT_SEQ &gt; 12 THEN KRW_PRIN_AMT ELSE 0 END AS ASTS25
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'A5' AND ASTS_SDTP_CLAS_C NOT IN ('10', '20') THEN KRW_PRIN_AMT ELSE 0 END AS ASTS26
+		            , '' AS ASTS27
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'A5' THEN KRW_PRIN_AMT ELSE 0 END AS ASTS28
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('A1', 'A2', 'A3', 'A41', 'A42', 'A5') AND ASTS_SDTP_CLAS_C IN ('10', '20') AND MTRT_SECT_SEQ BETWEEN 1 AND 3 THEN KRW_PRIN_AMT ELSE 0 END AS ASTS29
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('A1', 'A2', 'A3', 'A41', 'A42', 'A5') AND ASTS_SDTP_CLAS_C IN ('10', '20') AND MTRT_SECT_SEQ BETWEEN 4 AND 6 THEN KRW_PRIN_AMT ELSE 0 END AS ASTS30
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('A1', 'A2', 'A3', 'A41', 'A42', 'A5') AND ASTS_SDTP_CLAS_C IN ('10', '20') AND MTRT_SECT_SEQ BETWEEN 7 AND 12 THEN KRW_PRIN_AMT ELSE 0 END AS ASTS31
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('A1', 'A2', 'A3', 'A41', 'A42', 'A5') AND ASTS_SDTP_CLAS_C IN ('10', '20') AND MTRT_SECT_SEQ &gt; 12 THEN KRW_PRIN_AMT ELSE 0 END AS ASTS32
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('A1', 'A2', 'A3', 'A41', 'A42', 'A5') AND ASTS_SDTP_CLAS_C NOT IN ('10', '20') THEN KRW_PRIN_AMT ELSE 0 END AS ASTS33
+		            , '' AS ASTS34
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('A1', 'A2', 'A3', 'A41', 'A42', 'A5') THEN KRW_PRIN_AMT ELSE 0 END AS ASTS35
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('B11', 'B12') AND MTRT_SECT_SEQ BETWEEN 1 AND 3 THEN KRW_PRIN_AMT ELSE 0 END AS DEBT1
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('B11', 'B12') AND MTRT_SECT_SEQ BETWEEN 4 AND 6 THEN KRW_PRIN_AMT ELSE 0 END AS DEBT2
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('B11', 'B12') AND MTRT_SECT_SEQ BETWEEN 7 AND 12 THEN KRW_PRIN_AMT ELSE 0 END AS DEBT3
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('B11', 'B12') AND MTRT_SECT_SEQ &gt; 12 THEN KRW_PRIN_AMT ELSE 0 END AS DEBT4
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('B11', 'B12') AND ASTS_SDTP_CLAS_C NOT IN ('10', '20') THEN KRW_PRIN_AMT ELSE 0 END AS DEBT5
+		            , '' AS DEBT6
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('B11', 'B12') THEN KRW_PRIN_AMT ELSE 0 END AS DEBT7
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'B2' AND MTRT_SECT_SEQ BETWEEN 1 AND 3 THEN KRW_PRIN_AMT ELSE 0 END AS DEBT8
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'B2' AND MTRT_SECT_SEQ BETWEEN 4 AND 6 THEN KRW_PRIN_AMT ELSE 0 END AS DEBT9
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'B2' AND MTRT_SECT_SEQ BETWEEN 7 AND 12 THEN KRW_PRIN_AMT ELSE 0 END AS DEBT10
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'B2' AND MTRT_SECT_SEQ &gt; 12 THEN KRW_PRIN_AMT ELSE 0 END AS DEBT11
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'B2' AND ASTS_SDTP_CLAS_C NOT IN ('10', '20') THEN KRW_PRIN_AMT ELSE 0 END AS DEBT12
+		            , '' AS DEBT13
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'B2' THEN KRW_PRIN_AMT ELSE 0 END AS DEBT14
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'B3' AND MTRT_SECT_SEQ BETWEEN 1 AND 3 THEN KRW_PRIN_AMT ELSE 0 END AS DEBT15
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'B3' AND MTRT_SECT_SEQ BETWEEN 4 AND 6 THEN KRW_PRIN_AMT ELSE 0 END AS DEBT16
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'B3' AND MTRT_SECT_SEQ BETWEEN 7 AND 12 THEN KRW_PRIN_AMT ELSE 0 END AS DEBT17
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'B3' AND MTRT_SECT_SEQ &gt; 12 THEN KRW_PRIN_AMT ELSE 0 END AS DEBT18
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'B3' AND ASTS_SDTP_CLAS_C NOT IN ('10', '20') THEN KRW_PRIN_AMT ELSE 0 END AS DEBT19
+		            , '' AS DEBT20
+		            , CASE WHEN RGLT_LQDT_ITEM_C = 'B3' THEN KRW_PRIN_AMT ELSE 0 END AS DEBT21
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('B11', 'B12', 'B2', 'B3') AND MTRT_SECT_SEQ BETWEEN 1 AND 3 THEN KRW_PRIN_AMT ELSE 0 END AS DEBT22
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('B11', 'B12', 'B2', 'B3') AND MTRT_SECT_SEQ BETWEEN 4 AND 6 THEN KRW_PRIN_AMT ELSE 0 END AS DEBT23
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('B11', 'B12', 'B2', 'B3') AND MTRT_SECT_SEQ BETWEEN 7 AND 12 THEN KRW_PRIN_AMT ELSE 0 END AS DEBT24
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('B11', 'B12', 'B2', 'B3') AND MTRT_SECT_SEQ &gt; 12 THEN KRW_PRIN_AMT ELSE 0 END AS DEBT25
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('B11', 'B12', 'B2', 'B3') AND ASTS_SDTP_CLAS_C NOT IN ('10', '20') THEN KRW_PRIN_AMT ELSE 0 END AS DEBT26
+		            , '' AS DEBT27
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('B11', 'B12', 'B2', 'B3') THEN KRW_PRIN_AMT ELSE 0 END AS DEBT28
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('A1', 'A2', 'A3', 'A41', 'A42') AND ASTS_SDTP_CLAS_C IN ('10', '20') AND MTRT_SECT_SEQ BETWEEN 1 AND 3 THEN KRW_PRIN_AMT ELSE 0 END AS LQDT1
+		            , CASE WHEN RGLT_LQDT_ITEM_C IN ('B11', 'B12', 'B2') AND MTRT_SECT_SEQ BETWEEN 1 AND 3 THEN KRW_PRIN_AMT ELSE 0 END AS LQDT2
+		            
+		            , CASE WHEN ACCT_C LIKE '15%' AND RGLT_LQDT_ITEM_C = 'A5'
+		                   THEN KRW_PRIN_AMT 
+		                   ELSE 0 
+		              END                                                            AS ASTS18_SUM /*MTRT_SECT_SEQ > 12 구간에만 합산*/
+		            , CASE WHEN ACCT_C LIKE '15%' AND RGLT_LQDT_ITEM_C = 'A5'
+		                   THEN KRW_PRIN_AMT
+		                   ELSE 0
+		              END                                                            AS ASTS25_DIFF /*MTRT_SECT_SEQ > 12 구간에만 차감*/
+		        FROM TRT_RGLT_LQDT_TOT A
+		        WHERE A.BASE_DATE = #{sch_base_date} 
+		        AND A.ALM_WORK_TC = 'M'
+		        AND A.ORG_CLAS_C = '30'
+		        AND A.MNBR_TOT_YN = 'Y' --본지점합산여부
+		        AND A.CAP_QTY_SNRO_NO = '1' --자금량시나리오번호
+		        AND A.FUTU_POT_SECT_CNT = '0' --미래시점구간수
+		        AND A.NEW_CAP_QTY_TC = '0' --신규자금량구분코드
+		        AND A.AC_BUSI_TC = '2102' --회계구분
+		    ) A
+		    GROUP BY 
+		        A.BASE_DATE
+		        , A.BR_C
+		) A
+		JOIN (
+		    SELECT
+		        B.MO_BR_C
+		        , SUM(BKPR_AMT) AS TOT_ASTS_AMT -- 총자산
+		        , CASE
+		            WHEN SUM(BKPR_AMT) &lt; 30000000000 -- 300억 미만 : 규제비율 80%
+		            THEN 0.8
+		            WHEN SUM(BKPR_AMT) &lt; 100000000000   -- 1000억 미만 : 규제비율 90%
+		            THEN 0.9
+		            WHEN SUM(BKPR_AMT) &gt;= 100000000000  -- 1000억 이상 : 100%
+		            THEN 1
+		            ELSE NULL
+		        END AS RGLT_RTO -- 규제비율
+		    FROM
+		        TIG_BS_RSLT_TOT_M A
+		    LEFT JOIN TTL_BR_C_INFO B ON B.BR_C = A.BR_C
+		    WHERE BASE_DATE = TO_CHAR(ADD_MONTHS(TO_DATE(#{sch_base_date}, 'YYYYMMDD'), -12), 'YYYY')||'1231'
+		    AND ACCT_C =  '1000010' 
+		    AND AC_BUSI_TC = '2102'
+		    AND A.BR_C != '001'
+		    GROUP BY B.MO_BR_C
+		) B ON B.MO_BR_C = A.BR_C
+		JOIN (
+		    SELECT A.BR_C, A.BR_NM, B.BR_C AS UP_BR_C, B.BR_NM AS UP_BR_NM 
+		    FROM TTL_BR_C_INFO A
+		    JOIN TTL_BR_C_INFO B ON B.BR_C = A.BLNG_HQ_BR_C
+		) C ON C.BR_C = A.BR_C
+		ORDER BY A.BR_C
+	</select>
+
+</mapper>

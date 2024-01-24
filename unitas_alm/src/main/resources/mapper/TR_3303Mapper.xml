@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_3303Mapper">
+
+	
+	<select id="tr_3303SelectList" parameterType="java.util.Map" resultType="java.util.HashMap">
+	
+		SELECT 
+		    LQDT_STRS_ITEM_C 
+		    ,CASE
+		     WHEN  A.LQDT_STRS_ITEM_C LIKE 'A%'
+		     THEN (SELECT DTL_CLAS_NM FROM ALMADM.TSY_CO_MNG B WHERE CO_C = 'LQDT_STRS_ITEM_C' AND B.DTL_CLAS_VAL = 'A0000' ) 
+		     WHEN  A.LQDT_STRS_ITEM_C LIKE 'B%'
+		     THEN (SELECT DTL_CLAS_NM FROM ALMADM.TSY_CO_MNG B WHERE CO_C = 'LQDT_STRS_ITEM_C' AND B.DTL_CLAS_VAL = 'B0000' ) 
+		     ELSE (SELECT DTL_CLAS_NM FROM ALMADM.TSY_CO_MNG B WHERE CO_C = 'LQDT_STRS_ITEM_C' AND B.DTL_CLAS_VAL = 'C0000' )
+		     END AS "LVL_1"
+		    ,(SELECT DTL_CLAS_NM FROM ALMADM.TSY_CO_MNG B WHERE CO_C = 'LQDT_STRS_ITEM_C' AND B.DTL_CLAS_VAL = A.LQDT_STRS_ITEM_C ) AS "LVL_2"
+		    ,SEQ
+		    ,CASE
+		        WHEN (SELECT DTL_CLAS_NM FROM ALMADM.TSY_CO_MNG B WHERE CO_C = 'LQDT_STRS_WVAL_TC' AND A.LQDT_STRS_WVAL_TC = B.DTL_CLAS_VAL ) = '가중치'
+		        THEN LQDT_STRS_WVAL_TC || ':바젤3' || (SELECT DTL_CLAS_NM FROM ALMADM.TSY_CO_MNG B WHERE CO_C = 'LQDT_STRS_WVAL_TC' AND A.LQDT_STRS_WVAL_TC = B.DTL_CLAS_VAL )
+		        WHEN (SELECT DTL_CLAS_NM FROM ALMADM.TSY_CO_MNG B WHERE CO_C = 'LQDT_STRS_WVAL_TC' AND A.LQDT_STRS_WVAL_TC = B.DTL_CLAS_VAL ) = '고객행동율'
+		        THEN LQDT_STRS_WVAL_TC || ':' || (SELECT DTL_CLAS_NM FROM ALMADM.TSY_CO_MNG B WHERE CO_C = 'LQDT_STRS_WVAL_TC' AND A.LQDT_STRS_WVAL_TC = B.DTL_CLAS_VAL )
+		        WHEN (SELECT DTL_CLAS_NM FROM ALMADM.TSY_CO_MNG B WHERE CO_C = 'LQDT_STRS_WVAL_TC' AND A.LQDT_STRS_WVAL_TC = B.DTL_CLAS_VAL ) = '수기입력'
+		        THEN LQDT_STRS_WVAL_TC || ':사용자정의'
+		     END AS "LQDT_STRS_WVAL_TC"    
+		    ,(SELECT DTL_CLAS_NM FROM ALMADM.TSY_CO_MNG B WHERE CO_C = 'CS_BHOR_TC' AND A.CS_BHOR_TC = B.DTL_CLAS_VAL )  AS "CS_BHOR_TC"    
+		    ,(SELECT DTL_CLAS_NM FROM ALMADM.TSY_CO_MNG B WHERE CO_C = 'LQDT_STRS_WVAL_METH_C' AND A.LQDT_STRS_WVAL_METH_C = B.DTL_CLAS_VAL )  AS "LQDT_STRS_WVAL_METH_C"  
+		    ,(SELECT DTL_CLAS_NM FROM ALMADM.TSY_CO_MNG B WHERE CO_C = 'LQDT_STRS_WVAL_KIND_C' AND A.LQDT_STRS_WVAL_KIND_C = B.DTL_CLAS_VAL )  AS "LQDT_STRS_WVAL_KIND_C"  
+		    ,NORM_STRS_VAL * 100  AS "NORM_STRS_VAL"
+		    ,NATV_STRS_VAL * 100  AS "NATV_STRS_VAL"
+		    ,MRKT_STRS_VAL * 100  AS "MRKT_STRS_VAL"
+		    ,CBN_STRS_VAL  * 100  AS "CBN_STRS_VAL"  
+		FROM
+		    TSY_CRSS_STAT_STRS_APLY_MNG A 
+		WHERE
+			BASE_DATE = #{BASE_DATE}
+			AND
+		    ORG_CLAS_C = #{ORG_CLAS_C}
+		    AND 
+		    STRS_TC = #{STRS_TC}
+		    AND 
+		    SUBSTR(LQDT_STRS_ITEM_C,2) != '0000' 
+		ORDER BY 1
+	
+	</select>
+	
+
+	<delete id="existMonthDelete" parameterType="java.util.Map">
+	
+		DELETE FROM TSY_CRSS_STAT_STRS_APLY_MNG
+		 WHERE BASE_DATE  = #{BASE_DATE}
+	
+	</delete>
+	
+	<select id = "selectPrevMonth" parameterType="java.util.Map" resultType="String">
+	
+		SELECT MAX( BASE_DATE ) 
+		  FROM TSY_CRSS_STAT_STRS_APLY_MNG 
+		 WHERE BASE_DATE &lt; #{BASE_DATE}
+		   
+	</select>
+	
+
+
+	<insert id="prevMonthCopy" parameterType="java.util.Map">
+	
+		INSERT INTO TSY_CRSS_STAT_STRS_APLY_MNG
+		(
+			BASE_DATE
+			,ORG_CLAS_C
+			,STRS_TC
+			,LQDT_STRS_ITEM_C
+			,SEQ
+			,LQDT_STRS_WVAL_TC
+			,LQDT_STRS_WVAL_METH_C
+			,LQDT_STRS_WVAL_KIND_C
+			,CS_BHOR_TC
+			,NORM_STRS_VAL
+			,NATV_STRS_VAL
+			,MRKT_STRS_VAL
+			,CBN_STRS_VAL
+			,SIGN_C
+			,LAST_CHNG_ID
+			,LAST_CHNG_DT
+		)
+		SELECT 
+			  #{BASE_DATE} <!-- '기준일자'만 넣고 , 나머지는 전월의 '시나리오'만을 복사하여 인설트  --> 
+			, ORG_CLAS_C
+			, STRS_TC
+			, LQDT_STRS_ITEM_C
+			, SEQ
+			, LQDT_STRS_WVAL_TC
+			, LQDT_STRS_WVAL_METH_C
+			, LQDT_STRS_WVAL_KIND_C
+			, CS_BHOR_TC
+			, NORM_STRS_VAL
+			, NATV_STRS_VAL
+			, MRKT_STRS_VAL
+			, CBN_STRS_VAL
+			, SIGN_C
+			, LAST_CHNG_ID
+			, LAST_CHNG_DT  
+		FROM
+			  TSY_CRSS_STAT_STRS_APLY_MNG
+		WHERE BASE_DATE   = (
+								SELECT MAX( BASE_DATE ) 
+								  FROM TSY_CRSS_STAT_STRS_APLY_MNG 
+								 WHERE BASE_DATE &lt; #{BASE_DATE}
+							)
+				
+	</insert>
+
+
+	
+	<update id="tr_3303Update" parameterType="java.util.Map">
+	
+		UPDATE TSY_CRSS_STAT_STRS_APLY_MNG 
+		   SET
+			   NATV_STRS_VAL = TO_NUMBER(#{NATV_STRS_VAL}) / 100	
+			 , MRKT_STRS_VAL = TO_NUMBER(#{MRKT_STRS_VAL}) / 100		
+			 , CBN_STRS_VAL  = TO_NUMBER(#{CBN_STRS_VAL})  / 100		
+			 , LAST_CHNG_ID  = #{session.USID}
+			 , LAST_CHNG_DT  = SYSDATE	
+	     WHERE BASE_DATE = #{base_date}
+	       AND ORG_CLAS_C = #{org_clas_c}
+	       AND STRS_TC = #{strs_tc}
+	       AND LQDT_STRS_ITEM_C = #{LQDT_STRS_ITEM_C}
+	       AND SEQ = #{SEQ}
+	    	<!-- 시나리오 충격치 설정 값은  분석구분이 '사용자분석' 일때만 가능하다. -->
+	</update>
+
+
+
+
+
+</mapper>

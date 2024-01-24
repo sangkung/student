@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_1208Mapper">
+
+
+
+
+    <!-- 거액 수신 거래처별 현황 조회  -->
+	<select id = "selectTR_1208" parameterType="java.util.Map" resultType="java.util.HashMap">
+	
+	WITH BASE AS(
+		SELECT 
+		      BASE_DATE         
+		    , ALM_WORK_TC       
+		    , ORG_CLAS_C        
+		    , BR_C              
+		    , MNBR_TOT_YN           
+		    , CUR_C       
+		 	<if test="AC_BUSI_TC == '0000'">
+		 	, '1105'  	AS AC_BUSI_TC
+		 	</if>
+		 	<if test="AC_BUSI_TC != '0000'">
+		 	, AC_BUSI_TC
+		 	</if>     
+		    , STAT_RPRT_ID      
+		    , STAT_RPRT_ITEM_ID 
+		    , CNO                  
+		    , SUM(NVL(CASE WHEN SEQ = 0   THEN BKPR_AMT ELSE 0 END ,0))      AS  BKPR_AMT_ALL
+		    , SUM(NVL(CASE WHEN SEQ != 0   THEN BKPR_AMT ELSE 0 END ,0))     AS  BKPR_AMT0
+		    , SUM(NVL(CASE WHEN SEQ = 1   THEN BKPR_AMT ELSE 0 END ,0))      AS  BKPR_AMT1  
+		    , SUM(NVL(CASE WHEN SEQ = 2   THEN BKPR_AMT ELSE 0 END ,0))      AS  BKPR_AMT2  
+		    , SUM(NVL(CASE WHEN SEQ = 3   THEN BKPR_AMT ELSE 0 END ,0))      AS  BKPR_AMT3  
+		    , SUM(NVL(CASE WHEN SEQ = 6   THEN BKPR_AMT ELSE 0 END ,0))      AS  BKPR_AMT6  
+		    , SUM(NVL(CASE WHEN SEQ = 9   THEN BKPR_AMT ELSE 0 END ,0))      AS  BKPR_AMT9  
+		    , SUM(NVL(CASE WHEN SEQ = 12  THEN BKPR_AMT ELSE 0 END ,0))      AS  BKPR_AMT12  
+		    , SUM(NVL(CASE WHEN SEQ = 24  THEN BKPR_AMT ELSE 0 END ,0))      AS  BKPR_AMT24 
+		    , SUM(NVL(CASE WHEN SEQ = 36  THEN BKPR_AMT ELSE 0 END ,0))      AS  BKPR_AMT36  
+		    , SUM(NVL(CASE WHEN SEQ = 60  THEN BKPR_AMT ELSE 0 END ,0))      AS  BKPR_AMT60  
+		    , SUM(NVL(CASE WHEN SEQ = 61  THEN BKPR_AMT ELSE 0 END ,0))      AS  BKPR_AMT61  
+		FROM  TSR_LAMT_LNDP_CLNT_STAT
+		WHERE BASE_DATE    = #{BASE_DATE} 
+		  AND STAT_RPRT_ID = 'P8' || #{TAB_TC} || '0'
+		  AND ALM_WORK_TC  = 'M'
+		  AND CUR_C        = 'KRW'
+		  AND ORG_CLAS_C   = #{ORG_CLAS_C}
+		  <if test="JISO_INCLUDE == 'yes'">
+		  AND MNBR_TOT_YN  = 'Y' 
+		  </if>
+		  <if test="JISO_INCLUDE == 'no'">
+		  AND MNBR_TOT_YN  = 'N' 
+		  </if>
+	 	  <if test="AC_BUSI_TC == '0000'">
+	 	  AND AC_BUSI_TC IN('1105','1106','1107')
+	 	  </if>
+	 	  <if test="AC_BUSI_TC != '0000'">
+	 	  AND AC_BUSI_TC = #{AC_BUSI_TC}
+	 	  </if>
+		  <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'">
+		 	-- 모든 점소코드 나오기
+		  </if>
+		  <if test="JISO_INCLUDE == 'yes' and BLNG_HQ_BR_C != ''">   
+		  AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{BR_C} ) 
+		  </if>
+		  <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+		  AND BR_C     = #{BR_C}
+		  </if>
+		  <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+		  AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} )
+		  </if>
+		  <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == '001'">
+		  AND BR_C     = #{BR_C}
+		  </if>
+		GROUP BY 
+		      BASE_DATE         
+		    , ALM_WORK_TC       
+		    , ORG_CLAS_C        
+		    , BR_C              
+		    , MNBR_TOT_YN       
+		    , CUR_C             
+		    , AC_BUSI_TC        
+		    , STAT_RPRT_ID      
+		    , STAT_RPRT_ITEM_ID 
+		    , CNO 
+		
+	)
+	,PREV_M1 AS(
+	
+		SELECT 
+		      BASE_DATE         
+		    , ALM_WORK_TC       
+		    , ORG_CLAS_C        
+		    , BR_C              
+		    , MNBR_TOT_YN       
+		    , CUR_C             
+		 	<if test="AC_BUSI_TC == '0000'">
+		 	, '1105'  	AS AC_BUSI_TC
+		 	</if>
+		 	<if test="AC_BUSI_TC != '0000'">
+		 	, AC_BUSI_TC
+		 	</if>       
+		    , STAT_RPRT_ID      
+		    , STAT_RPRT_ITEM_ID 
+		    , CNO                
+		    , SUM(NVL(CASE WHEN SEQ = 0   THEN BKPR_AMT ELSE 0 END ,0))      AS  BKPR_AMT_ALL
+		    , SUM(NVL(CASE WHEN SEQ != 0   THEN BKPR_AMT ELSE 0 END ,0))     AS  BKPR_AMT0
+		FROM  TSR_LAMT_LNDP_CLNT_STAT
+		WHERE BASE_DATE    = TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE},'YYYYMMDD'),-1),'YYYYMMDD')
+		  AND STAT_RPRT_ID = 'P8' || #{TAB_TC} || '0'
+		  AND ALM_WORK_TC  = 'M'
+		  AND CUR_C        = 'KRW'
+		  AND ORG_CLAS_C   = #{ORG_CLAS_C}
+		  <if test="JISO_INCLUDE == 'yes'">
+		  AND MNBR_TOT_YN  = 'Y' 
+		  </if>
+		  <if test="JISO_INCLUDE == 'no'">
+		  AND MNBR_TOT_YN  = 'N' 
+		  </if>
+	 	  <if test="AC_BUSI_TC == '0000'">
+	 	  AND AC_BUSI_TC IN('1105','1106','1107')
+	 	  </if>
+	 	  <if test="AC_BUSI_TC != '0000'">
+	 	  AND AC_BUSI_TC = #{AC_BUSI_TC}
+	 	  </if>
+		  <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'">
+		 	-- 모든 점소코드 나오기
+		  </if>
+		  <if test="JISO_INCLUDE == 'yes' and BLNG_HQ_BR_C != ''">   
+		  AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{BR_C} ) 
+		  </if>
+		  <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+		  AND BR_C     = #{BR_C}
+		  </if>
+		  <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+		  AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} )
+		  </if>
+		  <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == '001'">
+		  AND BR_C     = #{BR_C}
+		  </if>
+		GROUP BY 
+		      BASE_DATE         
+		    , ALM_WORK_TC       
+		    , ORG_CLAS_C        
+		    , BR_C              
+		    , MNBR_TOT_YN       
+		    , CUR_C             
+		    , AC_BUSI_TC        
+		    , STAT_RPRT_ID      
+		    , STAT_RPRT_ITEM_ID 
+		    , CNO                
+	)      
+
+	SELECT 
+	       A.STAT_RPRT_ITEM_ID
+	     , A.CNO 
+	     , A.BKPR_AMT0                                                                                     AS BASE_AMT
+	     , B.BKPR_AMT0                                                                                     AS P_M1_AMT 
+	     , ROUND( A.BKPR_AMT0 / (SELECT BKPR_AMT_ALL FROM BASE WHERE STAT_RPRT_ITEM_ID = 'A1' ) * 100 ,2)  AS BIZUNG
+	     , CASE 
+              WHEN B.BKPR_AMT0 = 0        THEN 0
+          	  WHEN NVL(B.BKPR_AMT0,0) = 0 THEN 999999999
+	          ELSE ROUND(( A.BKPR_AMT0 - B.BKPR_AMT0 ) / B.BKPR_AMT0 * 100 ,2)
+	       END                                                                                             AS PLUS_RATIO 
+	     , ROUND(A.BKPR_AMT0  / #{AMT_UNIT})                                                               AS VIEW_BKPR_AMT
+	     , ROUND(A.BKPR_AMT1  / #{AMT_UNIT})                                                               AS VIEW_BKPR_AMT1 
+	     , ROUND(A.BKPR_AMT2  / #{AMT_UNIT})                                                               AS VIEW_BKPR_AMT2 
+	     , ROUND(A.BKPR_AMT3  / #{AMT_UNIT})                                                               AS VIEW_BKPR_AMT3 
+	     , ROUND(A.BKPR_AMT6  / #{AMT_UNIT})                                                               AS VIEW_BKPR_AMT6 
+	     , ROUND(A.BKPR_AMT9  / #{AMT_UNIT})                                                               AS VIEW_BKPR_AMT9 
+	     , ROUND(A.BKPR_AMT12 / #{AMT_UNIT})                                                               AS VIEW_BKPR_AMT12
+	     , ROUND(A.BKPR_AMT24 / #{AMT_UNIT})                                                               AS VIEW_BKPR_AMT24
+	     , ROUND(A.BKPR_AMT36 / #{AMT_UNIT})                                                               AS VIEW_BKPR_AMT36
+	     , ROUND(A.BKPR_AMT60 / #{AMT_UNIT})                                                               AS VIEW_BKPR_AMT60
+	     , ROUND(A.BKPR_AMT61 / #{AMT_UNIT})                                                               AS VIEW_BKPR_AMT61
+	     -----------------------------                                                             
+	     , A.BKPR_AMT1                                                                                     AS BKPR_AMT1 
+	     , A.BKPR_AMT2                                                                                     AS BKPR_AMT2 
+	     , A.BKPR_AMT3                                                                                     AS BKPR_AMT3 
+	     , A.BKPR_AMT6                                                                                     AS BKPR_AMT6 
+	     , A.BKPR_AMT9                                                                                     AS BKPR_AMT9 
+	     , A.BKPR_AMT12                                                                                    AS BKPR_AMT12
+	     , A.BKPR_AMT24                                                                                    AS BKPR_AMT24
+	     , A.BKPR_AMT36                                                                                    AS BKPR_AMT36
+	     , A.BKPR_AMT60                                                                                    AS BKPR_AMT60
+	     , A.BKPR_AMT61                                                                                    AS BKPR_AMT61
+	     , (SELECT BKPR_AMT_ALL FROM BASE WHERE STAT_RPRT_ITEM_ID = 'A1' )                                 AS BASE_AMT_TOT
+	  FROM BASE A , PREV_M1 B
+	 WHERE 1 = 1
+	   AND A.CNO = B.CNO (+)
+	   AND A.STAT_RPRT_ITEM_ID != 'A1'
+     ORDER BY A.STAT_RPRT_ITEM_ID 
+	
+	</select>
+
+
+  
+
+
+</mapper>

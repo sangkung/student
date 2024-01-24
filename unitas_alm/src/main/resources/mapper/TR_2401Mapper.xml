@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_2401Mapper">
+
+	<select id="selectTr2401Senario" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT SNRO_NO     AS CODE
+		     , SNRO_NM     AS TEXT
+		  FROM TSY_SNRO_SET_MNG
+		 WHERE ORG_CLAS_C  = '10' 
+		   AND SNRO_KIND_C = '01'
+		 ORDER BY TO_NUMBER(SNRO_NO)
+	</select>
+
+
+	<select id="selectTr2401List" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+/*
+ * ALM_BASE_RATE_C
+ * 11%          시장금리 YTM
+ * 12% NOT 129% 여신금리 BASE
+ * 13%          수신금리 BASE
+ * 21%          상품금리 LDGR
+ * 23%          유가증권 LDGR
+ * 129%         여신금리 LDGR
+ * 22%          수익금리 BSPL
+ *
+ * TST_RATE_TOT 통계_금리집계
+ *   시장금리 : RATE_TOT_TC 금리집계구분코드 1 말일자 2 월평균
+ *              ORG_CLAS_C 기관분류코드 '00'
+ *              BR_C 점소코드 '000'
+ *   기타금리 : RATE_TOT_TC 금리집계구분코드 1 말일자
+ *              ORG_CLAS_C 기관분류코드 VALUE
+ *              BR_C 점소코드 VALUE
+ *
+ * TSI_BASE_RATE_SNRO 시뮬레이션_기준금리시나리오
+ *   시장금리 : ORG_CLAS_C 기관분류코드 VALUE
+ *              BR_C 점소코드 '000'
+ *   기타금리 : ORG_CLAS_C 기관분류코드 VALUE
+ *              BR_C 점소코드 VALUE
+ */
+SELECT ALM_BASE_RATE_C                                 AS ALM_BASE_RATE_C
+     , ALM_BASE_RATE_NM                                AS ALM_BASE_RATE_NM
+     , ALM_BASE_RATE_TRM_CNT                           AS ALM_BASE_RATE_TRM_CNT
+     , MAX(ALM_BASE_RATE)                              AS ALM_BASE_RATE
+     , MAX(CASE WHEN PEST_MMS = 1  THEN PEST_RATE END) AS M1
+     , MAX(CASE WHEN PEST_MMS = 2  THEN PEST_RATE END) AS M2
+     , MAX(CASE WHEN PEST_MMS = 3  THEN PEST_RATE END) AS M3
+     , MAX(CASE WHEN PEST_MMS = 4  THEN PEST_RATE END) AS M4
+     , MAX(CASE WHEN PEST_MMS = 5  THEN PEST_RATE END) AS M5
+     , MAX(CASE WHEN PEST_MMS = 6  THEN PEST_RATE END) AS M6
+     , MAX(CASE WHEN PEST_MMS = 7  THEN PEST_RATE END) AS M7
+     , MAX(CASE WHEN PEST_MMS = 8  THEN PEST_RATE END) AS M8
+     , MAX(CASE WHEN PEST_MMS = 9  THEN PEST_RATE END) AS M9
+     , MAX(CASE WHEN PEST_MMS = 10 THEN PEST_RATE END) AS M10
+     , MAX(CASE WHEN PEST_MMS = 11 THEN PEST_RATE END) AS M11
+     , MAX(CASE WHEN PEST_MMS = 12 THEN PEST_RATE END) AS M12
+     , MAX(CASE WHEN PEST_MMS = 13 THEN PEST_RATE END) AS M13
+     , MAX(CASE WHEN PEST_MMS = 14 THEN PEST_RATE END) AS M14
+     , MAX(CASE WHEN PEST_MMS = 15 THEN PEST_RATE END) AS M15
+     , MAX(CASE WHEN PEST_MMS = 16 THEN PEST_RATE END) AS M16
+     , MAX(CASE WHEN PEST_MMS = 17 THEN PEST_RATE END) AS M17
+     , MAX(CASE WHEN PEST_MMS = 18 THEN PEST_RATE END) AS M18
+     , MAX(CASE WHEN PEST_MMS = 19 THEN PEST_RATE END) AS M19
+     , MAX(CASE WHEN PEST_MMS = 20 THEN PEST_RATE END) AS M20
+     , MAX(CASE WHEN PEST_MMS = 21 THEN PEST_RATE END) AS M21
+     , MAX(CASE WHEN PEST_MMS = 22 THEN PEST_RATE END) AS M22
+     , MAX(CASE WHEN PEST_MMS = 23 THEN PEST_RATE END) AS M23
+     , MAX(CASE WHEN PEST_MMS = 24 THEN PEST_RATE END) AS M24
+     , MAX(CASE WHEN PEST_MMS = 25 THEN PEST_RATE END) AS M25
+     , MAX(CASE WHEN PEST_MMS = 26 THEN PEST_RATE END) AS M26
+     , MAX(CASE WHEN PEST_MMS = 27 THEN PEST_RATE END) AS M27
+     , MAX(CASE WHEN PEST_MMS = 28 THEN PEST_RATE END) AS M28
+     , MAX(CASE WHEN PEST_MMS = 29 THEN PEST_RATE END) AS M29
+     , MAX(CASE WHEN PEST_MMS = 30 THEN PEST_RATE END) AS M30
+     , MAX(CASE WHEN PEST_MMS = 31 THEN PEST_RATE END) AS M31
+     , MAX(CASE WHEN PEST_MMS = 32 THEN PEST_RATE END) AS M32
+     , MAX(CASE WHEN PEST_MMS = 33 THEN PEST_RATE END) AS M33
+     , MAX(CASE WHEN PEST_MMS = 34 THEN PEST_RATE END) AS M34
+     , MAX(CASE WHEN PEST_MMS = 35 THEN PEST_RATE END) AS M35
+     , MAX(CASE WHEN PEST_MMS = 36 THEN PEST_RATE END) AS M36
+     , CASE WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '12' THEN 1
+            WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '13' THEN 2
+            WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '21' THEN 3
+            WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '22' THEN 4
+            WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '23' THEN 5
+            WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '11' THEN 6
+            WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '00' THEN 7
+       END AS DAT_ORDER
+  FROM (
+       SELECT A.ALM_BASE_RATE_C
+            , A.ALM_BASE_RATE_NM
+            , A.ALM_BASE_RATE_TRM_CNT
+            , B.ALM_BASE_RATE
+            , C.PEST_MMS
+            , C.PEST_RATE
+         FROM (
+               SELECT ALM_BASE_RATE_C        /* ALM기준금리코드        */
+                    , ALM_BASE_RATE_TRM_CNT  /* ALM기준금리기간수      */
+                    , ALM_BASE_RATE_NM       /* ALM기준금리명          */
+                    , ALM_REP_RATE_YN        /* ALM대표금리여부        */
+                 FROM TSY_ALM_BASE_RATE_MNG  /* 시스템_ALM기준금리관리 */
+                WHERE USE_YN = 'Y'
+              ) A
+            , (
+               SELECT BASE_DATE              /* 기준일자          */
+                    , ORG_CLAS_C             /* 기관분류코드      */
+                    , BR_C                   /* 점소코드          */
+                    , ALM_BASE_RATE_C        /* ALM기준금리코드   */
+                    , ALM_BASE_RATE_TRM_CNT  /* ALM기준금리기간수 */
+                    , ALM_BASE_RATE          /* ALM기준금리기간수 */
+                 FROM TST_RATE_TOT           /* 통계_금리집계     */
+                WHERE BASE_DATE   = #{BASE_DATE}
+                  /* 시장금리 11 TST_RATE_TOT 통계_금리집계 ORG_CLAS_C 00 조인조건 예외처리 */
+                  AND ORG_CLAS_C  = CASE WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '11' THEN ORG_CLAS_C ELSE #{ORG_CLAS_C} END
+                  /* 시장금리 11 TST_RATE_TOT 통계_금리집계 BR_C 000 조인조건 예외처리 */
+                  AND BR_C        = CASE WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '11' THEN BR_C ELSE #{BR_C} END
+                  /* 시장금리 11             TST_RATE_TOT 통계_금리집계 RATE_TOT_TC 1 말일자 2 월평균 조인조건 예외처리    */
+                  /* 기타금리 12 13 21 22 23 TST_RATE_TOT 통계_금리집계 RATE_TOT_TC 1 말일자 조인조건 예외처리             */
+                  AND RATE_TOT_TC = CASE WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '11' THEN '2' ELSE '1' END
+              ) B
+            , (
+              SELECT A.BASE_DATE              /* 기준일자                    */
+                   , A.ORG_CLAS_C             /* 기관분류코드                */
+                   , A.BR_C                   /* 점소코드                    */
+                   , A.ALM_BASE_RATE_C        /* ALM기준금리코드             */
+                   , A.ALM_BASE_RATE_TRM_CNT  /* ALM기준금리기간수           */
+                   , A.PEST_MMS               /* 예측월수                    */
+                   , A.PEST_RATE              /* 예측금리                    */
+                FROM TSI_BASE_RATE_SNRO A     /* 시뮬레이션_기준금리시나리오 */
+               WHERE A.BASE_DATE  = #{BASE_DATE}
+                 AND A.ORG_CLAS_C = #{ORG_CLAS_C}
+                 /* 시장금리 11 TSI_BASE_RATE_SNRO 시뮬레이션_기준금리시나리오 BR_C 000 조인조건 예외처리 */
+                 AND A.BR_C       = CASE WHEN SUBSTR(A.ALM_BASE_RATE_C,1,2) = '11' THEN A.BR_C ELSE #{BR_C} END
+                 AND A.SNRO_NO    = #{SNRO_NO}
+              ) C
+       WHERE A.ALM_BASE_RATE_C       = B.ALM_BASE_RATE_C
+         AND A.ALM_BASE_RATE_TRM_CNT = B.ALM_BASE_RATE_TRM_CNT
+         AND A.ALM_BASE_RATE_C       = C.ALM_BASE_RATE_C(+)
+         AND A.ALM_BASE_RATE_TRM_CNT = C.ALM_BASE_RATE_TRM_CNT(+)
+         /* 시장금리 11 TST_RATE_TOT 통계_금리집계 ORG_CLAS_C 00 조인조건 예외처리 */
+         AND B.ORG_CLAS_C            = CASE WHEN SUBSTR(B.ALM_BASE_RATE_C,1,2) = '11' THEN B.ORG_CLAS_C ELSE C.ORG_CLAS_C(+) END
+         AND B.BR_C                  = C.BR_C(+)
+     )
+ GROUP BY ALM_BASE_RATE_C
+        , ALM_BASE_RATE_NM
+        , ALM_BASE_RATE_TRM_CNT
+        , CASE WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '12' THEN 1
+               WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '13' THEN 2
+               WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '21' THEN 3
+               WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '22' THEN 4
+               WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '23' THEN 5
+               WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '11' THEN 6
+               WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '00' THEN 7
+          END
+ ORDER BY CASE WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '12' THEN 1
+               WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '13' THEN 2
+               WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '21' THEN 3
+               WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '22' THEN 4
+               WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '23' THEN 5
+               WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '11' THEN 6
+               WHEN SUBSTR(ALM_BASE_RATE_C,1,2) = '00' THEN 7
+          END
+        , ALM_BASE_RATE_C
+        , ALM_BASE_RATE_TRM_CNT                 
+	</select>
+	
+</mapper>

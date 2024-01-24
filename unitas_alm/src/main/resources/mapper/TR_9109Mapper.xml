@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_9109Mapper">
+
+	<select id="selectTr9109List" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT A.ORG_CLAS_C 
+		     , A.SNRO_KIND_C
+		     , A.SNRO_NO    
+		     , A.SNRO_NM
+		     , A.SNRO_APLY_METH_C
+		     , B.SNRO_APLY_METH_C_NM
+		     , A.RATE_IND_DIRT_VAL
+		     , A.SNRO_APLY_1_VAL
+		     , A.SNRO_APLY_2_VAL
+		     , A.SNRO_CNTN        
+		     , A.USE_YN
+		  FROM TSY_SNRO_SET_MNG A
+		     , (
+		        SELECT DTL_CLAS_VAL
+		             , DTL_CLAS_NM  AS SNRO_APLY_METH_C_NM
+		          FROM TSY_CO_MNG 
+		         WHERE CO_C = 'SNRO_APLY_METH_C' 
+		           AND USE_YN = 'Y' 
+		           AND DTL_CLAS_VAL != '-'
+		       ) B
+		 WHERE ORG_CLAS_C = #{searchparam}
+		   AND A.SNRO_APLY_METH_C = B.DTL_CLAS_VAL(+)
+		 ORDER BY A.ORG_CLAS_C
+		        , A.SNRO_KIND_C
+				, TO_NUMBER(A.SNRO_NO)
+	</select>
+	
+	<update id="updateTr9109" parameterType="java.util.Map">
+		UPDATE TSY_SNRO_SET_MNG
+		   SET SNRO_NM         = #{SNRO_NM}
+		     , SNRO_APLY_1_VAL = #{SNRO_APLY_1_VAL}
+		     , SNRO_APLY_2_VAL = #{SNRO_APLY_2_VAL}
+		     , SNRO_CNTN       = #{SNRO_CNTN}
+		     , USE_YN          = #{USE_YN}
+		     , LAST_CHNG_ID    = #{LAST_CHNG_ID}
+		     , LAST_CHNG_DT    = SYSDATE
+		 WHERE ORG_CLAS_C      = #{ORG_CLAS_C}
+		   AND SNRO_KIND_C     = #{SNRO_KIND_C}
+		   AND SNRO_NO         = #{SNRO_NO}
+	</update>
+
+
+</mapper>

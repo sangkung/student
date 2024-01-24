@@ -1,0 +1,1185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_5104Mapper">
+
+	<!-- 추정 대차대조표 조회  -->
+	<select id="selectTR_5104List" parameterType="java.util.Map" resultType="java.util.HashMap">
+	
+		WITH TEMP AS
+		(
+		SELECT 
+		       B.BASE_DATE
+		     , B.ORG_CLAS_C  
+		     , B.BR_C
+		     , B.ACCT_C
+		     , B.AC_BUSI_TC
+		 	 /* 디멘션 조회 시 */
+	         <if test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+		     , NVL(A.DIMS_CDNM1,'-')  AS DIMS_CDNM1
+		     , B.DIMS_C1
+	         </if>
+	         <if test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+		     , NVL(A.DIMS_CDNM1,'-')  AS DIMS_CDNM1
+		     , B.DIMS_C1
+		     , NVL(A.DIMS_CDNM2,'-')  AS DIMS_CDNM2  
+		     , B.DIMS_C2
+	         </if>
+		     --------------------기준월 데이터 
+		     , B.BASE_AMT                      
+		     , B.BASE_AMT_RT      
+		     --------------------구간별 데이터 
+		     , A.CAL_VIEW_AMT_1
+		     , A.CAL_VIEW_AMT_2
+		     , A.CAL_VIEW_AMT_3
+		     , A.CAL_VIEW_AMT_4
+		     , A.CAL_VIEW_AMT_5
+		     , A.CAL_VIEW_AMT_6
+		     , A.CAL_VIEW_AMT_7
+		     , A.CAL_VIEW_AMT_8
+		     , A.CAL_VIEW_AMT_9
+		     , A.CAL_VIEW_AMT_10
+		     , A.CAL_VIEW_AMT_11
+		     , A.CAL_VIEW_AMT_12
+		     , A.CAL_VIEW_AMT_13
+		     , A.CAL_VIEW_AMT_14
+		     , A.CAL_VIEW_AMT_15
+		     , A.CAL_VIEW_AMT_16
+		     , A.CAL_VIEW_AMT_17
+		     , A.CAL_VIEW_AMT_18
+		     , A.CAL_VIEW_AMT_24
+		     --------------------
+		     , A.AMT_RT_1
+		     , A.AMT_RT_2
+		     , A.AMT_RT_3
+		     , A.AMT_RT_4
+		     , A.AMT_RT_5
+		     , A.AMT_RT_6
+		     , A.AMT_RT_7
+		     , A.AMT_RT_8
+		     , A.AMT_RT_9
+		     , A.AMT_RT_10
+		     , A.AMT_RT_11
+		     , A.AMT_RT_12
+		     , A.AMT_RT_13
+		     , A.AMT_RT_14
+		     , A.AMT_RT_15
+		     , A.AMT_RT_16
+		     , A.AMT_RT_17
+		     , A.AMT_RT_18
+		     , A.AMT_RT_24
+		FROM    
+		    (
+		    SELECT 
+                   BASE_DATE
+                 , ORG_CLAS_C  
+                 , ALM_WORK_TC
+                 , BR_C
+                 , ACCT_C
+                 , CUR_C
+                 , AC_BUSI_TC
+			 	 /* 디멘션 조회 시 */
+		         <if test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+		         , DIMS_CDNM1
+                 , DIMS_C1
+		         </if>
+		         <if test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+		         , DIMS_CDNM1
+                 , DIMS_C1
+		         , DIMS_CDNM2
+                 , DIMS_C2
+		         </if>
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 1  THEN AMT ELSE 0 END)               				        AS CAL_VIEW_AMT_1
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 2  THEN AMT ELSE 0 END)               				        AS CAL_VIEW_AMT_2
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 3  THEN AMT ELSE 0 END)               				        AS CAL_VIEW_AMT_3
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 4  THEN AMT ELSE 0 END)               				        AS CAL_VIEW_AMT_4
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 5  THEN AMT ELSE 0 END)               				        AS CAL_VIEW_AMT_5
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 6  THEN AMT ELSE 0 END)               				        AS CAL_VIEW_AMT_6
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 7  THEN AMT ELSE 0 END)               				        AS CAL_VIEW_AMT_7
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 8  THEN AMT ELSE 0 END)               				        AS CAL_VIEW_AMT_8
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 9  THEN AMT ELSE 0 END)               				        AS CAL_VIEW_AMT_9
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 10 THEN AMT ELSE 0 END)               				        AS CAL_VIEW_AMT_10
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 11 THEN AMT ELSE 0 END)               				        AS CAL_VIEW_AMT_11
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 12 THEN AMT ELSE 0 END)               				        AS CAL_VIEW_AMT_12
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 13 THEN AMT ELSE 0 END)               				        AS CAL_VIEW_AMT_13
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 14 THEN AMT ELSE 0 END)               				        AS CAL_VIEW_AMT_14
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 15 THEN AMT ELSE 0 END)               				        AS CAL_VIEW_AMT_15
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 16 THEN AMT ELSE 0 END)               				        AS CAL_VIEW_AMT_16
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 17 THEN AMT ELSE 0 END)               				        AS CAL_VIEW_AMT_17
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 18 THEN AMT ELSE 0 END)               				        AS CAL_VIEW_AMT_18
+		         <if test="AMT_TC != null and AMT_TC == 1"> /* 잔액 */        
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 24 THEN AMT ELSE 0 END)  	           				        AS CAL_VIEW_AMT_24
+		         </if>      
+		         <if test="AMT_TC != null and AMT_TC == 2"> /* 평잔 */        
+			     , SUM(CASE WHEN MTRT_SECT_SEQ > 18 AND 24 >= MTRT_SECT_SEQ THEN AMT ELSE 0 END) / 6        AS CAL_VIEW_AMT_24 
+		         </if>      
+			     ----------------------------------------------------------------       
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 1  THEN AMT_RT ELSE 0 END)      				            AS AMT_RT_1
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 2  THEN AMT_RT ELSE 0 END)      				            AS AMT_RT_2
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 3  THEN AMT_RT ELSE 0 END)      				            AS AMT_RT_3
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 4  THEN AMT_RT ELSE 0 END)      				            AS AMT_RT_4
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 5  THEN AMT_RT ELSE 0 END)      				            AS AMT_RT_5
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 6  THEN AMT_RT ELSE 0 END)      				            AS AMT_RT_6
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 7  THEN AMT_RT ELSE 0 END)      				            AS AMT_RT_7
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 8  THEN AMT_RT ELSE 0 END)      				            AS AMT_RT_8
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 9  THEN AMT_RT ELSE 0 END)      				            AS AMT_RT_9
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 10 THEN AMT_RT ELSE 0 END)      				            AS AMT_RT_10
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 11 THEN AMT_RT ELSE 0 END)      				            AS AMT_RT_11
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 12 THEN AMT_RT ELSE 0 END)      				            AS AMT_RT_12
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 13 THEN AMT_RT ELSE 0 END)      				            AS AMT_RT_13
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 14 THEN AMT_RT ELSE 0 END)      				            AS AMT_RT_14
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 15 THEN AMT_RT ELSE 0 END)      				            AS AMT_RT_15
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 16 THEN AMT_RT ELSE 0 END)      				            AS AMT_RT_16
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 17 THEN AMT_RT ELSE 0 END)      				            AS AMT_RT_17
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 18 THEN AMT_RT ELSE 0 END)      				            AS AMT_RT_18
+		         <if test="AMT_TC != null and AMT_TC == 1"> /* 잔액 */
+			     , SUM(CASE WHEN MTRT_SECT_SEQ = 24 THEN AMT_RT ELSE 0 END)  	   				        	AS AMT_RT_24
+		         </if>
+		         <if test="AMT_TC != null and AMT_TC == 2"> /* 평잔 */
+			     , SUM(CASE WHEN MTRT_SECT_SEQ > 18 AND 24 >= MTRT_SECT_SEQ THEN AMT_RT ELSE 0 END)  		AS AMT_RT_24
+		         </if>
+		     FROM
+		     (
+		    
+				    SELECT 
+				           BASE_DATE
+				         , ORG_CLAS_C  
+				         , ALM_WORK_TC
+				         , BR_C
+				         , ACCT_C
+				         , CUR_C
+					 	<if test="AC_BUSI_TC == '0000'">
+					     , '1105'	AS AC_BUSI_TC
+					 	</if>
+					 	<if test="AC_BUSI_TC != '0000'">
+					     , AC_BUSI_TC
+					 	</if>
+					 	 /* 디멘션 조회 시 */
+				         <if test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+			             , (SELECT DIMS_CDNM 
+			                 FROM TSY_DIMS_ITEM_MNG 
+			                WHERE DIMS_ITEM_NO = #{DIMS1}
+			                  AND DIMS_C_VAL = (CASE 
+			                                        WHEN #{DIMS1} = '1' THEN FIX_VAR_TC
+			                                        WHEN #{DIMS1} = '2' THEN '' || RATE_VAR_CYCL
+			                                        WHEN #{DIMS1} = '3' THEN ALM_BASE_RATE_C
+			                                        WHEN #{DIMS1} = '4' THEN PRIN_RMBR_METH_C
+			                                        WHEN #{DIMS1} = '5' THEN CONT_TRM_SECT_C
+			                                        WHEN #{DIMS1} = '6' THEN ALM_MRTG_TC
+			                                        WHEN #{DIMS1} = '7' THEN LN_DP_GD_C
+			                                    END)
+			               )    AS DIMS_CDNM1
+			             
+			             , CASE 
+			                WHEN #{DIMS1} = '1' THEN FIX_VAR_TC
+			                WHEN #{DIMS1} = '2' THEN '' || RATE_VAR_CYCL
+			                WHEN #{DIMS1} = '3' THEN ALM_BASE_RATE_C
+			                WHEN #{DIMS1} = '4' THEN PRIN_RMBR_METH_C
+			                WHEN #{DIMS1} = '5' THEN CONT_TRM_SECT_C
+			                WHEN #{DIMS1} = '6' THEN ALM_MRTG_TC
+			                WHEN #{DIMS1} = '7' THEN LN_DP_GD_C
+			               END  AS DIMS_C1
+				         </if>
+				         <if test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+			             , (SELECT DIMS_CDNM 
+			                 FROM TSY_DIMS_ITEM_MNG 
+			                WHERE DIMS_ITEM_NO = #{DIMS1}
+			                  AND DIMS_C_VAL = (CASE 
+			                                        WHEN #{DIMS1} = '1' THEN FIX_VAR_TC
+			                                        WHEN #{DIMS1} = '2' THEN '' || RATE_VAR_CYCL
+			                                        WHEN #{DIMS1} = '3' THEN ALM_BASE_RATE_C
+			                                        WHEN #{DIMS1} = '4' THEN PRIN_RMBR_METH_C
+			                                        WHEN #{DIMS1} = '5' THEN CONT_TRM_SECT_C
+			                                        WHEN #{DIMS1} = '6' THEN ALM_MRTG_TC
+			                                        WHEN #{DIMS1} = '7' THEN LN_DP_GD_C
+			                                    END)
+			               )    AS DIMS_CDNM1
+			             
+			             , CASE 
+			                WHEN #{DIMS1} = '1' THEN FIX_VAR_TC
+			                WHEN #{DIMS1} = '2' THEN '' || RATE_VAR_CYCL
+			                WHEN #{DIMS1} = '3' THEN ALM_BASE_RATE_C
+			                WHEN #{DIMS1} = '4' THEN PRIN_RMBR_METH_C
+			                WHEN #{DIMS1} = '5' THEN CONT_TRM_SECT_C
+			                WHEN #{DIMS1} = '6' THEN ALM_MRTG_TC
+			                WHEN #{DIMS1} = '7' THEN LN_DP_GD_C
+			               END  AS DIMS_C1
+			               
+			             , (SELECT DIMS_CDNM 
+			                 FROM TSY_DIMS_ITEM_MNG 
+			                WHERE DIMS_ITEM_NO = #{DIMS2}
+			                  AND DIMS_C_VAL = (CASE 
+			                                        WHEN #{DIMS2} = '1' THEN FIX_VAR_TC
+			                                        WHEN #{DIMS2} = '2' THEN '' || RATE_VAR_CYCL
+			                                        WHEN #{DIMS2} = '3' THEN ALM_BASE_RATE_C
+			                                        WHEN #{DIMS2} = '4' THEN PRIN_RMBR_METH_C
+			                                        WHEN #{DIMS2} = '5' THEN CONT_TRM_SECT_C
+			                                        WHEN #{DIMS2} = '6' THEN ALM_MRTG_TC
+			                                        WHEN #{DIMS2} = '7' THEN LN_DP_GD_C
+			                                    END)
+			               )    AS DIMS_CDNM2
+			             
+			             , CASE 
+			                WHEN #{DIMS2} = '1' THEN FIX_VAR_TC
+			                WHEN #{DIMS2} = '2' THEN '' || RATE_VAR_CYCL
+			                WHEN #{DIMS2} = '3' THEN ALM_BASE_RATE_C
+			                WHEN #{DIMS2} = '4' THEN PRIN_RMBR_METH_C
+			                WHEN #{DIMS2} = '5' THEN CONT_TRM_SECT_C
+			                WHEN #{DIMS2} = '6' THEN ALM_MRTG_TC
+			                WHEN #{DIMS2} = '7' THEN LN_DP_GD_C
+			               END  AS DIMS_C2
+				         </if>
+				         <if test="AMT_TC != null and AMT_TC == 1"> /* 잔액 */
+			             , MME_BAL  		AS AMT
+			             , MME_BAL_WT_RT    AS AMT_RT
+				         </if>
+				         <if test="AMT_TC != null and AMT_TC == 2"> /* 평잔 */
+			             , ABAL_AMT		    AS AMT
+			             , TRM_INT_AMT	    AS AMT_RT
+				         </if>
+				         , MTRT_SECT_SEQ
+		<choose>
+			<when test='BR_C != "ALL"'>
+				<choose>
+					<when test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+						FROM TRT_LQDT_GAP_SUM /*도지회별합산*/
+					</when>	
+					<otherwise>
+						FROM TRT_LQDT_GAP_TOT
+					</otherwise>
+				</choose>
+			</when>
+			<otherwise>
+				FROM TRT_LQDT_GAP_SUM /*전체조합*/
+			</otherwise>
+		</choose>  
+				     WHERE ALM_WORK_TC       = 'M'
+				       AND CUR_C             = 'KRW'
+				       AND ALM_MTRT_SECT_C   = '10'				 -- ALM만기구간코드
+				       AND FUTU_POT_SECT_CNT = '0'				 -- FUTU_POT_SECT_CNT(미래시점구간수)에 현재 값이 없다.
+				       -------------------------------/*▲고정*/
+				       AND BASE_DATE         = #{BASE_DATE} 
+				       AND CS_BHOR_REFL_YN   = #{C_BHOR_YN}      -- 고객행동포함   
+				       AND RATE_SNRO_NO      = #{RATE_SNRO}      -- 금리 시나리오
+				       <if test="NEW_CAP_QTY_TC == 0">           
+				       AND NEW_CAP_QTY_TC    = '0'				 -- 신규자금량(미포함)
+				       AND CAP_QTY_SNRO_NO   = '1'
+				       </if>
+				       <if test ="NEW_CAP_QTY_TC == 1">			 
+				       AND NEW_CAP_QTY_TC    = '1'               -- 신규자금량(포함)
+				       AND CAP_QTY_SNRO_NO   = #{FUNDS_SNRO}
+				       </if>
+					  
+				 	<if test="AC_BUSI_TC == '0000'">
+				 		AND AC_BUSI_TC IN('1105','1106','1107')
+				 	</if>
+				 	<if test="AC_BUSI_TC != '0000'">
+				 		AND AC_BUSI_TC = #{AC_BUSI_TC}
+				 	</if>
+					 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'">
+					 	AND BR_C = 'ALL' /*전체*/
+					 </if>
+					 <if test="JISO_INCLUDE == 'yes' and BLNG_HQ_BR_C != ''">   
+					 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{BR_C} ) 
+					 </if>
+					 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+					 	AND BR_C     = #{BR_C}
+					 </if>
+					 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+<!-- 					 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} ) -->
+					 	AND BR_C = #{BR_C}
+					 </if>
+					 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == '001'">
+						AND BR_C     = #{BR_C}
+					 </if>
+				)
+				GROUP BY
+				      BASE_DATE
+				    , ORG_CLAS_C  
+				    , ALM_WORK_TC
+				    , BR_C
+				    , ACCT_C
+				    , CUR_C
+				    , AC_BUSI_TC
+			        <if test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+			        , DIMS_CDNM1
+			        , DIMS_C1   
+			        </if>
+			        <if test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''"> 
+			        , DIMS_CDNM1
+			        , DIMS_C1   
+			        , DIMS_CDNM2
+			        , DIMS_C2   
+			        </if>
+				
+				
+		    )A
+		    ,
+		    (
+		    SELECT
+		           BASE_DATE
+		         , ORG_CLAS_C
+		         , BR_C
+		         , ACCT_C
+		         , AC_BUSI_TC
+		         <if test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+		         , DIMS_C1
+		         </if>
+		         <if test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+		         , DIMS_C1
+		         , DIMS_C2
+		         </if>
+		         , SUM(CAP_QTY_AMT)      				AS BASE_AMT       
+		         , SUM(CAP_QTY_AMT * APLY_RATE )   	    AS BASE_AMT_RT
+		      FROM
+		      (
+		      
+				    SELECT 
+				           BASE_DATE
+				         , ORG_CLAS_C
+				         , BR_C
+				         , ACCT_C
+						 /* 중앙회 조회 시 에만 발생  */
+					 	<if test="AC_BUSI_TC == '0000'">
+					     , '1105'	AS AC_BUSI_TC
+					 	</if>
+					 	<if test="AC_BUSI_TC != '0000'">
+					     , AC_BUSI_TC
+					 	</if>
+				         <if test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+				         , CASE
+				           		WHEN #{DIMS1} = '1' THEN '' || FIX_VAR_TC
+				           		WHEN #{DIMS1} = '2' THEN '' || RATE_VAR_CYCL
+				           		WHEN #{DIMS1} = '3' THEN '' || ALM_BASE_RATE_C
+				           		WHEN #{DIMS1} = '4' THEN '' || PRIN_RMBR_METH_C
+				           		WHEN #{DIMS1} = '5' THEN '' || CONT_TRM_SECT_C
+				           		WHEN #{DIMS1} = '6' THEN '' || ALM_MRTG_TC
+				           		WHEN #{DIMS1} = '7' THEN '' || LN_DP_GD_C
+				           END  AS DIMS_C1
+				         </if>
+				         <if test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+				         , CASE
+				           		WHEN #{DIMS1} = '1' THEN '' || FIX_VAR_TC
+				           		WHEN #{DIMS1} = '2' THEN '' || RATE_VAR_CYCL
+				           		WHEN #{DIMS1} = '3' THEN '' || ALM_BASE_RATE_C
+				           		WHEN #{DIMS1} = '4' THEN '' || PRIN_RMBR_METH_C
+				           		WHEN #{DIMS1} = '5' THEN '' || CONT_TRM_SECT_C
+				           		WHEN #{DIMS1} = '6' THEN '' || ALM_MRTG_TC
+				           		WHEN #{DIMS1} = '7' THEN '' || LN_DP_GD_C
+				           END  AS DIMS_C1
+				         , CASE
+				           		WHEN #{DIMS2} = '1' THEN '' || FIX_VAR_TC
+				           		WHEN #{DIMS2} = '2' THEN '' || RATE_VAR_CYCL
+				           		WHEN #{DIMS2} = '3' THEN '' || ALM_BASE_RATE_C
+				           		WHEN #{DIMS2} = '4' THEN '' || PRIN_RMBR_METH_C
+				           		WHEN #{DIMS2} = '5' THEN '' || CONT_TRM_SECT_C
+				           		WHEN #{DIMS2} = '6' THEN '' || ALM_MRTG_TC
+				           		WHEN #{DIMS2} = '7' THEN '' || LN_DP_GD_C
+				           END  AS DIMS_C2
+				         </if>
+				         , CAP_QTY_AMT             
+				         , APLY_RATE               
+				      FROM TST_CAPQ_TOT  /*통계_자금량집계*/
+				     WHERE BASE_DATE  = #{BASE_DATE}
+				       AND ORG_CLAS_C = #{ORG_CLAS_C}
+				       AND ALM_CAP_TC = #{AMT_TC}       -- 잔액 - 1, 월중평잔 - 2, 기중평잔 - 3
+				       AND MIS_COR_YN = 'N' 
+				       
+				 	<if test="AC_BUSI_TC == '0000'">
+				 		AND AC_BUSI_TC IN('1105','1106','1107')
+				 	</if>
+				 	<if test="AC_BUSI_TC != '0000'">
+				 		AND AC_BUSI_TC = #{AC_BUSI_TC}
+				 	</if>
+					 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == 'ALL'">
+					 </if>
+					 <if test="JISO_INCLUDE == 'yes' and BLNG_HQ_BR_C != ''">   
+					 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{BR_C} ) 
+					 </if>
+					 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C != ''"> 
+					 	AND BR_C     = #{BR_C}
+					 </if>
+					 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C != 'ALL' and BR_C != '001'">
+					 	AND BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C} )
+					 </if>
+					 <if test="JISO_INCLUDE == 'no' and BLNG_HQ_BR_C == '' and BR_C == '001'">
+						AND BR_C     = #{BR_C}
+					 </if>
+			 
+				)
+				GROUP BY BASE_DATE
+			           , ORG_CLAS_C
+			           , BR_C
+			           , ACCT_C
+			           , AC_BUSI_TC
+			           <if test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+			           , DIMS_C1
+			           </if>
+			           <if test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+			           , DIMS_C1
+			           , DIMS_C2
+			           </if>
+			 
+		    )B
+		    WHERE 1 = 1
+		      AND A.BASE_DATE (+)  = B.BASE_DATE   
+		      AND A.ORG_CLAS_C(+)  = B.ORG_CLAS_C
+		      AND A.BR_C      (+)  = B.BR_C        
+		      AND A.ACCT_C    (+)  = B.ACCT_C    
+		      AND A.AC_BUSI_TC(+)  = B.AC_BUSI_TC
+	         <if test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+	          AND A.DIMS_C1   (+)  = B.DIMS_C1   
+	         </if>
+	         <if test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''"> 
+	          AND A.DIMS_C1   (+)  = B.DIMS_C1   
+	          AND A.DIMS_C2   (+)  = B.DIMS_C2   
+	         </if>
+		) 
+		    
+		
+	
+		
+		SELECT
+		     <if test="LVL == 1"> 
+		        CASE 
+                    WHEN LVL1 = '자산'
+		            THEN LVL1||'(A)' 
+		            WHEN LVL1 = '부채' 
+		            THEN LVL1||'(B)'
+		            ELSE LVL1
+		        END     																		  			AS ACCT_NM1
+		     	<choose>
+		     		<when test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+				     , DECODE( GROUPING_ID( DIMS_CDNM1 ) , 1 , LVL1 || ' 소계', DIMS_CDNM1 ) 					AS DIMS_1
+				     , GROUPING_ID( DIMS_CDNM1 )                                               			    AS GRP_ID 
+		     		</when>
+		     		<when test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+				     , DECODE( GROUPING_ID( DIMS_CDNM1,DIMS_CDNM2 ) , 3 , LVL1 || ' 소계', DIMS_CDNM1 ) 	 	AS DIMS_1
+		     		 , DECODE( GROUPING_ID( DIMS_CDNM1,DIMS_CDNM2 ) , 1 , DIMS_CDNM1 || ' 소계', DIMS_CDNM2 ) AS DIMS_2
+				     , GROUPING_ID( DIMS_CDNM1,DIMS_CDNM2 ) 												AS GRP_ID 
+		     		</when>
+		     		<otherwise>
+				     , ''   				                                                                AS DIMS_1
+				     , ''					                                                                AS DIMS_2 
+		     		</otherwise>
+		     	</choose>
+		     </if>    		
+		     <if test="LVL == 2"> 
+		           LVL1																						 	 AS ACCT_NM1
+			     , DECODE( GROUPING_ID( LVL2 ) , 1,
+			        CASE 
+                        WHEN LVL1 = '자산'
+			            THEN '['||LVL1||'합계](A)' 
+			            WHEN LVL1 = '부채' 
+			            THEN '['||LVL1||'합계](B)'
+			            ELSE LVL1 || ' 소계' 
+			        END
+			       , LVL2 ) 	         																		 AS ACCT_NM2
+		     	<choose>
+		     		<when test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+				     , DECODE( GROUPING_ID( LVL2,DIMS_CDNM1 ) , 1 , LVL2 || ' 소계', DIMS_CDNM1 ) 			     AS DIMS_1
+				     , GROUPING_ID( LVL2,DIMS_CDNM1 )                                               			 AS GRP_ID 
+		     		</when>
+		     		<when test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+				     , DECODE( GROUPING_ID( LVL2,DIMS_CDNM1,DIMS_CDNM2 ) , 3 , LVL2 || ' 소계', DIMS_CDNM1 ) 		 AS DIMS_1
+		     		 , DECODE( GROUPING_ID( LVL2,DIMS_CDNM1,DIMS_CDNM2 ) , 1 , DIMS_CDNM1 || ' 소계', DIMS_CDNM2 ) AS DIMS_2
+				     , GROUPING_ID( LVL2,DIMS_CDNM1,DIMS_CDNM2 ) 												 AS GRP_ID 
+		     		</when>
+		     		<otherwise>
+				     , GROUPING_ID( LVL2 )                                                                       AS GRP_ID 
+				     , ''   				                                                                     AS DIMS_1
+				     , ''					                                                                     AS DIMS_2 
+		     		</otherwise>
+		     	</choose>
+		     </if>    																 
+		     <if test="LVL == 3"> 
+		           LVL1																						 	 	 AS ACCT_NM1
+			     , DECODE( GROUPING_ID( LVL2,LVL3 ) , 3,
+			        CASE 
+                        WHEN LVL1 = '자산'
+			            THEN '['||LVL1||'합계](A)' 
+			            WHEN LVL1 = '부채' 
+			            THEN '['||LVL1||'합계](B)'
+			            ELSE LVL1 || ' 소계' 
+			        END
+			       , LVL2 ) 	         																			  AS ACCT_NM2
+			     , DECODE( GROUPING_ID( LVL2,LVL3 ) , 1, LVL2 || ' 소계', LVL3 )               						  AS ACCT_NM3
+		     	<choose>
+		     		<when test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+				     , DECODE( GROUPING_ID( LVL2,LVL3,DIMS_CDNM1 ) , 1 , LVL3 || ' 소계', DIMS_CDNM1 ) 				  AS DIMS_1
+				     , GROUPING_ID( LVL2,LVL3,DIMS_CDNM1 )                                               			  AS GRP_ID 
+		     		</when>
+		     		<when test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+				     , DECODE( GROUPING_ID( LVL2,LVL3,DIMS_CDNM1,DIMS_CDNM2 ) , 3 , LVL3 || ' 소계', DIMS_CDNM1 ) 	  AS DIMS_1
+		     		 , DECODE( GROUPING_ID( LVL2,LVL3,DIMS_CDNM1,DIMS_CDNM2 ) , 1 , DIMS_CDNM1 || ' 소계', DIMS_CDNM2 ) AS DIMS_2
+				     , GROUPING_ID( LVL2,LVL3,DIMS_CDNM1,DIMS_CDNM2 ) 												  AS GRP_ID 
+		     		</when>
+		     		<otherwise>
+				     , GROUPING_ID( LVL2,LVL3 )                                                                        AS GRP_ID 
+				     , ''   				  	                                                                       AS DIMS_1
+				     , ''					  		                                                                   AS DIMS_2 
+		     		</otherwise>
+		     	</choose>
+		     </if>  																 
+		     <if test="LVL == 4"> 
+		           LVL1																						 	 		   AS ACCT_NM1
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4 ) , 7,
+			        CASE 
+                        WHEN LVL1 = '자산'
+			            THEN '['||LVL1||'합계](A)' 
+			            WHEN LVL1 = '부채' 
+			            THEN '['||LVL1||'합계](B)'
+			            ELSE LVL1 || ' 소계' 
+			        END
+			       , LVL2 ) 	         																				   AS ACCT_NM2
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4 ) , 3, LVL2 || ' 소계', LVL3 )               						   AS ACCT_NM3
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4 ) , 1, LVL3 || ' 소계', LVL4 )               						   AS ACCT_NM4
+		     	<choose>
+		     		<when test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+				     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,DIMS_CDNM1 ) , 1 , LVL4 || ' 소계', DIMS_CDNM1 ) 				   AS DIMS_1
+				     , GROUPING_ID( LVL2,LVL3,LVL4,DIMS_CDNM1 )                                               			   AS GRP_ID 
+		     		</when>
+		     		<when test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+				     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,DIMS_CDNM1,DIMS_CDNM2 ) , 3 , LVL4 || ' 소계', DIMS_CDNM1 ) 	   AS DIMS_1
+		     		 , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,DIMS_CDNM1,DIMS_CDNM2 ) , 1 , DIMS_CDNM1 || ' 소계', DIMS_CDNM2 ) AS DIMS_2
+				     , GROUPING_ID( LVL2,LVL3,LVL4,DIMS_CDNM1,DIMS_CDNM2 ) 												   AS GRP_ID 
+		     		</when>
+		     		<otherwise>
+				     , GROUPING_ID( LVL2,LVL3,LVL4 )                                                                       AS GRP_ID 
+				     , ''   				  				                                                               AS DIMS_1
+				     , ''					  				                                                               AS DIMS_2 
+		     		</otherwise>
+		     	</choose>
+		     </if>  																 
+		     <if test="LVL == 5"> 
+		           LVL1																						 	 			    AS ACCT_NM1
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ) , 15,
+			        CASE 
+                        WHEN LVL1 = '자산'
+			            THEN '['||LVL1||'합계](A)' 
+			            WHEN LVL1 = '부채' 
+			            THEN '['||LVL1||'합계](B)'
+			            ELSE LVL1 || ' 소계' 
+			        END
+			       , LVL2 ) 	         																						AS ACCT_NM2
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ) , 7 , LVL2 || ' 소계', LVL3 )              				    		AS ACCT_NM3
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ) , 3 , LVL3 || ' 소계', LVL4 )               					    AS ACCT_NM4
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5 ) , 1 , LVL4 || ' 소계', LVL5 )               					    AS ACCT_NM5
+		     	<choose>
+		     		<when test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+				     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,DIMS_CDNM1 ) , 1 , LVL5 || ' 소계', DIMS_CDNM1 ) 					AS DIMS_1
+				     , GROUPING_ID( LVL2,LVL3,LVL4,LVL5,DIMS_CDNM1 )                                               			    AS GRP_ID 
+		     		</when>
+		     		<when test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+				     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,DIMS_CDNM1,DIMS_CDNM2 ) , 3 , LVL5    || ' 소계', DIMS_CDNM1 ) 	AS DIMS_1
+		     		 , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,DIMS_CDNM1,DIMS_CDNM2 ) , 1 , DIMS_CDNM1 || ' 소계', DIMS_CDNM2 ) AS DIMS_2
+				     , GROUPING_ID( LVL2,LVL3,LVL4,LVL5,DIMS_CDNM1,DIMS_CDNM2 ) 											    AS GRP_ID 
+		     		</when>
+		     		<otherwise>
+				     , GROUPING_ID( LVL2,LVL3,LVL4,LVL5 )                                                                       AS GRP_ID 
+				     , ''   				  						                                                            AS DIMS_1
+				     , ''					  						                                                            AS DIMS_2 
+		     		</otherwise>
+		     	</choose>
+		     </if>  																  
+		     <if test="LVL == 6"> 
+		           LVL1																						 	 					 AS ACCT_NM1
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ) , 31,
+			        CASE 
+                        WHEN LVL1 = '자산'
+			            THEN '['||LVL1||'합계](A)' 
+			            WHEN LVL1 = '부채' 
+			            THEN '['||LVL1||'합계](B)'
+			            ELSE LVL1 || ' 소계' 
+			        END
+			       , LVL2 ) 	         																						      AS ACCT_NM2
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ) , 15, LVL2 || ' 소계', LVL3 )               					      AS ACCT_NM3
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ) , 7 , LVL3 || ' 소계', LVL4 )               					      AS ACCT_NM4
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ) , 3 , LVL4 || ' 소계', LVL5 )               					      AS ACCT_NM5
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 ) , 1 , LVL5 || ' 소계', LVL6 )              					      AS ACCT_NM6
+		     	<choose>
+		     		<when test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+				     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,DIMS_CDNM1 ) , 1 , LVL6 || ' 소계', DIMS_CDNM1 ) 				  AS DIMS_1
+				     , GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,DIMS_CDNM1 )                                               			  AS GRP_ID 
+		     		</when>
+		     		<when test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+				     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,DIMS_CDNM1,DIMS_CDNM2 ) , 3 , LVL6 	 || ' 소계', DIMS_CDNM1 )   AS DIMS_1
+		     		 , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,DIMS_CDNM1,DIMS_CDNM2 ) , 1 , DIMS_CDNM1 || ' 소계', DIMS_CDNM2 )  AS DIMS_2
+				     , GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,DIMS_CDNM1,DIMS_CDNM2 ) 												  AS GRP_ID 
+		     		</when>
+		     		<otherwise>
+				     , GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6 )                                                                        AS GRP_ID 
+				     , ''   				  								                                                          AS DIMS_1
+				     , ''					  								                                                          AS DIMS_2 
+		     		</otherwise>
+		     	</choose>
+		     </if>  																 
+		     <if test="LVL == 7"> 
+		           LVL1																						 	 						 AS ACCT_NM1
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ) , 63,
+			        CASE 
+                        WHEN LVL1 = '자산'
+			            THEN '['||LVL1||'합계](A)' 
+			            WHEN LVL1 = '부채' 
+			            THEN '['||LVL1||'합계](B)'
+			            ELSE LVL1 || ' 소계' 
+			        END
+			       , LVL2 ) 	         																						         AS ACCT_NM2
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ) , 31, LVL2 || ' 소계', LVL3 )               						 AS ACCT_NM3
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ) , 15, LVL3 || ' 소계', LVL4 )              						 AS ACCT_NM4
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ) , 7 , LVL4 || ' 소계', LVL5 )               						 AS ACCT_NM5
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ) , 3 , LVL5 || ' 소계', LVL6 )               						 AS ACCT_NM6
+			     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 ) , 1 , LVL6 || ' 소계', LVL7 )               						 AS ACCT_NM7
+		     	<choose>
+		     		<when test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+				     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7,DIMS_CDNM1 ) , 1 , LVL7 || ' 소계', DIMS_CDNM1 ) 			     AS DIMS_1
+				     , GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7,DIMS_CDNM1 )                                               			 AS GRP_ID 
+		     		</when>
+		     		<when test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+				     , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7,DIMS_CDNM1,DIMS_CDNM2 ) , 3 , LVL7    || ' 소계', DIMS_CDNM1 )    AS DIMS_1
+		     		 , DECODE( GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7,DIMS_CDNM1,DIMS_CDNM2 ) , 1 , DIMS_CDNM1 || ' 소계', DIMS_CDNM2 ) AS DIMS_2
+				     , GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7,DIMS_CDNM1,DIMS_CDNM2 ) 												  AS GRP_ID 
+		     		</when>
+		     		<otherwise>
+				     , GROUPING_ID( LVL2,LVL3,LVL4,LVL5,LVL6,LVL7 )                                                                       AS GRP_ID 
+				     , ''   				  										                                                      AS DIMS_1
+				     , ''					  										                                                      AS DIMS_2 
+		     		</otherwise>
+		     	</choose>
+		     </if>    
+		     -------------------------------------------------------------------------------------------▼ 기준월
+		     , SUM(VIEW_AMT_0)                                                                               		   AS BASE_AMT 	  -- 기준월 잔액
+		     , CASE WHEN NVL(SUM(CAL_AMT_0), 0) = 0 THEN 0 ELSE ROUND( SUM(AMT_RT_0) / SUM(CAL_AMT_0) ,2) END          AS BASE_AMT_RT -- 기준월 이율
+		     -------------------------------------------------------------------------------------------▼ 1~24개월
+		     , SUM(VIEW_AMT_1)                                                                               		   AS AMT1 	  
+		     , CASE WHEN NVL(SUM(CAL_AMT_1), 0) = 0 THEN 0 ELSE ROUND( SUM(AMT_RT_1) / SUM(CAL_AMT_1) ,2) END          AS AMT_RT1 
+		     , SUM(VIEW_AMT_2)                                                                               		   AS AMT2 	  
+		     , CASE WHEN NVL(SUM(CAL_AMT_2), 0) = 0 THEN 0 ELSE ROUND( SUM(AMT_RT_2) / SUM(CAL_AMT_2) ,2) END          AS AMT_RT2 
+		     , SUM(VIEW_AMT_3)                                                                               		   AS AMT3 	  
+		     , CASE WHEN NVL(SUM(CAL_AMT_3), 0) = 0 THEN 0 ELSE ROUND( SUM(AMT_RT_3) / SUM(CAL_AMT_3) ,2) END          AS AMT_RT3 
+		     , SUM(VIEW_AMT_4)                                                                               		   AS AMT4 	  
+		     , CASE WHEN NVL(SUM(CAL_AMT_4), 0) = 0 THEN 0 ELSE ROUND( SUM(AMT_RT_4) / SUM(CAL_AMT_4) ,2) END          AS AMT_RT4 
+		     , SUM(VIEW_AMT_5)                                                                               		   AS AMT5 	  
+		     , CASE WHEN NVL(SUM(CAL_AMT_5), 0) = 0 THEN 0 ELSE ROUND( SUM(AMT_RT_5) / SUM(CAL_AMT_5) ,2) END          AS AMT_RT5 
+		     , SUM(VIEW_AMT_6)                                                                               		   AS AMT6 	  
+		     , CASE WHEN NVL(SUM(CAL_AMT_6), 0) = 0 THEN 0 ELSE ROUND( SUM(AMT_RT_6) / SUM(CAL_AMT_6) ,2) END          AS AMT_RT6 
+		     , SUM(VIEW_AMT_7)                                                                               		   AS AMT7 	  
+		     , CASE WHEN NVL(SUM(CAL_AMT_7), 0) = 0 THEN 0 ELSE ROUND( SUM(AMT_RT_7) / SUM(CAL_AMT_7) ,2) END          AS AMT_RT7 
+		     , SUM(VIEW_AMT_8)                                                                               		   AS AMT8 	  
+		     , CASE WHEN NVL(SUM(CAL_AMT_8), 0) = 0 THEN 0 ELSE ROUND( SUM(AMT_RT_8) / SUM(CAL_AMT_8) ,2) END          AS AMT_RT8 
+		     , SUM(VIEW_AMT_9)                                                                               		   AS AMT9 	  
+		     , CASE WHEN NVL(SUM(CAL_AMT_9), 0) = 0 THEN 0 ELSE ROUND( SUM(AMT_RT_9) / SUM(CAL_AMT_9) ,2) END          AS AMT_RT9 
+		     , SUM(VIEW_AMT_10)                                                                               		   AS AMT10	  
+		     , CASE WHEN NVL(SUM(CAL_AMT_10), 0) = 0 THEN 0 ELSE ROUND( SUM(AMT_RT_10) / SUM(CAL_AMT_10) ,2) END       AS AMT_RT10 
+		     , SUM(VIEW_AMT_11)                                                                               		   AS AMT11 	  
+		     , CASE WHEN NVL(SUM(CAL_AMT_11), 0) = 0 THEN 0 ELSE ROUND( SUM(AMT_RT_11) / SUM(CAL_AMT_11) ,2) END       AS AMT_RT11 
+		     , SUM(VIEW_AMT_12)                                                                               		   AS AMT12 	  
+		     , CASE WHEN NVL(SUM(CAL_AMT_12), 0) = 0 THEN 0 ELSE ROUND( SUM(AMT_RT_12) / SUM(CAL_AMT_12) ,2) END       AS AMT_RT12 
+		     , SUM(VIEW_AMT_13)                                                                               		   AS AMT13 	  
+		     , CASE WHEN NVL(SUM(CAL_AMT_13), 0) = 0 THEN 0 ELSE ROUND( SUM(AMT_RT_13) / SUM(CAL_AMT_13) ,2) END       AS AMT_RT13 
+		     , SUM(VIEW_AMT_14)                                                                               		   AS AMT14 	  
+		     , CASE WHEN NVL(SUM(CAL_AMT_14), 0) = 0 THEN 0 ELSE ROUND( SUM(AMT_RT_14) / SUM(CAL_AMT_14) ,2) END       AS AMT_RT14 
+		     , SUM(VIEW_AMT_15)                                                                               		   AS AMT15 	  
+		     , CASE WHEN NVL(SUM(CAL_AMT_15), 0) = 0 THEN 0 ELSE ROUND( SUM(AMT_RT_15) / SUM(CAL_AMT_15) ,2) END       AS AMT_RT15 
+		     , SUM(VIEW_AMT_16)                                                                               		   AS AMT16 	  
+		     , CASE WHEN NVL(SUM(CAL_AMT_16), 0) = 0 THEN 0 ELSE ROUND( SUM(AMT_RT_16) / SUM(CAL_AMT_16) ,2) END       AS AMT_RT16 
+		     , SUM(VIEW_AMT_17)                                                                               		   AS AMT17 	  
+		     , CASE WHEN NVL(SUM(CAL_AMT_17), 0) = 0 THEN 0 ELSE ROUND( SUM(AMT_RT_17) / SUM(CAL_AMT_17) ,2) END       AS AMT_RT17 
+		     , SUM(VIEW_AMT_18)                                                                               		   AS AMT18 	  
+		     , CASE WHEN NVL(SUM(CAL_AMT_18), 0) = 0 THEN 0 ELSE ROUND( SUM(AMT_RT_18) / SUM(CAL_AMT_18) ,2) END       AS AMT_RT18 
+		     , SUM(VIEW_AMT_24)                                                                               		   AS AMT24 	  
+		     , CASE WHEN NVL(SUM(CAL_AMT_24), 0) = 0 THEN 0 ELSE ROUND( SUM(AMT_RT_24) / SUM(CAL_AMT_24) ,2) END       AS AMT_RT24  
+		 FROM
+		 (
+
+		    SELECT
+		          B.LVL1 
+		        <if test="LVL == 2">
+		        , B.LVL2
+		        </if>
+		        <if test="LVL == 3">
+		        , B.LVL2
+		        , B.LVL3
+		        </if>
+		        <if test="LVL == 4">
+		        , B.LVL2
+		        , B.LVL3
+		        , B.LVL4
+		        </if>
+		        <if test="LVL == 5">
+		        , B.LVL2
+		        , B.LVL3
+		        , B.LVL4
+		        , B.LVL5
+		        </if>
+		        <if test="LVL == 6">
+		        , B.LVL2
+		        , B.LVL3
+		        , B.LVL4
+		        , B.LVL5
+		        , B.LVL6
+		        </if>
+		        <if test="LVL == 7">
+		        , B.LVL2
+		        , B.LVL3
+		        , B.LVL4
+		        , B.LVL5
+		        , B.LVL6
+		        , B.LVL7
+		     	</if>
+		   
+		        <if test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+		        , A.DIMS_CDNM1
+		        </if>
+		        <if test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+		        , A.DIMS_CDNM1
+		        , A.DIMS_CDNM2
+		        </if>
+		        -------------기준월데이터(잔액)
+		        , SUM(A.BASE_AMT   )                                       AS CAL_AMT_0             
+		        , SUM(A.BASE_AMT_RT)                                       AS AMT_RT_0 
+		        -------------구간별데이터(잔액)                               
+		        , SUM(A.CAL_VIEW_AMT_1 )                                   AS CAL_AMT_1 
+		        , SUM(A.CAL_VIEW_AMT_2 )                                   AS CAL_AMT_2 
+		        , SUM(A.CAL_VIEW_AMT_3 )                                   AS CAL_AMT_3 
+		        , SUM(A.CAL_VIEW_AMT_4 )                                   AS CAL_AMT_4 
+		        , SUM(A.CAL_VIEW_AMT_5 )                                   AS CAL_AMT_5 
+		        , SUM(A.CAL_VIEW_AMT_6 )                                   AS CAL_AMT_6 
+		        , SUM(A.CAL_VIEW_AMT_7 )                                   AS CAL_AMT_7 
+		        , SUM(A.CAL_VIEW_AMT_8 )                                   AS CAL_AMT_8 
+		        , SUM(A.CAL_VIEW_AMT_9 )                                   AS CAL_AMT_9 
+		        , SUM(A.CAL_VIEW_AMT_10)                                   AS CAL_AMT_10
+		        , SUM(A.CAL_VIEW_AMT_11)                                   AS CAL_AMT_11
+		        , SUM(A.CAL_VIEW_AMT_12)                                   AS CAL_AMT_12
+		        , SUM(A.CAL_VIEW_AMT_13)                                   AS CAL_AMT_13
+		        , SUM(A.CAL_VIEW_AMT_14)                                   AS CAL_AMT_14
+		        , SUM(A.CAL_VIEW_AMT_15)                                   AS CAL_AMT_15
+		        , SUM(A.CAL_VIEW_AMT_16)                                   AS CAL_AMT_16
+		        , SUM(A.CAL_VIEW_AMT_17)                                   AS CAL_AMT_17
+		        , SUM(A.CAL_VIEW_AMT_18)                                   AS CAL_AMT_18
+		        , SUM(A.CAL_VIEW_AMT_24)                                   AS CAL_AMT_24
+		        --------------------                                       
+		        , SUM(A.AMT_RT_1 )                                         AS AMT_RT_1 
+		        , SUM(A.AMT_RT_2 )                                         AS AMT_RT_2 
+		        , SUM(A.AMT_RT_3 )                                         AS AMT_RT_3 
+		        , SUM(A.AMT_RT_4 )                                         AS AMT_RT_4 
+		        , SUM(A.AMT_RT_5 )                                         AS AMT_RT_5 
+		        , SUM(A.AMT_RT_6 )                                         AS AMT_RT_6 
+		        , SUM(A.AMT_RT_7 )                                         AS AMT_RT_7 
+		        , SUM(A.AMT_RT_8 )                                         AS AMT_RT_8 
+		        , SUM(A.AMT_RT_9 )                                         AS AMT_RT_9 
+		        , SUM(A.AMT_RT_10)                                         AS AMT_RT_10
+		        , SUM(A.AMT_RT_11)                                         AS AMT_RT_11
+		        , SUM(A.AMT_RT_12)                                         AS AMT_RT_12
+		        , SUM(A.AMT_RT_13)                                         AS AMT_RT_13
+		        , SUM(A.AMT_RT_14)                                         AS AMT_RT_14
+		        , SUM(A.AMT_RT_15)                                         AS AMT_RT_15
+		        , SUM(A.AMT_RT_16)                                         AS AMT_RT_16
+		        , SUM(A.AMT_RT_17)                                         AS AMT_RT_17
+		        , SUM(A.AMT_RT_18)                                         AS AMT_RT_18
+		        , SUM(A.AMT_RT_24)                                         AS AMT_RT_24
+		        --------------------화면용 잔액
+		        , CASE WHEN NVL(SUM(A.BASE_AMT   )    ,0) = 0 THEN 0 ELSE ROUND( SUM(A.BASE_AMT   )     / TO_NUMBER(#{AMT_UNIT}) ) END AS VIEW_AMT_0  
+		        , CASE WHEN NVL(SUM(A.CAL_VIEW_AMT_1 ),0) = 0 THEN 0 ELSE ROUND( SUM(A.CAL_VIEW_AMT_1 ) / TO_NUMBER(#{AMT_UNIT}) ) END AS VIEW_AMT_1 
+		        , CASE WHEN NVL(SUM(A.CAL_VIEW_AMT_2 ),0) = 0 THEN 0 ELSE ROUND( SUM(A.CAL_VIEW_AMT_2 ) / TO_NUMBER(#{AMT_UNIT}) ) END AS VIEW_AMT_2 
+		        , CASE WHEN NVL(SUM(A.CAL_VIEW_AMT_3 ),0) = 0 THEN 0 ELSE ROUND( SUM(A.CAL_VIEW_AMT_3 ) / TO_NUMBER(#{AMT_UNIT}) ) END AS VIEW_AMT_3 
+		        , CASE WHEN NVL(SUM(A.CAL_VIEW_AMT_4 ),0) = 0 THEN 0 ELSE ROUND( SUM(A.CAL_VIEW_AMT_4 ) / TO_NUMBER(#{AMT_UNIT}) ) END AS VIEW_AMT_4 
+		        , CASE WHEN NVL(SUM(A.CAL_VIEW_AMT_5 ),0) = 0 THEN 0 ELSE ROUND( SUM(A.CAL_VIEW_AMT_5 ) / TO_NUMBER(#{AMT_UNIT}) ) END AS VIEW_AMT_5 
+		        , CASE WHEN NVL(SUM(A.CAL_VIEW_AMT_6 ),0) = 0 THEN 0 ELSE ROUND( SUM(A.CAL_VIEW_AMT_6 ) / TO_NUMBER(#{AMT_UNIT}) ) END AS VIEW_AMT_6 
+		        , CASE WHEN NVL(SUM(A.CAL_VIEW_AMT_7 ),0) = 0 THEN 0 ELSE ROUND( SUM(A.CAL_VIEW_AMT_7 ) / TO_NUMBER(#{AMT_UNIT}) ) END AS VIEW_AMT_7 
+		        , CASE WHEN NVL(SUM(A.CAL_VIEW_AMT_8 ),0) = 0 THEN 0 ELSE ROUND( SUM(A.CAL_VIEW_AMT_8 ) / TO_NUMBER(#{AMT_UNIT}) ) END AS VIEW_AMT_8 
+		        , CASE WHEN NVL(SUM(A.CAL_VIEW_AMT_9 ),0) = 0 THEN 0 ELSE ROUND( SUM(A.CAL_VIEW_AMT_9 ) / TO_NUMBER(#{AMT_UNIT}) ) END AS VIEW_AMT_9 
+		        , CASE WHEN NVL(SUM(A.CAL_VIEW_AMT_10),0) = 0 THEN 0 ELSE ROUND( SUM(A.CAL_VIEW_AMT_10) / TO_NUMBER(#{AMT_UNIT}) ) END AS VIEW_AMT_10
+		        , CASE WHEN NVL(SUM(A.CAL_VIEW_AMT_11),0) = 0 THEN 0 ELSE ROUND( SUM(A.CAL_VIEW_AMT_11) / TO_NUMBER(#{AMT_UNIT}) ) END AS VIEW_AMT_11
+		        , CASE WHEN NVL(SUM(A.CAL_VIEW_AMT_12),0) = 0 THEN 0 ELSE ROUND( SUM(A.CAL_VIEW_AMT_12) / TO_NUMBER(#{AMT_UNIT}) ) END AS VIEW_AMT_12
+		        , CASE WHEN NVL(SUM(A.CAL_VIEW_AMT_13),0) = 0 THEN 0 ELSE ROUND( SUM(A.CAL_VIEW_AMT_13) / TO_NUMBER(#{AMT_UNIT}) ) END AS VIEW_AMT_13
+		        , CASE WHEN NVL(SUM(A.CAL_VIEW_AMT_14),0) = 0 THEN 0 ELSE ROUND( SUM(A.CAL_VIEW_AMT_14) / TO_NUMBER(#{AMT_UNIT}) ) END AS VIEW_AMT_14
+		        , CASE WHEN NVL(SUM(A.CAL_VIEW_AMT_15),0) = 0 THEN 0 ELSE ROUND( SUM(A.CAL_VIEW_AMT_15) / TO_NUMBER(#{AMT_UNIT}) ) END AS VIEW_AMT_15
+		        , CASE WHEN NVL(SUM(A.CAL_VIEW_AMT_16),0) = 0 THEN 0 ELSE ROUND( SUM(A.CAL_VIEW_AMT_16) / TO_NUMBER(#{AMT_UNIT}) ) END AS VIEW_AMT_16
+		        , CASE WHEN NVL(SUM(A.CAL_VIEW_AMT_17),0) = 0 THEN 0 ELSE ROUND( SUM(A.CAL_VIEW_AMT_17) / TO_NUMBER(#{AMT_UNIT}) ) END AS VIEW_AMT_17
+		        , CASE WHEN NVL(SUM(A.CAL_VIEW_AMT_18),0) = 0 THEN 0 ELSE ROUND( SUM(A.CAL_VIEW_AMT_18) / TO_NUMBER(#{AMT_UNIT}) ) END AS VIEW_AMT_18
+		        , CASE WHEN NVL(SUM(A.CAL_VIEW_AMT_24),0) = 0 THEN 0 ELSE ROUND( SUM(A.CAL_VIEW_AMT_24) / TO_NUMBER(#{AMT_UNIT}) ) END AS VIEW_AMT_24
+		        --------------------
+		        , MAX(B.PRNT_ORD1)                                         AS PRNT_ORD1
+		        <if test="LVL == 2">                                   
+		        , MAX(B.PRNT_ORD2)                                         AS PRNT_ORD2
+		        </if>                                  
+		        <if test="LVL == 3">                                   
+		        , MAX(B.PRNT_ORD2)                                         AS PRNT_ORD2
+		        , MAX(B.PRNT_ORD3)                                         AS PRNT_ORD3
+		        </if>                                  
+		        <if test="LVL == 4">                                   
+		        , MAX(B.PRNT_ORD2)                                         AS PRNT_ORD2
+		        , MAX(B.PRNT_ORD3)                                         AS PRNT_ORD3
+		        , MAX(B.PRNT_ORD4)                                         AS PRNT_ORD4
+		        </if>                                  
+		        <if test="LVL == 5">                                   
+		        , MAX(B.PRNT_ORD2)                                         AS PRNT_ORD2
+		        , MAX(B.PRNT_ORD3)                                         AS PRNT_ORD3
+		        , MAX(B.PRNT_ORD4)                                         AS PRNT_ORD4
+		        , MAX(B.PRNT_ORD5)                                         AS PRNT_ORD5
+		        </if>                                  
+		        <if test="LVL == 6">                                   
+		        , MAX(B.PRNT_ORD2)                                         AS PRNT_ORD2
+		        , MAX(B.PRNT_ORD3)                                         AS PRNT_ORD3
+		        , MAX(B.PRNT_ORD4)                                         AS PRNT_ORD4
+		        , MAX(B.PRNT_ORD5)                                         AS PRNT_ORD5
+		        , MAX(B.PRNT_ORD6)                                         AS PRNT_ORD6
+		        </if>                                  
+		        <if test="LVL == 7">                                   
+		        , MAX(B.PRNT_ORD2)                                         AS PRNT_ORD2
+		        , MAX(B.PRNT_ORD3)                                         AS PRNT_ORD3
+		        , MAX(B.PRNT_ORD4)                                         AS PRNT_ORD4
+		        , MAX(B.PRNT_ORD5)                                         AS PRNT_ORD5
+		        , MAX(B.PRNT_ORD6)                                         AS PRNT_ORD6
+		        , MAX(B.PRNT_ORD7)                                         AS PRNT_ORD7
+		     	</if>
+		   
+		        <if test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+		        , MAX(TO_NUMBER(A.DIMS_C1))                                AS PRNT_ORD8
+		        </if>
+		        <if test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+		        , MAX(TO_NUMBER(A.DIMS_C1))                                AS PRNT_ORD8
+		        , MAX(TO_NUMBER(A.DIMS_C2))                                AS PRNT_ORD9
+		        </if>
+		    FROM TEMP A,
+		    (
+		        SELECT 
+		              LEVEL AS LVL
+		            , SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%') AS ACCT_C_NM_PATH
+		            , REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 1 )                      AS LVL1
+		            , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 2 ),TRIM(ACCT_C_NM)) AS LVL2
+		            , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 3 ),TRIM(ACCT_C_NM)) AS LVL3
+		            , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 4 ),TRIM(ACCT_C_NM)) AS LVL4
+		            , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 5 ),TRIM(ACCT_C_NM)) AS LVL5
+		            , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 6 ),TRIM(ACCT_C_NM)) AS LVL6
+		            , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 7 ),TRIM(ACCT_C_NM)) AS LVL7
+		            , TRIM(ACCT_C_NM)
+		            , ORG_CLAS_C
+		            , ACCT_C
+		            , UP_ACCT_C
+		            , AC_BUSI_TC
+		            , TO_NUMBER(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 1 ) )                           AS PRNT_ORD1
+		            , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 2 ),TRIM(PRNT_ORD)))        AS PRNT_ORD2
+		            , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 3 ),TRIM(PRNT_ORD)))        AS PRNT_ORD3
+		            , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 4 ),TRIM(PRNT_ORD)))        AS PRNT_ORD4
+		            , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 5 ),TRIM(PRNT_ORD)))        AS PRNT_ORD5
+		            , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 6 ),TRIM(PRNT_ORD)))        AS PRNT_ORD6
+		            , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 7 ),TRIM(PRNT_ORD)))        AS PRNT_ORD7
+		        FROM TSY_ACCT_MSTR_MNG
+		        WHERE BASE_DATE = (SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE &lt;= #{BASE_DATE})
+		          AND ORG_CLAS_C = #{ORG_CLAS_C}
+		       <if test="AC_BUSI_TC != null and AC_BUSI_TC != '' and AC_BUSI_TC != '0000'">
+		       	  AND AC_BUSI_TC = #{AC_BUSI_TC} /*회계구분*/
+		       </if>
+		       <if test="AC_BUSI_TC == '0000'">
+		       	  AND AC_BUSI_TC = '1105'        /*전체합산인 경우 '1105'로 보기 */
+		       </if>
+		        START WITH UP_ACCT_C = '0000000'
+		        CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+		    ) B
+		    WHERE 1 = 1
+		      AND A.ACCT_C     = B.ACCT_C
+		      AND A.ORG_CLAS_C = B.ORG_CLAS_C
+		      AND A.AC_BUSI_TC = B.AC_BUSI_TC
+		    GROUP BY
+		          B.LVL1 
+		        <if test="LVL == 2">
+		        , B.LVL2
+		        </if>
+		        <if test="LVL == 3">
+		        , B.LVL2
+		        , B.LVL3
+		        </if>
+		        <if test="LVL == 4">
+		        , B.LVL2
+		        , B.LVL3
+		        , B.LVL4
+		        </if>
+		        <if test="LVL == 5">
+		        , B.LVL2
+		        , B.LVL3
+		        , B.LVL4
+		        , B.LVL5
+		        </if>
+		        <if test="LVL == 6">
+		        , B.LVL2
+		        , B.LVL3
+		        , B.LVL4
+		        , B.LVL5
+		        , B.LVL6
+		        </if>
+		        <if test="LVL == 7">
+		        , B.LVL2
+		        , B.LVL3
+		        , B.LVL4
+		        , B.LVL5
+		        , B.LVL6
+		        , B.LVL7
+		     </if>
+		     
+	         <if test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+	         , A.DIMS_CDNM1
+	         </if>
+	         <if test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+	         , A.DIMS_CDNM1
+	         , A.DIMS_CDNM2
+	         </if>
+		)
+		GROUP BY
+			  LVL1
+		<if test="LVL == 1"> 
+	     	<choose>
+	     		<when test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+				, ROLLUP( DIMS_CDNM1 )	 
+				ORDER BY
+				      MAX(PRNT_ORD1)
+				    , MAX(PRNT_ORD8)     
+				    , GRP_ID
+	     		</when>
+	     		<when test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+			    , ROLLUP( DIMS_CDNM1, DIMS_CDNM2 )	 
+				ORDER BY
+				      MAX(PRNT_ORD1)
+				    , MAX(PRNT_ORD8)    
+				    , MAX(PRNT_ORD9)    
+				    , GRP_ID
+	     		</when>
+	     		<otherwise>     		 
+				ORDER BY
+				      MAX(PRNT_ORD1)
+	     		</otherwise>
+	     	</choose>
+		</if> 
+		<if test="LVL == 2"> 
+	     	<choose>
+	     		<when test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+			    , ROLLUP( LVL2, DIMS_CDNM1 )
+				ORDER BY
+				      MAX(PRNT_ORD1)
+				    , MAX(PRNT_ORD2)
+				    , MAX(PRNT_ORD8)     
+				    , GRP_ID
+	     		</when>
+	     		<when test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+			    , ROLLUP( LVL2, DIMS_CDNM1, DIMS_CDNM2 )
+				ORDER BY
+				      MAX(PRNT_ORD1)
+				    , MAX(PRNT_ORD2)
+				    , MAX(PRNT_ORD8)     
+				    , MAX(PRNT_ORD9)    
+				    , GRP_ID
+	     		</when>
+	     		<otherwise>
+	     		, ROLLUP( LVL2 ) 
+				ORDER BY
+				      MAX(PRNT_ORD1)
+				    , MAX(PRNT_ORD2)
+				    , GRP_ID
+	     		</otherwise>
+	     	</choose>
+		</if> 
+		<if test="LVL == 3"> 
+	     	<choose>
+	     		<when test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+			    , ROLLUP( LVL2, LVL3, DIMS_CDNM1 )
+				ORDER BY
+				      MAX(PRNT_ORD1)
+				    , MAX(PRNT_ORD2)
+				    , MAX(PRNT_ORD3)
+				    , MAX(PRNT_ORD8)     
+				    , GRP_ID
+	     		</when>
+	     		<when test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+			    , ROLLUP( LVL2, LVL3, DIMS_CDNM1, DIMS_CDNM2 )
+				ORDER BY
+				      MAX(PRNT_ORD1)
+				    , MAX(PRNT_ORD2)
+				    , MAX(PRNT_ORD3)
+				    , MAX(PRNT_ORD8)     
+				    , MAX(PRNT_ORD9)    
+				    , GRP_ID
+	     		</when>
+	     		<otherwise>
+	     		, ROLLUP( LVL2, LVL3 ) 
+				ORDER BY
+				      MAX(PRNT_ORD1)
+				    , MAX(PRNT_ORD2)
+				    , MAX(PRNT_ORD3)
+				    , GRP_ID
+	     		</otherwise>
+	     	</choose>
+		</if> 
+		<if test="LVL == 4"> 
+	     	<choose>
+	     		<when test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+			    , ROLLUP( LVL2, LVL3, LVL4, DIMS_CDNM1 )
+				ORDER BY
+				      MAX(PRNT_ORD1)
+				    , MAX(PRNT_ORD2)
+				    , MAX(PRNT_ORD3)
+				    , MAX(PRNT_ORD4)
+				    , MAX(PRNT_ORD8)     
+				    , GRP_ID
+	     		</when>
+	     		<when test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+			    , ROLLUP( LVL2, LVL3, LVL4, DIMS_CDNM1, DIMS_CDNM2 )
+				ORDER BY
+				      MAX(PRNT_ORD1)
+				    , MAX(PRNT_ORD2)
+				    , MAX(PRNT_ORD3)
+				    , MAX(PRNT_ORD4)
+				    , MAX(PRNT_ORD8)     
+				    , MAX(PRNT_ORD9)    
+				    , GRP_ID
+	     		</when>
+	     		<otherwise>
+	     		, ROLLUP( LVL2, LVL3, LVL4 ) 
+				ORDER BY
+				      MAX(PRNT_ORD1)
+				    , MAX(PRNT_ORD2)
+				    , MAX(PRNT_ORD3)
+				    , MAX(PRNT_ORD4)
+				    , GRP_ID
+	     		</otherwise>
+	     	</choose>
+		</if> 
+		<if test="LVL == 5"> 
+	     	<choose>
+	     		<when test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+			    , ROLLUP( LVL2, LVL3, LVL4, LVL5, DIMS_CDNM1 )
+				ORDER BY
+				      MAX(PRNT_ORD1)
+				    , MAX(PRNT_ORD2)
+				    , MAX(PRNT_ORD3)
+				    , MAX(PRNT_ORD4)
+				    , MAX(PRNT_ORD5)
+				    , MAX(PRNT_ORD8)     
+				    , GRP_ID
+	     		</when>
+	     		<when test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+			    , ROLLUP( LVL2, LVL3, LVL4, LVL5, DIMS_CDNM1, DIMS_CDNM2 )
+				ORDER BY
+				      MAX(PRNT_ORD1)
+				    , MAX(PRNT_ORD2)
+				    , MAX(PRNT_ORD3)
+				    , MAX(PRNT_ORD4)
+				    , MAX(PRNT_ORD5)
+				    , MAX(PRNT_ORD8)     
+				    , MAX(PRNT_ORD9)     
+				    , GRP_ID
+	     		</when>
+	     		<otherwise>
+	     		, ROLLUP( LVL2, LVL3, LVL4, LVL5 ) 
+				ORDER BY
+				      MAX(PRNT_ORD1)
+				    , MAX(PRNT_ORD2)
+				    , MAX(PRNT_ORD3)
+				    , MAX(PRNT_ORD4)
+				    , MAX(PRNT_ORD5)
+				    , GRP_ID
+	     		</otherwise>
+	     	</choose>
+		</if> 
+		<if test="LVL == 6"> 
+	     	<choose>
+	     		<when test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+			    , ROLLUP( LVL2, LVL3, LVL4, LVL5, LVL6, DIMS_CDNM1 )
+				ORDER BY
+				      MAX(PRNT_ORD1)
+				    , MAX(PRNT_ORD2)
+				    , MAX(PRNT_ORD3)
+				    , MAX(PRNT_ORD4)
+				    , MAX(PRNT_ORD5)
+				    , MAX(PRNT_ORD6)
+				    , MAX(PRNT_ORD8)     
+				    , GRP_ID
+	     		</when>
+	     		<when test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+			    , ROLLUP( LVL2, LVL3, LVL4, LVL5, LVL6, DIMS_CDNM1, DIMS_CDNM2 )
+				ORDER BY
+				      MAX(PRNT_ORD1)
+				    , MAX(PRNT_ORD2)
+				    , MAX(PRNT_ORD3)
+				    , MAX(PRNT_ORD4)
+				    , MAX(PRNT_ORD5)
+				    , MAX(PRNT_ORD6)
+				    , MAX(PRNT_ORD8)     
+				    , MAX(PRNT_ORD9)   
+				    , GRP_ID
+	     		</when>
+	     		<otherwise>
+	     		, ROLLUP( LVL2, LVL3, LVL4, LVL5, LVL6 ) 
+				ORDER BY
+				      MAX(PRNT_ORD1)
+				    , MAX(PRNT_ORD2)
+				    , MAX(PRNT_ORD3)
+				    , MAX(PRNT_ORD4)
+				    , MAX(PRNT_ORD5)
+				    , MAX(PRNT_ORD6)
+				    , GRP_ID
+	     		</otherwise>
+	     	</choose>
+		</if> 
+		<if test="LVL == 7"> 
+	     	<choose>
+	     		<when test="DIMS1 != null and DIMS1 != '' and (DIMS2 == null or DIMS2 == '')">
+			    , ROLLUP( LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMS_CDNM1 )
+				ORDER BY
+				      MAX(PRNT_ORD1)
+				    , MAX(PRNT_ORD2)
+				    , MAX(PRNT_ORD3)
+				    , MAX(PRNT_ORD4)
+				    , MAX(PRNT_ORD5)
+				    , MAX(PRNT_ORD6)
+				    , MAX(PRNT_ORD7)
+				    , MAX(PRNT_ORD8)     
+				    , GRP_ID
+	     		</when>
+	     		<when test="DIMS1 != null and DIMS1 != '' and DIMS2 != null and DIMS2 != ''">
+			    , ROLLUP( LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMS_CDNM1, DIMS_CDNM2 )
+				ORDER BY
+				      MAX(PRNT_ORD1)
+				    , MAX(PRNT_ORD2)
+				    , MAX(PRNT_ORD3)
+				    , MAX(PRNT_ORD4)
+				    , MAX(PRNT_ORD5)
+				    , MAX(PRNT_ORD6)
+				    , MAX(PRNT_ORD7)
+				    , MAX(PRNT_ORD8)     
+				    , MAX(PRNT_ORD9)   
+				    , GRP_ID
+	     		</when>
+	     		<otherwise>
+	     		, ROLLUP( LVL2, LVL3, LVL4, LVL5, LVL6, LVL7 ) 
+				ORDER BY
+				      MAX(PRNT_ORD1)
+				    , MAX(PRNT_ORD2)
+				    , MAX(PRNT_ORD3)
+				    , MAX(PRNT_ORD4)
+				    , MAX(PRNT_ORD5)
+				    , MAX(PRNT_ORD6)
+				    , MAX(PRNT_ORD7)
+				    , GRP_ID
+	     		</otherwise>
+	     	</choose>
+		</if> 
+				
+	
+    </select>
+    
+    
+    <select id="selectTr_5104_snroList" parameterType="java.util.Map" resultType="java.util.HashMap">
+    	-- 시나리오 리스트 조회
+		SELECT 
+		       SNRO_NO
+		     , SNRO_NM
+		  FROM TSY_SNRO_SET_MNG
+		 WHERE ORG_CLAS_C  = '10'   
+		   AND SNRO_KIND_C = '01'
+		   AND SNRO_NO NOT IN('6','7','8','9','10','11','12')
+		   AND USE_YN = 'Y'
+		 ORDER BY
+		       TO_NUMBER(SNRO_NO) 
+    </select>
+
+</mapper>

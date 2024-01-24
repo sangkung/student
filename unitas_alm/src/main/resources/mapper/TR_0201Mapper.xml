@@ -1,0 +1,746 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_0201Mapper">
+
+	
+	<select id="selectTR_0201LsitCnt" parameterType="java.util.Map" resultType="int">
+	
+		SELECT COUNT(*)
+		  FROM TSR_EARL_ALRM_IDX_STAT
+		 WHERE BASE_DATE    = #{BASE_DATE}
+           AND ALM_WORK_TC  = 'M'
+           AND CUR_C        = 'KRW'
+           AND STAT_RPRT_ID = 'A100'
+           AND ORG_CLAS_C   = #{ORG_CLAS_C}
+           <if test="ORG_CLAS_C == 30">
+           AND AC_BUSI_TC   = '2102'  
+           </if>
+           <if test="ORG_CLAS_C == 10">
+           AND AC_BUSI_TC   = '0000'
+           </if> 
+           AND MO_BR_C      = #{MO_BR_C}
+	
+	</select>
+
+
+	<sql id="TR_0201List_temp2_condition">
+	
+        WHERE BASE_DATE    = #{BASE_DATE}
+          AND ALM_WORK_TC  = 'M'
+          AND CUR_C        = 'KRW'
+          AND STAT_RPRT_ID = 'A100'
+          AND ORG_CLAS_C   = #{ORG_CLAS_C}
+          <if test="ORG_CLAS_C == 10">
+          AND AC_BUSI_TC   = '0000'
+          </if>
+          <if test="ORG_CLAS_C == 30">
+          AND AC_BUSI_TC   = '2102'
+          </if>
+	
+	</sql>
+
+
+	<select id = "selectTR_0201Lsit" parameterType="java.util.Map" resultType="java.util.HashMap">
+	
+				
+		/* 유동성 조기경보 진단 
+		
+		    - RPRT_FACN_AMT(분자) / RPRT_DVSR_AMT(분모) = RPRT_RTO(보고서 비율)
+		*/
+		-- 기준점소 
+		WITH TEMP AS
+		(
+		    SELECT  
+		           A.BASE_DATE
+		         , A.ALM_WORK_TC
+		         , A.ORG_CLAS_C
+		         , A.MO_BR_C
+		         , A.CUR_C
+		         , A.AC_BUSI_TC
+		         , A.STAT_RPRT_ID
+		         , A.STAT_RPRT_ITEM_ID
+		         , B.STAT_RPRT_ITEM_NM
+		         , SUM(A.B_RTO      )    AS B_RTO      
+		         , SUM(A.P_M1_RTO   )    AS P_M1_RTO   
+		         , SUM(A.P_Y_L_D_RTO)    AS P_Y_L_D_RTO
+		         , SUM(A.P_Y_S_M_RTO)    AS P_Y_S_M_RTO
+		         , SUM(A.B_TOT_AMT  )    AS B_TOT_AMT  
+		    FROM 
+		    (
+		        SELECT 
+		               #{BASE_DATE} AS BASE_DATE
+		             , ALM_WORK_TC
+		             , ORG_CLAS_C
+		             , MO_BR_C
+		             , CUR_C
+		             , AC_BUSI_TC
+		             , STAT_RPRT_ID
+		             , STAT_RPRT_ITEM_ID
+		             , CASE WHEN BASE_DATE = #{BASE_DATE} THEN RPRT_RTO     ELSE 0 END      															AS B_RTO       -- BASE
+		             , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -1  ),'YYYYMMDD')       THEN RPRT_RTO  ELSE 0 END   AS P_M1_RTO    -- PREV_1MONTH  
+		             , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -12 ),'YYYY') || '1231' THEN RPRT_RTO  ELSE 0 END   AS P_Y_L_D_RTO -- PREV_YEAR_LAST_DAY
+		             , CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -12 ),'YYYYMMDD') 	    THEN RPRT_RTO  ELSE 0 END   AS P_Y_S_M_RTO -- PREV_YEAR_SAME_MONTH 
+		             , CASE WHEN BASE_DATE = #{BASE_DATE} THEN TOT_ASTS_AMT ELSE 0 END      														    AS B_TOT_AMT   -- BASE_TOT_AMT
+		         FROM TSR_EARL_ALRM_IDX_STAT
+		        WHERE BASE_DATE IN ( 
+		                              #{BASE_DATE}                                                  
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -1  ),'YYYYMMDD')                             
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -12 ),'YYYY') || '1231'  
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -12 ),'YYYYMMDD')                            
+		                            )
+		          AND ALM_WORK_TC  = 'M'
+		          AND CUR_C        = 'KRW'
+		          AND STAT_RPRT_ID = 'A100'
+		          AND ORG_CLAS_C   = #{ORG_CLAS_C}
+		          <if test="ORG_CLAS_C == 30">
+		          AND AC_BUSI_TC   = '2102'  
+		          </if>
+		          <if test="ORG_CLAS_C == 10">
+		          AND AC_BUSI_TC   IN ('1105','1106','1107')        ------------------------------------------ 중앙회 쪽 데이터 생기면 각 회계구분코드인지 전체합산(0000) 인지 체크하기
+		          </if> 
+		          AND MO_BR_C      = #{MO_BR_C}        
+		    ) A , TII_STAT_ANAL_RPRT_INFO B
+		    WHERE 1 = 1
+		      AND A.ORG_CLAS_C        = B.ORG_CLAS_C 
+		      AND A.STAT_RPRT_ID      = B.STAT_RPRT_ID 
+		      AND A.STAT_RPRT_ITEM_ID = B.STAT_RPRT_ITEM_ID
+		    GROUP BY A.BASE_DATE
+		           , A.ALM_WORK_TC
+		           , A.ORG_CLAS_C
+		           , A.MO_BR_C
+		           , A.CUR_C
+		           , A.AC_BUSI_TC
+		           , A.STAT_RPRT_ID
+		           , A.STAT_RPRT_ITEM_ID
+		           , B.STAT_RPRT_ITEM_NM   
+		)
+		/* 동일권역 */
+		,GET_SAME_ZONE_BR_C AS(
+
+            SELECT BR_C
+              FROM TTL_BR_C_INFO
+             WHERE 1 = 1 
+               AND ZONE_TC IN(
+                               SELECT DTL_CLAS_VAL 
+                                 FROM TSY_CO_MNG 
+                                WHERE CO_C = 'ZONE_TC'
+                                  AND CO_C_1_VAL = ( 
+                                                     SELECT CO_C_1_VAL 
+                                                       FROM TSY_CO_MNG
+                                                      WHERE CO_C = 'ZONE_TC'
+                                                        AND DTL_CLAS_VAL = #{ZONE_TC} 
+                                                   ) 
+                             ) 
+         
+        )
+		,
+		-- 전체점소
+		TEMP2 AS
+		(
+			
+		        SELECT 
+                   A.BASE_DATE                
+                 , A.ALM_WORK_TC              
+                 , A.ORG_CLAS_C               
+                 , A.CUR_C                    
+                 , A.AC_BUSI_TC  
+                 , A.STAT_RPRT_ID
+                 , A.STAT_RPRT_ITEM_ID   
+                 , ROUND(A.RPRT_RTO*100,2)  AS BLNG_HQ_RTO
+                 , ROUND(B.RPRT_RTO*100,2)  AS SAME_ZONE_RTO
+                 , ROUND(C.RPRT_RTO*100,2)  AS NATIONWIDE_RTO
+              FROM 
+              (
+		       SELECT 
+                      BASE_DATE                
+                    , ALM_WORK_TC              
+                    , ORG_CLAS_C               
+                    , CUR_C                    
+                    , AC_BUSI_TC  
+                    , STAT_RPRT_ID
+		            , STAT_RPRT_ITEM_ID  
+		            , AVG(RPRT_RTO)     AS RPRT_RTO
+		         FROM TSR_EARL_ALRM_IDX_STAT
+		        <include refid="TR_0201List_temp2_condition"></include>  
+		          AND MO_BR_C IN ( SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BLNG_HQ_BR_C} )
+		        GROUP BY 
+                      BASE_DATE                
+                    , ALM_WORK_TC              
+                    , ORG_CLAS_C               
+                    , CUR_C                    
+                    , AC_BUSI_TC  
+                    , STAT_RPRT_ID
+		            , STAT_RPRT_ITEM_ID 
+		       )A
+		       ,
+		       ( 
+		       SELECT STAT_RPRT_ID
+		            , STAT_RPRT_ITEM_ID  
+		            , AVG(RPRT_RTO)     AS RPRT_RTO
+		         FROM TSR_EARL_ALRM_IDX_STAT
+		        <include refid="TR_0201List_temp2_condition"></include> 
+		          AND MO_BR_C IN ( SELECT BR_C FROM GET_SAME_ZONE_BR_C )
+		        GROUP BY STAT_RPRT_ID, STAT_RPRT_ITEM_ID  
+		        )B
+		        ,
+		        (	        
+		       SELECT STAT_RPRT_ID
+		            , STAT_RPRT_ITEM_ID  
+		            , AVG(RPRT_RTO)     AS RPRT_RTO
+		         FROM TSR_EARL_ALRM_IDX_STAT
+		        <include refid="TR_0201List_temp2_condition"></include>  
+		        GROUP BY STAT_RPRT_ID, STAT_RPRT_ITEM_ID  
+                )C
+                WHERE 1 = 1
+                  AND A.STAT_RPRT_ITEM_ID = B.STAT_RPRT_ITEM_ID
+                  AND B.STAT_RPRT_ITEM_ID = C.STAT_RPRT_ITEM_ID
+                ORDER BY 2  
+		
+		)
+		
+		
+		SELECT 
+		       A.STAT_RPRT_ID                  AS STAT_RPRT_ID
+		     , A.STAT_RPRT_ITEM_ID             AS STAT_RPRT_ITEM_ID
+		     , A.STAT_RPRT_ITEM_NM             AS STAT_RPRT_ITEM_NM
+		     , A.B_RTO                         AS B_RTO
+		     , A.P_M1_RTO                      AS P_M1_RTO
+		     , A.P_Y_L_D_RTO                   AS P_Y_L_D_RTO
+		     , A.P_Y_S_M_RTO                   AS P_Y_S_M_RTO       
+		     , NVL(B.DOZI_ZONE,0)              AS DOZI
+		     , NVL(B.SAME_ZONE,0)              AS SAME_ZONE
+		     , NVL(B.ALL_ZONE ,0)              AS ALL_ZONE
+		     , A.LQDT_CRSS_STAG_C              AS LQDT_CRSS_STAG_C
+		     , A.B_TOT_AMT                     AS B_TOT_AMT
+		FROM
+		/* 조합  값  A 테이블 */
+		( 
+		SELECT 
+		       A.BASE_DATE
+		     , A.ALM_WORK_TC
+		     , A.ORG_CLAS_C
+		     , A.MO_BR_C
+		     , A.CUR_C
+		     , A.AC_BUSI_TC
+		     , A.STAT_RPRT_ID
+		     , A.STAT_RPRT_ITEM_ID
+		     , A.STAT_RPRT_ITEM_NM
+		     , A.B_TOT_AMT
+		     , ROUND(A.B_RTO       * 100 ,2)  AS B_RTO      
+		     , ROUND(A.P_M1_RTO    * 100 ,2)  AS P_M1_RTO   
+		     , ROUND(A.P_Y_L_D_RTO * 100 ,2)  AS P_Y_L_D_RTO
+		     , ROUND(A.P_Y_S_M_RTO * 100 ,2)  AS P_Y_S_M_RTO
+		     , NVL(T.LQDT_CRSS_STAG_C,999)    AS LQDT_CRSS_STAG_C
+		  FROM TEMP A  
+		    , 
+		    (
+             SELECT 
+                    #{BASE_DATE} AS BASE_DATE
+                  , ORG_CLAS_C
+                  , AC_BUSI_TC
+                  , STAT_RPRT_ID
+                  , STAT_RPRT_ITEM_ID
+                  , LQDT_CRSS_STAG_C
+                  , STRT_STAG_ASTS_SCAL
+                  , STRT_STAG_RANG_COND_VAL
+                  , END_STAG_ASTS_SCAL
+                  , END_STAG_RANG_COND_VAL
+                  , STRT_CRIV_RT
+                  , STRT_RNAG_COND_VAL
+                  , END_CRIV_RT
+                  , END_RNAG_COND_VAL
+                  , STAG_REP_CRIV_RT
+                  , STAG_REP_RNAG_COND_VAL
+               FROM TSY_EARL_ALRM_CRIV_MNG
+              WHERE BASE_DATE = (SELECT MAX(BASE_DATE) FROM TSY_EARL_ALRM_CRIV_MNG WHERE BASE_DATE &lt;= #{BASE_DATE}) 
+		    ) T
+		WHERE 1=1
+		  AND A.BASE_DATE         = T.BASE_DATE          (+)
+		  AND A.ORG_CLAS_C        = T.ORG_CLAS_C         (+)
+		  AND A.AC_BUSI_TC        = T.AC_BUSI_TC         (+)
+		  AND A.STAT_RPRT_ID      = T.STAT_RPRT_ID       (+)
+		  AND A.STAT_RPRT_ITEM_ID = T.STAT_RPRT_ITEM_ID  (+)
+		  AND A.B_RTO       BETWEEN T.STRT_CRIV_RT       (+) AND T.END_CRIV_RT       (+)
+		  AND A.B_TOT_AMT   BETWEEN T.STRT_STAG_ASTS_SCAL(+) AND T.END_STAG_ASTS_SCAL(+)
+		)A
+		/* 기준월기준 [도지회,동일권역,전국 평균비율 값] B 테이블 */
+		,(
+            SELECT 
+                  BASE_DATE                
+                , ALM_WORK_TC              
+                , ORG_CLAS_C               
+                , CUR_C                    
+                , AC_BUSI_TC               
+                , STAT_RPRT_ID             
+                , STAT_RPRT_ITEM_ID 
+                , BLNG_HQ_RTO     AS DOZI_ZONE
+                , SAME_ZONE_RTO   AS SAME_ZONE
+                , NATIONWIDE_RTO  AS ALL_ZONE
+             FROM TEMP2
+		)B
+		WHERE 1=1
+		  AND A.BASE_DATE         = B.BASE_DATE        (+)
+		  AND A.ALM_WORK_TC       = B.ALM_WORK_TC      (+)
+		  AND A.CUR_C             = B.CUR_C            (+)
+		  AND A.ORG_CLAS_C        = B.ORG_CLAS_C       (+)
+		  AND A.AC_BUSI_TC        = B.AC_BUSI_TC       (+)
+		  AND A.STAT_RPRT_ID      = B.STAT_RPRT_ID     (+)
+		  AND A.STAT_RPRT_ITEM_ID = B.STAT_RPRT_ITEM_ID(+)
+		ORDER BY STAT_RPRT_ITEM_ID
+		
+
+	
+	</select>
+	
+	
+	
+	
+	
+	
+	<select id = "selectTR_0201HelpContent" parameterType="java.util.Map" resultType="java.util.HashMap">
+	/* 해당 지표의 도움말   */
+	
+		SELECT 
+		       STAT_RPRT_ITEM_NM
+		     , RPRT_ITEM_CALE_CNTN
+		     , RPRT_ITEM_DESC_CNTN
+		  FROM TII_STAT_ANAL_RPRT_INFO 
+		 WHERE STAT_RPRT_ID      = 'A100' 
+		   AND ORG_CLAS_C        = #{ORG_CLAS_C}
+		   AND STAT_RPRT_ITEM_ID = #{stat_rprt_item_id}
+		  	
+	</select>
+	
+	
+	<select id = "selectTR_0201StagCrivRt" parameterType="java.util.Map" resultType="java.util.HashMap">
+	 /* 해당 지표의  단계별 임계치  */
+
+			  		
+		SELECT 
+		        BASE_DATE
+		      , ORG_CLAS_C
+		      , AC_BUSI_TC
+		      , STAT_RPRT_ID
+		      , STAT_RPRT_ITEM_ID
+		      , STAG_TC
+		      , LQDT_CRSS_STAG_C_0
+		      , LQDT_CRSS_STAG_C_1
+		      , LQDT_CRSS_STAG_C_2
+		      , LQDT_CRSS_STAG_C_3
+		      , LQDT_CRSS_STAG_C_4
+		  FROM      
+		(
+		SELECT 
+		        BASE_DATE
+		      , ORG_CLAS_C
+		      , AC_BUSI_TC
+		      , STAT_RPRT_ID
+		      , STAT_RPRT_ITEM_ID
+		      , '임계치'	 															   AS STAG_TC	
+		      , SUM(CASE WHEN LQDT_CRSS_STAG_C = 0 THEN LQDT_CRSS_STAG_C ELSE '0' END) AS LQDT_CRSS_STAG_C_0
+		      , SUM(CASE WHEN LQDT_CRSS_STAG_C = 1 THEN LQDT_CRSS_STAG_C ELSE '0' END) AS LQDT_CRSS_STAG_C_1
+		      , SUM(CASE WHEN LQDT_CRSS_STAG_C = 2 THEN LQDT_CRSS_STAG_C ELSE '0' END) AS LQDT_CRSS_STAG_C_2
+		      , SUM(CASE WHEN LQDT_CRSS_STAG_C = 3 THEN LQDT_CRSS_STAG_C ELSE '0' END) AS LQDT_CRSS_STAG_C_3
+		      , SUM(CASE WHEN LQDT_CRSS_STAG_C = 4 THEN LQDT_CRSS_STAG_C ELSE '0' END) AS LQDT_CRSS_STAG_C_4
+		  FROM  TSY_EARL_ALRM_CRIV_MNG
+		 WHERE  BASE_DATE = ( SELECT MAX(BASE_DATE) FROM TSY_EARL_ALRM_CRIV_MNG WHERE BASE_DATE &lt;= #{BASE_DATE} )
+		   AND  ORG_CLAS_C = #{ORG_CLAS_C}	 
+          <if test="ORG_CLAS_C == 30">
+           AND AC_BUSI_TC   = '2102'  
+          </if>
+          <if test="ORG_CLAS_C == 10">
+           AND AC_BUSI_TC   = '0000'
+          </if> 
+		   AND  STAT_RPRT_ID = 'A100'
+		   AND  STAT_RPRT_ITEM_ID = #{stat_rprt_item_id}
+		   AND  #{tot_amt} BETWEEN STRT_STAG_ASTS_SCAL AND END_STAG_ASTS_SCAL 	
+		 GROUP BY
+		        BASE_DATE
+		      , ORG_CLAS_C
+		      , AC_BUSI_TC
+		      , STAT_RPRT_ID
+		      , STAT_RPRT_ITEM_ID
+		)
+		UNION ALL 
+		(
+		SELECT 
+		        BASE_DATE
+		      , ORG_CLAS_C
+		      , AC_BUSI_TC
+		      , STAT_RPRT_ID
+		      , STAT_RPRT_ITEM_ID
+		      , '임계치'	 															   				AS STAG_TC	
+		      , SUM(CASE WHEN LQDT_CRSS_STAG_C = 0 THEN ROUND(STAG_REP_CRIV_RT * 100,2) ELSE 0 END) AS STAG_REP_CRIV_RT_0
+		      , SUM(CASE WHEN LQDT_CRSS_STAG_C = 1 THEN ROUND(STAG_REP_CRIV_RT * 100,2) ELSE 0 END) AS STAG_REP_CRIV_RT_1
+		      , SUM(CASE WHEN LQDT_CRSS_STAG_C = 2 THEN ROUND(STAG_REP_CRIV_RT * 100,2) ELSE 0 END) AS STAG_REP_CRIV_RT_2
+		      , SUM(CASE WHEN LQDT_CRSS_STAG_C = 3 THEN ROUND(STAG_REP_CRIV_RT * 100,2) ELSE 0 END) AS STAG_REP_CRIV_RT_3
+		      , SUM(CASE WHEN LQDT_CRSS_STAG_C = 4 THEN ROUND(STAG_REP_CRIV_RT * 100,2) ELSE 0 END) AS STAG_REP_CRIV_RT_4
+		  FROM  TSY_EARL_ALRM_CRIV_MNG
+		 WHERE  BASE_DATE = ( SELECT MAX(BASE_DATE) FROM TSY_EARL_ALRM_CRIV_MNG WHERE BASE_DATE &lt;= #{BASE_DATE} )
+		   AND  ORG_CLAS_C = #{ORG_CLAS_C}
+          <if test="ORG_CLAS_C == 30">
+           AND AC_BUSI_TC   = '2102'  
+          </if>
+          <if test="ORG_CLAS_C == 10">
+           AND AC_BUSI_TC   = '0000'
+          </if> 
+		   AND  STAT_RPRT_ID = 'A100'
+		   AND  STAT_RPRT_ITEM_ID = #{stat_rprt_item_id}
+		   AND  #{tot_amt} BETWEEN STRT_STAG_ASTS_SCAL AND END_STAG_ASTS_SCAL 	
+		 GROUP BY
+		        BASE_DATE
+		      , ORG_CLAS_C
+		      , AC_BUSI_TC
+		      , STAT_RPRT_ID
+		      , STAT_RPRT_ITEM_ID
+		)      
+		UNION ALL
+		(
+		SELECT 
+		        BASE_DATE
+		      , ORG_CLAS_C
+		      , AC_BUSI_TC
+		      , STAT_RPRT_ID
+		      , STAT_RPRT_ITEM_ID
+		      , '임계치'	 															   		 AS STAG_TC	
+		      , SUM(CASE WHEN LQDT_CRSS_STAG_C = 0 THEN STAG_REP_RNAG_COND_VAL ELSE '0' END) AS STAG_REP_RNAG_COND_VAL_0
+		      , SUM(CASE WHEN LQDT_CRSS_STAG_C = 1 THEN STAG_REP_RNAG_COND_VAL ELSE '0' END) AS STAG_REP_RNAG_COND_VAL_1
+		      , SUM(CASE WHEN LQDT_CRSS_STAG_C = 2 THEN STAG_REP_RNAG_COND_VAL ELSE '0' END) AS STAG_REP_RNAG_COND_VAL_2
+		      , SUM(CASE WHEN LQDT_CRSS_STAG_C = 3 THEN STAG_REP_RNAG_COND_VAL ELSE '0' END) AS STAG_REP_RNAG_COND_VAL_3
+		      , SUM(CASE WHEN LQDT_CRSS_STAG_C = 4 THEN STAG_REP_RNAG_COND_VAL ELSE '0' END) AS STAG_REP_RNAG_COND_VAL_4
+		  FROM  TSY_EARL_ALRM_CRIV_MNG
+		 WHERE  BASE_DATE = ( SELECT MAX(BASE_DATE) FROM TSY_EARL_ALRM_CRIV_MNG WHERE BASE_DATE &lt;= #{BASE_DATE} )
+		   AND  ORG_CLAS_C = #{ORG_CLAS_C}	 
+          <if test="ORG_CLAS_C == 30">
+           AND AC_BUSI_TC   = '2102'  
+          </if>
+          <if test="ORG_CLAS_C == 10">
+           AND AC_BUSI_TC   = '0000'
+          </if> 
+		   AND  STAT_RPRT_ID = 'A100'
+		   AND  STAT_RPRT_ITEM_ID = #{stat_rprt_item_id}
+		   AND  #{tot_amt} BETWEEN STRT_STAG_ASTS_SCAL AND END_STAG_ASTS_SCAL 	
+		 GROUP BY
+		        BASE_DATE
+		      , ORG_CLAS_C
+		      , AC_BUSI_TC
+		      , STAT_RPRT_ID
+		      , STAT_RPRT_ITEM_ID 
+		)	   
+			   
+	</select>
+
+
+	
+	<select id = "selectTR_0201PrevM12Result" parameterType="java.util.Map" resultType="java.util.HashMap">
+	/* 해당 지표의 12개월 추이  */	
+			
+		WITH TEMP AS
+		(
+		        SELECT 
+		              #{BASE_DATE}            AS BASE_DATE
+		             , ALM_WORK_TC
+		             , ORG_CLAS_C
+		             , MO_BR_C
+		             , CUR_C
+		             , AC_BUSI_TC
+		             , STAT_RPRT_ID
+		             , STAT_RPRT_ITEM_ID
+		             , SUM(CASE WHEN BASE_DATE = #{BASE_DATE} THEN RPRT_RTO     ELSE 0 END )     				   											AS B_RTO       -- BASE
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -1  ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END )    AS P_M1_RTO    -- PREV_1MONTH  
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -2  ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END )    AS P_M2_RTO    -- PREV_2MONTH  
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -3  ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END )    AS P_M3_RTO    -- PREV_3MONTH  
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -4  ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END )    AS P_M4_RTO    -- PREV_4MONTH  
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -5  ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END )    AS P_M5_RTO    -- PREV_5MONTH  
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -6  ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END )    AS P_M6_RTO    -- PREV_6MONTH  
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -7  ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END )    AS P_M7_RTO    -- PREV_7MONTH  
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -8  ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END )    AS P_M8_RTO    -- PREV_8MONTH  
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -9  ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END )    AS P_M9_RTO    -- PREV_9MONTH  
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -10 ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END )    AS P_M10_RTO   -- PREV_10MONTH  
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -11 ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END )    AS P_M11_RTO   -- PREV_11MONTH
+		         FROM TSR_EARL_ALRM_IDX_STAT
+		        WHERE BASE_DATE IN ( 
+		                              #{BASE_DATE}                                                  
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -1 ),'YYYYMMDD')                                
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -2 ),'YYYYMMDD')                               
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -3 ),'YYYYMMDD')                               
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -4 ),'YYYYMMDD')                               
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -5 ),'YYYYMMDD')                               
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -6 ),'YYYYMMDD')                               
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -7 ),'YYYYMMDD')                               
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -8 ),'YYYYMMDD')                               
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -9 ),'YYYYMMDD')                            
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -10),'YYYYMMDD')                            
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -11),'YYYYMMDD')                          
+		                            )
+		          AND ALM_WORK_TC       = 'M'
+		          AND CUR_C             = 'KRW'
+		          AND STAT_RPRT_ID      = 'A100'
+		          AND STAT_RPRT_ITEM_ID = #{stat_rprt_item_id}
+		          AND ORG_CLAS_C        = #{ORG_CLAS_C}
+		          AND MO_BR_C     	    = #{MO_BR_C}    
+		         <if test="ORG_CLAS_C == 30">
+		          AND AC_BUSI_TC   = '2102'  
+		         </if>
+		         <if test="ORG_CLAS_C == 10">
+		          AND AC_BUSI_TC   = '0000'
+		         </if>   		    
+               GROUP BY 
+	                 ALM_WORK_TC
+	               , ORG_CLAS_C
+	               , MO_BR_C
+	               , CUR_C
+	               , AC_BUSI_TC
+	               , STAT_RPRT_ID
+	               , STAT_RPRT_ITEM_ID	   
+		)
+		, TEMP2 AS
+		(
+		        SELECT 
+		              #{BASE_DATE}            AS BASE_DATE
+		             , ALM_WORK_TC
+		             , ORG_CLAS_C
+		             , MO_BR_C
+		             , CUR_C
+		             , AC_BUSI_TC
+		             , STAT_RPRT_ID
+		             , STAT_RPRT_ITEM_ID
+		             /* 데이터 처리 */
+                     ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+		             , SUM(CASE WHEN BASE_DATE = #{BASE_DATE} THEN RPRT_RTO     ELSE 0 END )     				   											  AS B_RTO       -- BASE
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -1  ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END)       AS P_M1_RTO    -- PREV_1MONTH  
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -2  ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END)       AS P_M2_RTO    -- PREV_2MONTH  
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -3  ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END)       AS P_M3_RTO    -- PREV_3MONTH  
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -4  ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END)       AS P_M4_RTO    -- PREV_4MONTH  
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -5  ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END)       AS P_M5_RTO    -- PREV_5MONTH  
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -6  ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END)       AS P_M6_RTO    -- PREV_6MONTH  
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -7  ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END)       AS P_M7_RTO    -- PREV_7MONTH  
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -8  ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END)       AS P_M8_RTO    -- PREV_8MONTH  
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -9  ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END)       AS P_M9_RTO    -- PREV_9MONTH  
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -10 ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END)       AS P_M10_RTO   -- PREV_10MONTH  
+		             , SUM(CASE WHEN BASE_DATE = TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -11 ),'YYYYMMDD') THEN RPRT_RTO     ELSE 0 END)       AS P_M11_RTO   -- PREV_11MONTH 
+                     ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+		         FROM TSR_EARL_ALRM_IDX_STAT
+		        WHERE BASE_DATE IN ( 
+		                              #{BASE_DATE}                                                  
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -1  ),'YYYYMMDD')                                
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -2  ),'YYYYMMDD')                               
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -3  ),'YYYYMMDD')                               
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -4  ),'YYYYMMDD')                               
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -5  ),'YYYYMMDD')                               
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -6  ),'YYYYMMDD')                               
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -7  ),'YYYYMMDD')                               
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -8  ),'YYYYMMDD')                               
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -9  ),'YYYYMMDD')                            
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -10 ),'YYYYMMDD')                            
+		                            , TO_CHAR(ADD_MONTHS( TO_DATE(#{BASE_DATE},'YYYYMMDD') , -11 ),'YYYYMMDD')                          
+		                            )
+		          AND ALM_WORK_TC       = 'M'
+		          AND CUR_C             = 'KRW'
+		          AND STAT_RPRT_ID      = 'A100'
+		          AND STAT_RPRT_ITEM_ID = #{stat_rprt_item_id}
+		          AND ORG_CLAS_C        = #{ORG_CLAS_C}
+		         <if test="ORG_CLAS_C == 30">
+		          AND AC_BUSI_TC   = '2102'  
+		         </if>
+		         <if test="ORG_CLAS_C == 10">
+		          AND AC_BUSI_TC   = '0000'
+		         </if>        	
+               GROUP BY 
+	                 ALM_WORK_TC
+	               , ORG_CLAS_C
+	               , MO_BR_C
+	               , CUR_C
+	               , AC_BUSI_TC
+	               , STAT_RPRT_ID
+	               , STAT_RPRT_ITEM_ID	    
+		)
+		,GET_SAME_ZONE_BR_C AS(
+
+            SELECT MO_BR_C
+              FROM TTL_BR_C_INFO
+             WHERE 1 = 1 
+               AND ZONE_TC IN(
+                               SELECT DTL_CLAS_VAL 
+                                 FROM TSY_CO_MNG 
+                                WHERE CO_C = 'ZONE_TC'
+                                  AND CO_C_1_VAL = ( 
+                                                     SELECT CO_C_1_VAL 
+                                                       FROM TSY_CO_MNG
+                                                      WHERE CO_C = 'ZONE_TC'
+                                                        AND DTL_CLAS_VAL = #{ZONE_TC} 
+                                                   ) 
+                             ) 
+         
+        )	
+		
+		
+        <if test="ORG_CLAS_C == 10">
+		SELECT  
+       		   '중앙회'                                AS TITLE         
+		     , BASE_DATE
+		     , ALM_WORK_TC
+		     , ORG_CLAS_C
+		     , CUR_C
+		     , AC_BUSI_TC
+		     , STAT_RPRT_ID
+		     , STAT_RPRT_ITEM_ID
+		     , ROUND(AVG(B_RTO    )  * 100 ,2)     AS B_RTO    
+		     , ROUND(AVG(P_M1_RTO )  * 100 ,2)     AS P_M1_RTO 
+		     , ROUND(AVG(P_M2_RTO )  * 100 ,2)     AS P_M2_RTO 
+		     , ROUND(AVG(P_M3_RTO )  * 100 ,2)     AS P_M3_RTO 
+		     , ROUND(AVG(P_M4_RTO )  * 100 ,2)     AS P_M4_RTO 
+		     , ROUND(AVG(P_M5_RTO )  * 100 ,2)     AS P_M5_RTO 
+		     , ROUND(AVG(P_M6_RTO )  * 100 ,2)     AS P_M6_RTO 
+		     , ROUND(AVG(P_M7_RTO )  * 100 ,2)     AS P_M7_RTO 
+		     , ROUND(AVG(P_M8_RTO )  * 100 ,2)     AS P_M8_RTO 
+		     , ROUND(AVG(P_M9_RTO )  * 100 ,2)     AS P_M9_RTO 
+		     , ROUND(AVG(P_M10_RTO)  * 100 ,2)     AS P_M10_RTO
+		     , ROUND(AVG(P_M11_RTO)  * 100 ,2)     AS P_M11_RTO  
+		  FROM TEMP
+		 GROUP BY 
+		       BASE_DATE
+		     , ALM_WORK_TC
+		     , ORG_CLAS_C
+		     , MO_BR_C 
+		     , CUR_C
+		     , AC_BUSI_TC
+		     , STAT_RPRT_ID
+		     , STAT_RPRT_ITEM_ID 
+        </if>   	
+        
+        
+        <if test="ORG_CLAS_C == 30">
+		
+		(
+		SELECT  
+       		   '조합'                                AS TITLE         
+		     , BASE_DATE
+		     , ALM_WORK_TC
+		     , ORG_CLAS_C
+		     , CUR_C
+		     , AC_BUSI_TC
+		     , STAT_RPRT_ID
+		     , STAT_RPRT_ITEM_ID
+		     , ROUND( B_RTO      * 100 ,2)     AS B_RTO    
+		     , ROUND( P_M1_RTO   * 100 ,2)     AS P_M1_RTO 
+		     , ROUND( P_M2_RTO   * 100 ,2)     AS P_M2_RTO 
+		     , ROUND( P_M3_RTO   * 100 ,2)     AS P_M3_RTO 
+		     , ROUND( P_M4_RTO   * 100 ,2)     AS P_M4_RTO 
+		     , ROUND( P_M5_RTO   * 100 ,2)     AS P_M5_RTO 
+		     , ROUND( P_M6_RTO   * 100 ,2)     AS P_M6_RTO 
+		     , ROUND( P_M7_RTO   * 100 ,2)     AS P_M7_RTO 
+		     , ROUND( P_M8_RTO   * 100 ,2)     AS P_M8_RTO 
+		     , ROUND( P_M9_RTO   * 100 ,2)     AS P_M9_RTO 
+		     , ROUND( P_M10_RTO  * 100 ,2)     AS P_M10_RTO
+		     , ROUND( P_M11_RTO  * 100 ,2)     AS P_M11_RTO  
+		  FROM TEMP
+		)
+		UNION ALL
+		(	
+		SELECT 
+       		  '지역본부 평균'                                AS TITLE         
+		    , BASE_DATE
+		    , ALM_WORK_TC
+		    , ORG_CLAS_C
+		    , CUR_C
+		    , AC_BUSI_TC
+		    , STAT_RPRT_ID
+		    , STAT_RPRT_ITEM_ID
+		    , ROUND( AVG( B_RTO    ) * 100 ,2) AS B_RTO
+		    , ROUND( AVG( P_M1_RTO ) * 100 ,2) AS P_M1_RTO 
+		    , ROUND( AVG( P_M2_RTO ) * 100 ,2) AS P_M2_RTO 
+		    , ROUND( AVG( P_M3_RTO ) * 100 ,2) AS P_M3_RTO 
+		    , ROUND( AVG( P_M4_RTO ) * 100 ,2) AS P_M4_RTO 
+		    , ROUND( AVG( P_M5_RTO ) * 100 ,2) AS P_M5_RTO 
+		    , ROUND( AVG( P_M6_RTO ) * 100 ,2) AS P_M6_RTO 
+		    , ROUND( AVG( P_M7_RTO ) * 100 ,2) AS P_M7_RTO 
+		    , ROUND( AVG( P_M8_RTO ) * 100 ,2) AS P_M8_RTO 
+		    , ROUND( AVG( P_M9_RTO ) * 100 ,2) AS P_M9_RTO 
+		    , ROUND( AVG( P_M10_RTO) * 100 ,2) AS P_M10_RTO 
+		    , ROUND( AVG( P_M11_RTO) * 100 ,2) AS P_M11_RTO  
+		 FROM TEMP2
+		WHERE 1 = 1
+		  AND MO_BR_C IN ( SELECT MO_BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BLNG_HQ_BR_C} )
+		GROUP BY
+		      BASE_DATE
+		    , ALM_WORK_TC
+		    , ORG_CLAS_C
+		    , CUR_C
+		    , AC_BUSI_TC
+		    , STAT_RPRT_ID
+		    , STAT_RPRT_ITEM_ID
+		) 
+		UNION ALL
+		(
+		SELECT 
+       		  '동일권역 평균'                                AS TITLE         
+		    , BASE_DATE
+		    , ALM_WORK_TC
+		    , ORG_CLAS_C
+		    , CUR_C
+		    , AC_BUSI_TC
+		    , STAT_RPRT_ID
+		    , STAT_RPRT_ITEM_ID
+		    , ROUND( AVG( B_RTO    ) * 100 ,2) AS B_RTO
+		    , ROUND( AVG( P_M1_RTO ) * 100 ,2) AS P_M1_RTO 
+		    , ROUND( AVG( P_M2_RTO ) * 100 ,2) AS P_M2_RTO 
+		    , ROUND( AVG( P_M3_RTO ) * 100 ,2) AS P_M3_RTO 
+		    , ROUND( AVG( P_M4_RTO ) * 100 ,2) AS P_M4_RTO 
+		    , ROUND( AVG( P_M5_RTO ) * 100 ,2) AS P_M5_RTO 
+		    , ROUND( AVG( P_M6_RTO ) * 100 ,2) AS P_M6_RTO 
+		    , ROUND( AVG( P_M7_RTO ) * 100 ,2) AS P_M7_RTO 
+		    , ROUND( AVG( P_M8_RTO ) * 100 ,2) AS P_M8_RTO 
+		    , ROUND( AVG( P_M9_RTO ) * 100 ,2) AS P_M9_RTO 
+		    , ROUND( AVG( P_M10_RTO) * 100 ,2) AS P_M10_RTO 
+		    , ROUND( AVG( P_M11_RTO) * 100 ,2) AS P_M11_RTO  
+		 FROM TEMP2
+		WHERE MO_BR_C IN ( SELECT MO_BR_C FROM GET_SAME_ZONE_BR_C ) 
+		GROUP BY
+		      BASE_DATE
+		    , ALM_WORK_TC
+		    , ORG_CLAS_C
+		    , CUR_C
+		    , AC_BUSI_TC
+		    , STAT_RPRT_ID
+		    , STAT_RPRT_ITEM_ID
+		)	
+		UNION ALL	
+		(        
+		SELECT 
+       	     '전국 평균'                                AS TITLE         
+		    , BASE_DATE
+		    , ALM_WORK_TC
+		    , ORG_CLAS_C
+		    , CUR_C
+		    , AC_BUSI_TC
+		    , STAT_RPRT_ID
+		    , STAT_RPRT_ITEM_ID
+		    , ROUND( AVG( B_RTO    ) * 100 ,2) AS B_RTO
+		    , ROUND( AVG( P_M1_RTO ) * 100 ,2) AS P_M1_RTO 
+		    , ROUND( AVG( P_M2_RTO ) * 100 ,2) AS P_M2_RTO 
+		    , ROUND( AVG( P_M3_RTO ) * 100 ,2) AS P_M3_RTO 
+		    , ROUND( AVG( P_M4_RTO ) * 100 ,2) AS P_M4_RTO 
+		    , ROUND( AVG( P_M5_RTO ) * 100 ,2) AS P_M5_RTO 
+		    , ROUND( AVG( P_M6_RTO ) * 100 ,2) AS P_M6_RTO 
+		    , ROUND( AVG( P_M7_RTO ) * 100 ,2) AS P_M7_RTO 
+		    , ROUND( AVG( P_M8_RTO ) * 100 ,2) AS P_M8_RTO 
+		    , ROUND( AVG( P_M9_RTO ) * 100 ,2) AS P_M9_RTO 
+		    , ROUND( AVG( P_M10_RTO) * 100 ,2) AS P_M10_RTO 
+		    , ROUND( AVG( P_M11_RTO) * 100 ,2) AS P_M11_RTO 
+		 FROM TEMP2
+		GROUP BY
+		      BASE_DATE
+		    , ALM_WORK_TC
+		    , ORG_CLAS_C
+		    , CUR_C
+		    , AC_BUSI_TC
+		    , STAT_RPRT_ID
+		    , STAT_RPRT_ITEM_ID
+		)
+	 	</if>
+	
+	</select>
+
+
+</mapper>

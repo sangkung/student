@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_5210Mapper">
+
+    <select id="getSnroNo" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+    SELECT NVL((SELECT SNRO_KIND_TC||LPAD(TO_CHAR(TO_NUMBER(SUBSTR( MAX(SNRO_NO), 2,3)) + 1), 3, '0')
+                  FROM TSI_USER_SNRO_MNG
+                 WHERE ORG_CLAS_C   = #{ORG_CLAS_C}
+                   AND BR_C         = #{BR_C}
+                   AND SNRO_KIND_C  = #{SNRO_KIND_C}
+                   AND SNRO_KIND_TC = #{SNRO_KIND_TC}
+              GROUP BY SNRO_KIND_TC ),   #{SNRO_KIND_TC}||'001') AS SNRO_NO
+      FROM DUAL
+	</select>
+	
+	<!-- Main 조회 -->
+    <select id="selectTr5210Main" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+SELECT A.ORG_CLAS_C
+     , A.BR_C
+     , A.SNRO_KIND_C
+     , A.SNRO_NO
+     , A.SNRO_NO_ORG
+     , A.SNRO_KIND_TC
+     , A.SNRO_NM
+     , A.SNRO_CNTN
+     , A.CHK
+     , A.GRID_STATUS
+     , A.LAST_CHNG_ID
+     , B.BR_NM
+     , B.MO_BR_C
+     , B.BLNG_HQ_BR_C
+     , C.LAST_CHNG_ID_NM
+  FROM (
+        SELECT ORG_CLAS_C                          /*기관분류코드          */
+             , BR_C                                /*점소코드              */
+             , SNRO_KIND_C                         /*시나리오유형코드      */
+             , CASE WHEN SNRO_NO LIKE 'U%' THEN  '사용자_'||SUBSTR(SNRO_NO, -3)
+                    ELSE '표준_'||SUBSTR(SNRO_NO, -3)
+               END              AS SNRO_NO         /*시나리오번호          */
+             , SNRO_NO          AS SNRO_NO_ORG
+             , SNRO_KIND_TC                        /*시나리오유형구분코드  */
+             , SNRO_NM                             /*시나리오명            */
+             , SNRO_CNTN                           /*시나리오내용          */
+             , '0'              AS CHK             /*그리드 삭제 상태값    */
+             , '1'              AS GRID_STATUS     /*그리드 제어 상태값    */
+             , LAST_CHNG_ID     AS LAST_CHNG_ID 
+          FROM TSI_USER_SNRO_MNG
+         WHERE ORG_CLAS_C   = #{ORG_CLAS_C}
+           AND SNRO_KIND_C  = '06'   /* 신상품 06 */
+          <choose>
+              <when test="MO_BR_C == 'ALL'">
+                  AND (BR_C = '000' OR SNRO_KIND_TC = 'S') /*전체조합*/
+              </when>
+              <when test="MO_BR_C == '001'">
+                  AND (BR_C = #{BR_C} OR SNRO_KIND_TC = 'S') /*도지회별 합산, 중앙회*/
+              </when>
+              <otherwise>
+                  AND (BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{MO_BR_C}) OR SNRO_KIND_TC = 'S') /*단위조합별 조회*/
+              </otherwise>
+          </choose>
+       ) A
+     , (
+        SELECT '000'      AS MO_BR_C
+             , '000'      AS BR_C
+             , '전체조합' AS BR_NM
+             , '000'      AS BLNG_HQ_BR_C
+          FROM DUAL
+         UNION ALL
+        SELECT MO_BR_C
+             , BR_C
+             , BR_NM
+             , BLNG_HQ_BR_C
+          FROM TTL_BR_C_INFO
+         GROUP BY MO_BR_C
+                , BR_C
+                , BR_NM
+                , BLNG_HQ_BR_C
+       ) B
+     , (
+        SELECT USID     AS LAST_CHNG_ID
+             , USER_NM  AS LAST_CHNG_ID_NM
+          FROM TSY_USER_MNG 
+         WHERE USE_YN = 'Y'
+       ) C
+ WHERE A.BR_C         = B.BR_C(+)
+   AND A.LAST_CHNG_ID = C.LAST_CHNG_ID(+)
+ ORDER BY A.SNRO_NO_ORG
+    </select>
+    
+    	<!-- Main 저장 -->
+    <insert id="insertTr5210" parameterType="java.util.Map">
+        INSERT INTO TSI_USER_SNRO_MNG
+        (
+            ORG_CLAS_C
+          , BR_C
+          , SNRO_KIND_C
+          , SNRO_NO
+          , SNRO_KIND_TC
+          , SNRO_NM
+          , SNRO_CNTN
+          , APLY_AMT_TC
+          , LAST_CHNG_ID
+          , LAST_CHNG_DT
+        ) VALUES (
+            #{ORG_CLAS_C}
+          , #{BR_C}
+          , #{SNRO_KIND_C}
+          , #{SNRO_NO}
+          , #{SNRO_KIND_TC}
+          , #{SNRO_NM}
+          , #{SNRO_CNTN}
+          , NULL
+          , #{LAST_CHNG_ID}
+          , SYSDATE
+        )
+    </insert>
+    
+    <!-- Main 삭제 -->
+    <delete id="deleteTr5210" parameterType="java.util.Map">
+        DELETE FROM TSI_USER_SNRO_MNG
+         WHERE ORG_CLAS_C   = #{ORG_CLAS_C}
+           AND BR_C         = #{BR_C}
+           AND SNRO_KIND_C  = #{SNRO_KIND_C}
+           AND SNRO_NO      = #{SNRO_NO}
+           AND SNRO_KIND_TC = #{SNRO_KIND_TC}
+    </delete>
+    
+	<!-- Main 삭제 할때 시뮬레이션에 있는 정보도 삭제 -->
+    <update id="updateTr5210TsiUserSimuMng" parameterType="java.util.Map">
+        UPDATE TSI_USER_SIMU_MNG
+           SET NEW_GD_SNRO_NO = ''    /* 신상품 */
+             , LAST_CHNG_ID   = #{LAST_CHNG_ID}
+             , LAST_CHNG_DT   = SYSDATE
+         WHERE ORG_CLAS_C     = #{ORG_CLAS_C}
+           AND BR_C           = #{BR_C}
+           AND NEW_GD_SNRO_NO = #{SNRO_NO}
+    </update>
+    
+    <!-- 시뮬레이션_신상품시나리오예측관리 삭제 -->
+    <delete id="deleteTr5210TsiNewGdSnroPestMng" parameterType="java.util.Map">
+        DELETE FROM TSI_NEW_GD_SNRO_PEST_MNG
+         WHERE ORG_CLAS_C   = #{ORG_CLAS_C}
+           AND BR_C         = #{BR_C}
+           AND SNRO_KIND_C  = #{SNRO_KIND_C}
+           AND SNRO_NO      = #{SNRO_NO}
+    </delete>
+    
+    
+    <update id="updateTr5210" parameterType="java.util.Map">
+        UPDATE TSI_USER_SNRO_MNG
+           SET SNRO_NM      = #{SNRO_NM}
+             , SNRO_CNTN    = #{SNRO_CNTN}
+             , LAST_CHNG_ID = #{LAST_CHNG_ID}
+             , LAST_CHNG_DT = SYSDATE
+         WHERE ORG_CLAS_C   = #{ORG_CLAS_C}
+           AND BR_C         = #{BR_C}
+           AND SNRO_KIND_C  = #{SNRO_KIND_C}
+           AND SNRO_NO      = #{SNRO_NO}
+           AND SNRO_KIND_TC = #{SNRO_KIND_TC}
+    </update>
+
+   
+	<select id="selectTr5210Bottom" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+        SELECT ORG_CLAS_C                                    /* 기관분류코드            */
+             , BR_C                                          /* 점소코드                */
+             , AC_BUSI_TC                                    /* 회계사업구분코드        */
+             , SNRO_KIND_C                                   /* 시나리오유형코드        */
+             , SNRO_NO                                       /* 시나리오번호            */
+             , ACCT_C                                        /* 계정코드                */
+             , ACNO                                          /* 계좌번호                */
+             , CASE WHEN ACNO LIKE '1%' 
+                    THEN '여신신상품('||ACCT_C||')' 
+                    ELSE '수신신상품('||ACCT_C||')' 
+               END     AS ACNO_NM
+             , CUR_C                                          /* 통화코드                */
+             , NEW_DATE                                       /* 신규일자                */
+             , CONT_TRM_MMS                                   /* 계약기간월수            */
+             , APLY_AMT                                       /* 적용금액                */
+             , APLY_RATE                                      /* 적용이율                */
+             , MRGN_RATE                                      /* 마진이율                */
+             , PRIN_RMBR_METH_C                               /* 원금상환방법코드        */
+             , PRIN_PAY_RMBR_CYCL                             /* 원금지급상환주기        */
+             , FIX_VAR_TC                                     /* 고정변동구분코드        */
+             , RATE_VAR_CYCL                                  /* 금리변동주기            */
+             , ALM_BASE_RATE_C                                /* ALM기준금리코드         */
+             , INT_PAY_RMBR_CYCL                              /* 이자지급상환주기        */
+             , INT_DDS_CALC_METH_C                            /* 이자일수계산방법코드    */
+             , INT_CINT_SINT_TC                               /* 이자복리단리구분코드    */
+             , NVL(ALM_MRTG_TC, '00')     AS ALM_MRTG_TC      /* ALM담보구분코드         */
+             , LN_DP_GD_C                                     /* 여신수신상품코드        */
+             , FIX_AF_FRST_RATE_VAR_DATE                      /* 고정후최초금리변동일자  */
+             , NVL(CONT_TRM_SECT_C, '00') AS CONT_TRM_SECT_C  /* 계약기간구간코드        */
+          FROM TSI_NEW_GD_SNRO_PEST_MNG                       /* 시뮬레이션_신상품시나리오예측관리 */
+         WHERE ORG_CLAS_C  = #{ORG_CLAS_C}
+           AND BR_C        = #{BR_C}
+           AND SNRO_KIND_C = '06'    /* 신상품 06 */
+           AND SNRO_NO     = #{SNRO_NO}
+	</select>
+
+	<select id="selectTr5210BaseRatePopup" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+ SELECT ALM_BASE_RATE_C
+      , ALM_BASE_RATE_NM
+   FROM (          
+         SELECT ALM_BASE_RATE_C
+              , ALM_BASE_RATE_NM
+           FROM TSY_ALM_BASE_RATE_MNG 
+          WHERE USE_YN = 'Y'
+            <if test="searchparam != null and searchparam != ''">
+		    AND ALM_BASE_RATE_C LIKE '%' || #{searchparam} || '%' OR ALM_BASE_RATE_NM LIKE '%' || #{searchparam} || '%'
+			</if>
+         GROUP BY ALM_BASE_RATE_C
+                , ALM_BASE_RATE_NM
+        )
+  ORDER BY ALM_BASE_RATE_C
+	</select>
+	
+	
+    <select id="selectTr5210LnDpGdCPopup" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+ SELECT DTL_CLAS_VAL 
+      , DTL_CLAS_NM 
+   FROM TSY_CO_MNG 
+  WHERE USE_YN        = 'Y'
+    AND DTL_CLAS_VAL != '-'
+    AND CO_C          = 'LN_DP_GD_C'   /* 여신수신상품코드 */
+    <if test="searchparam != null and searchparam != ''">
+    AND ( DTL_CLAS_VAL LIKE '%'|| #{searchparam} ||'%' OR DTL_CLAS_NM LIKE '%'|| #{searchparam} ||'%' )
+    </if>
+    AND CO_C_2_VAL = (CASE WHEN #{kindC} = '1' THEN  '여신상품코드' ELSE '수신상품코드' END)
+  ORDER BY PRNT_ORD
+    </select>
+	
+	
+    <select id="selectTr5210AlmBaseRate" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+        SELECT ALM_BASE_RATE_C    AS CD
+             , ALM_BASE_RATE_NM   AS NM
+          FROM TSY_ALM_BASE_RATE_MNG 
+         WHERE USE_YN = 'Y'
+         GROUP BY ALM_BASE_RATE_C
+                , ALM_BASE_RATE_NM
+    </select>
+    
+    
+    <select id="getAcno" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+SELECT NVL( (SELECT MAX(ACCT_C)|| LPAD(TO_CHAR(TO_NUMBER(SUBSTR(ACNO, -3, 3)) + 1), 3, '0')
+               FROM TSI_NEW_GD_SNRO_PEST_MNG
+              WHERE ORG_CLAS_C   = #{ORG_CLAS_C}
+                AND BR_C         = #{BR_C}
+                AND AC_BUSI_TC   = #{AC_BUSI_TC}
+                AND SNRO_KIND_C  = #{SNRO_KIND_C}
+                AND SNRO_NO      = #{SNRO_NO}
+                AND ACCT_C       = #{ACCT_C}
+                AND ACNO         = #{ACNO}
+                AND CUR_C        = #{CUR_C}
+              GROUP BY ACNO), #{ACCT_C}||'001')  AS ACNO
+  FROM DUAL
+    </select>
+    
+    
+    <insert id="insertTr5210NewGdMerge" parameterType="java.util.Map">
+    MERGE INTO TSI_NEW_GD_SNRO_PEST_MNG A
+    USING (
+            SELECT #{ORG_CLAS_C}                            AS ORG_CLAS_C
+                 , #{BR_C}                                  AS BR_C
+                 , #{AC_BUSI_TC}                            AS AC_BUSI_TC
+                 , #{SNRO_KIND_C}                           AS SNRO_KIND_C
+                 , #{SNRO_NO}                               AS SNRO_NO
+                 , #{ACCT_C}                                AS ACCT_C
+                 , #{ACNO}                                  AS ACNO
+                 , #{CUR_C}                                 AS CUR_C
+                 , #{NEW_DATE}                              AS NEW_DATE
+                 , TO_NUMBER(#{CONT_TRM_MMS})               AS CONT_TRM_MMS
+                 , TO_NUMBER(#{APLY_AMT})                   AS APLY_AMT
+                 , TO_NUMBER(#{APLY_RATE})                  AS APLY_RATE
+                 , TO_NUMBER(#{MRGN_RATE})                  AS MRGN_RATE
+                 , #{PRIN_RMBR_METH_C}                      AS PRIN_RMBR_METH_C
+                 , TO_NUMBER(#{PRIN_PAY_RMBR_CYCL})         AS PRIN_PAY_RMBR_CYCL
+                 , #{FIX_VAR_TC}                            AS FIX_VAR_TC
+                 , TO_NUMBER(#{RATE_VAR_CYCL})              AS RATE_VAR_CYCL
+                 , #{ALM_BASE_RATE_C}                       AS ALM_BASE_RATE_C
+                 , TO_NUMBER(#{INT_PAY_RMBR_CYCL})          AS INT_PAY_RMBR_CYCL
+                 , #{INT_DDS_CALC_METH_C}                   AS INT_DDS_CALC_METH_C
+                 , #{INT_CINT_SINT_TC}                      AS INT_CINT_SINT_TC
+                 , #{ALM_MRTG_TC}                           AS ALM_MRTG_TC
+                 , #{LN_DP_GD_C}                            AS LN_DP_GD_C
+                 , #{FIX_AF_FRST_RATE_VAR_DATE}             AS FIX_AF_FRST_RATE_VAR_DATE
+                 , #{CONT_TRM_SECT_C}                       AS CONT_TRM_SECT_C
+                 , #{LAST_CHNG_ID}                          AS LAST_CHNG_ID
+                 , SYSDATE                                  AS LAST_CHNG_DT
+              FROM DUAL
+          ) B
+      ON (
+             A.ORG_CLAS_C       = B.ORG_CLAS_C
+         AND A.BR_C             = B.BR_C
+         AND A.AC_BUSI_TC       = B.AC_BUSI_TC
+         AND A.SNRO_KIND_C      = B.SNRO_KIND_C
+         AND A.SNRO_NO          = B.SNRO_NO
+         AND A.ACCT_C           = B.ACCT_C
+         AND A.ACNO             = B.ACNO
+         AND A.CUR_C            = B.CUR_C
+       )
+  WHEN MATCHED THEN
+       UPDATE SET A.NEW_DATE                  = B.NEW_DATE              
+                , A.CONT_TRM_MMS              = B.CONT_TRM_MMS             
+                , A.APLY_AMT                  = B.APLY_AMT                 
+                , A.APLY_RATE                 = B.APLY_RATE                
+                , A.MRGN_RATE                 = B.MRGN_RATE                
+                , A.PRIN_RMBR_METH_C          = B.PRIN_RMBR_METH_C         
+                , A.PRIN_PAY_RMBR_CYCL        = B.PRIN_PAY_RMBR_CYCL       
+                , A.FIX_VAR_TC                = B.FIX_VAR_TC               
+                , A.RATE_VAR_CYCL             = B.RATE_VAR_CYCL            
+                , A.ALM_BASE_RATE_C           = B.ALM_BASE_RATE_C          
+                , A.INT_PAY_RMBR_CYCL         = B.INT_PAY_RMBR_CYCL        
+                , A.INT_DDS_CALC_METH_C       = B.INT_DDS_CALC_METH_C      
+                , A.INT_CINT_SINT_TC          = B.INT_CINT_SINT_TC         
+                , A.ALM_MRTG_TC               = B.ALM_MRTG_TC              
+                , A.LN_DP_GD_C                = B.LN_DP_GD_C               
+                , A.FIX_AF_FRST_RATE_VAR_DATE = B.FIX_AF_FRST_RATE_VAR_DATE
+                , A.CONT_TRM_SECT_C           = B.CONT_TRM_SECT_C          
+                , A.LAST_CHNG_ID              = B.LAST_CHNG_ID             
+                , A.LAST_CHNG_DT              = B.LAST_CHNG_DT
+ WHEN NOT MATCHED THEN
+   INSERT (
+             A.ORG_CLAS_C               
+           , A.BR_C                     
+           , A.AC_BUSI_TC               
+           , A.SNRO_KIND_C              
+           , A.SNRO_NO                  
+           , A.ACCT_C                   
+           , A.ACNO                     
+           , A.CUR_C                    
+           , A.NEW_DATE                 
+           , A.CONT_TRM_MMS             
+           , A.APLY_AMT                 
+           , A.APLY_RATE                
+           , A.MRGN_RATE                
+           , A.PRIN_RMBR_METH_C         
+           , A.PRIN_PAY_RMBR_CYCL       
+           , A.FIX_VAR_TC               
+           , A.RATE_VAR_CYCL            
+           , A.ALM_BASE_RATE_C          
+           , A.INT_PAY_RMBR_CYCL        
+           , A.INT_DDS_CALC_METH_C      
+           , A.INT_CINT_SINT_TC         
+           , A.ALM_MRTG_TC              
+           , A.LN_DP_GD_C               
+           , A.FIX_AF_FRST_RATE_VAR_DATE
+           , A.CONT_TRM_SECT_C          
+           , A.LAST_CHNG_ID             
+           , A.LAST_CHNG_DT                        
+   ) VALUES (
+              B.ORG_CLAS_C               
+            , B.BR_C                     
+            , B.AC_BUSI_TC               
+            , B.SNRO_KIND_C              
+            , B.SNRO_NO                  
+            , B.ACCT_C                   
+            , B.ACNO                     
+            , B.CUR_C                    
+            , B.NEW_DATE                 
+            , B.CONT_TRM_MMS             
+            , B.APLY_AMT                 
+            , B.APLY_RATE                
+            , B.MRGN_RATE                
+            , B.PRIN_RMBR_METH_C         
+            , B.PRIN_PAY_RMBR_CYCL       
+            , B.FIX_VAR_TC               
+            , B.RATE_VAR_CYCL            
+            , B.ALM_BASE_RATE_C          
+            , B.INT_PAY_RMBR_CYCL        
+            , B.INT_DDS_CALC_METH_C      
+            , B.INT_CINT_SINT_TC         
+            , B.ALM_MRTG_TC              
+            , B.LN_DP_GD_C               
+            , B.FIX_AF_FRST_RATE_VAR_DATE
+            , B.CONT_TRM_SECT_C          
+            , B.LAST_CHNG_ID             
+            , B.LAST_CHNG_DT             
+     )
+    </insert>
+    
+    <!-- Main 삭제 -->
+    <delete id="deleteTr5210NewGd" parameterType="java.util.Map">
+DELETE FROM TSI_NEW_GD_SNRO_PEST_MNG
+ WHERE ORG_CLAS_C  = #{ORG_CLAS_C}
+   AND BR_C        = #{BR_C}
+   AND AC_BUSI_TC  = #{AC_BUSI_TC}
+   AND SNRO_KIND_C = #{SNRO_KIND_C}
+   AND SNRO_NO     = #{SNRO_NO}
+   AND ACCT_C      = #{ACCT_C}
+   AND ACNO        = #{ACNO}
+   AND CUR_C       = #{CUR_C}
+    </delete>
+    
+    <insert id="insertTr5210NewGdSnroPestMngCopy" parameterType="java.util.Map">
+INSERT INTO TSI_NEW_GD_SNRO_PEST_MNG  /* 시뮬레이션_신상품시나리오예측관리 */
+SELECT ORG_CLAS_C
+     , BR_C
+     , AC_BUSI_TC
+     , SNRO_KIND_C
+     , #{SNRO_NO}    AS SNRO_NO
+     , ACCT_C
+     , ACNO
+     , CUR_C
+     , NEW_DATE
+     , CONT_TRM_MMS
+     , APLY_AMT
+     , APLY_RATE
+     , MRGN_RATE
+     , PRIN_RMBR_METH_C
+     , PRIN_PAY_RMBR_CYCL
+     , FIX_VAR_TC
+     , RATE_VAR_CYCL
+     , ALM_BASE_RATE_C
+     , INT_PAY_RMBR_CYCL
+     , INT_DDS_CALC_METH_C
+     , INT_CINT_SINT_TC
+     , ALM_MRTG_TC
+     , LN_DP_GD_C
+     , FIX_AF_FRST_RATE_VAR_DATE
+     , CONT_TRM_SECT_C
+     , #{LAST_CHNG_ID}           AS LAST_CHNG_ID
+     , SYSDATE                   AS LAST_CHNG_DT
+  FROM TSI_NEW_GD_SNRO_PEST_MNG  /* 시뮬레이션_신상품시나리오예측관리 */
+ WHERE ORG_CLAS_C  = #{ORG_CLAS_C}
+   AND BR_C        = #{BR_C}
+   AND SNRO_KIND_C = '06'     /*신상품 06*/
+   AND SNRO_NO     = #{SNRO_NO_ORG}    
+    </insert>
+    
+</mapper>

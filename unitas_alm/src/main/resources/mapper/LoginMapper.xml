@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.LoginMapper">
+
+	<select id="selectSsoLogin" parameterType="java.util.Map" resultType="java.util.HashMap">
+        SELECT COUNT(USID) AS CNT
+          FROM TSY_USER_MNG 
+         WHERE USE_YN    = 'Y'
+           AND USID      = #{user_id}
+	</select>
+	
+	<select id="checkUser" parameterType="java.util.Map" resultType="java.util.HashMap">
+        SELECT CASE WHEN #{password} = USER_PSWD THEN 'Y' ELSE 'N' END AS USER_CHECK
+          FROM TSY_USER_MNG 
+         WHERE USE_YN    = 'Y'
+           AND USID      = #{user_id}
+	</select>
+	
+	<select id="selectLoginInfo" parameterType="java.util.Map" resultType="java.util.HashMap">
+        SELECT A.USID                                                              AS USID         /* 사용자ID          */
+             , A.USER_NM                                                           AS USER_NM      /* 사용자명          */
+             , A.DPNM                                                              AS DPNM         /* 부서명            */
+             , A.AUTH_TC                                                           AS AUTH_TC      /* 메뉴권한 그룹코드 */
+             , A.ING_COND_TC                                                       AS ING_COND_TC  /* 조회조건구분코드(조합,중앙회 조회범위) */
+             , A.ASCN_C                                                            AS ASCN_C       /* 조합코드 */
+             , CASE WHEN A.BR_C BETWEEN '041' AND '049' THEN '도지회별 합산'
+                    ELSE CASE WHEN B.MO_BR_C='001' THEN '중앙회'
+                              ELSE '단위조합별 조회'
+                         END
+               END                                                                 AS ASCN_NM      /* 조합명 */
+             , CASE WHEN A.BR_C BETWEEN '041' AND '049' THEN A.BR_C
+                    ELSE CASE WHEN B.MO_BR_C='001' THEN '001'
+                              ELSE A.BR_C
+                         END
+               END                                                                 AS BR_C         /* 점소코드 */
+             , CASE WHEN A.BR_C BETWEEN '041' AND '049' THEN B.BR_NM
+	                ELSE CASE WHEN B.MO_BR_C='001' THEN '산림조합중앙회' 
+	                          ELSE B.BR_NM 
+	                     END
+	           END                                                                 AS BR_NM        /* 점소명 */
+             , B.BLNG_HQ_BR_C                                                      AS BLNG_HQ_BR_C /* 소속본부점소코드 */
+             , (
+                SELECT DTL_CLAS_VAL 
+                  FROM TSY_CO_MNG  
+                 WHERE CO_C = 'BATCH_BASE_DATE' 
+                   AND USE_YN = 'Y' 
+                   AND DTL_CLAS_VAL != '-' 
+               )                                                                   AS BASE_DATE    /* 배치실행일자 */
+             , CASE WHEN B.BR_BUSI_CHAR_TC='10'  THEN 'Y'  ELSE 'N'  END           AS SUB_YN       /* 10 이면 점소포함여부 표시 */
+             , CASE WHEN B.BR_TC IN ('03', '04') THEN '30' ELSE '10' END           AS BR_TC        /* 중앙회, 조합 구분 */
+             , B.ZONE_TC
+             , A.BR_C     AS ORG_BR_C
+		  FROM TSY_USER_MNG   A
+		     , (
+		        SELECT MO_BR_C
+		             , BR_C
+        		     , BR_NM
+                     , BLNG_HQ_BR_C
+                     , BR_BUSI_CHAR_TC
+                     , BR_TC
+                     , ZONE_TC
+                  FROM TTL_BR_C_INFO
+                 WHERE MO_BR_C IS NOT NULL
+		       ) B
+		 WHERE USE_YN    = 'Y'
+		   AND USID      = #{user_id}
+		   AND A.BR_C    = B.BR_C(+)
+	</select>
+	
+	
+	<select id="selectBrcInfoList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT  MO_BR_C           
+		      , BR_C              
+		      , BR_NM             
+		      , BR_BUSI_CHAR_TC   
+		      , BLNG_HQ_BR_C
+		      , CASE WHEN BR_TC IN ('03', '04') THEN '30' ELSE '10' END   AS BR_TC
+		      , ZONE_TC
+		   FROM TTL_BR_C_INFO
+		  ORDER BY MO_BR_C
+		         , BR_C  
+		         , BLNG_HQ_BR_C
+	</select>	
+	
+</mapper>

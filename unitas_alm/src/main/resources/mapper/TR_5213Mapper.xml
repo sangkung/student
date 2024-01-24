@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_5213Mapper">
+
+	<!-- 채번 -->
+    <select id="getSnroNo" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+    SELECT NVL((SELECT SNRO_KIND_TC||LPAD(TO_CHAR(TO_NUMBER(SUBSTR( MAX(SNRO_NO), 2,3)) + 1), 3, '0')
+                  FROM TSI_USER_SNRO_MNG
+                 WHERE ORG_CLAS_C   = #{ORG_CLAS_C}
+                   AND BR_C         = #{BR_C}
+                   AND SNRO_KIND_C  = #{SNRO_KIND_C}
+                   AND SNRO_KIND_TC = #{SNRO_KIND_TC}
+              GROUP BY SNRO_KIND_TC ),   #{SNRO_KIND_TC}||'001') AS SNRO_NO
+      FROM DUAL
+	</select>
+
+
+	<!-- Main 조회 -->
+    <select id="selectTr5213Main" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+SELECT A.ORG_CLAS_C
+     , A.BR_C
+     , A.SNRO_KIND_C
+     , A.SNRO_NO
+     , A.SNRO_NO_ORG
+     , A.SNRO_KIND_TC
+     , A.SNRO_NM
+     , A.SNRO_CNTN
+     , A.CHK
+     , A.GRID_STATUS
+     , A.LAST_CHNG_ID
+     , B.BR_NM
+     , B.MO_BR_C
+     , B.BLNG_HQ_BR_C
+     , C.LAST_CHNG_ID_NM
+  FROM (
+        SELECT ORG_CLAS_C                          /*기관분류코드          */
+             , BR_C                                /*점소코드              */
+             , SNRO_KIND_C                         /*시나리오유형코드      */
+             , CASE WHEN SNRO_NO LIKE 'U%' THEN  '사용자_'||SUBSTR(SNRO_NO, -3)
+                    ELSE '표준_'||SUBSTR(SNRO_NO, -3)
+               END              AS SNRO_NO         /*시나리오번호          */
+             , SNRO_NO          AS SNRO_NO_ORG
+             , SNRO_KIND_TC     AS SNRO_KIND_TC    /*시나리오유형구분코드  */
+             , SNRO_NM          AS SNRO_NM         /*시나리오명            */
+             , SNRO_CNTN        AS SNRO_CNTN       /*시나리오내용          */
+             , '0'              AS CHK             /*그리드 삭제 상태값    */
+             , '1'              AS GRID_STATUS     /*그리드 제어 상태값    */
+             , LAST_CHNG_ID     AS LAST_CHNG_ID 
+          FROM TSI_USER_SNRO_MNG
+         WHERE ORG_CLAS_C   = #{ORG_CLAS_C}
+           AND SNRO_KIND_C  = '08'   /* 비이자손익시나리오 08 */
+          <choose>
+              <when test="MO_BR_C == 'ALL'">
+                  AND (BR_C = '000' OR SNRO_KIND_TC = 'S') /*전체조합*/
+              </when>
+              <when test="MO_BR_C == '001'">
+                  AND (BR_C = #{BR_C} OR SNRO_KIND_TC = 'S') /*도지회별 합산, 중앙회*/
+              </when>
+              <otherwise>
+                  AND (BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{MO_BR_C}) OR SNRO_KIND_TC = 'S') /*단위조합별 조회*/
+              </otherwise>
+          </choose>
+       ) A
+     , (
+        SELECT '000'      AS MO_BR_C
+             , '000'      AS BR_C
+             , '전체조합' AS BR_NM
+             , '000'      AS BLNG_HQ_BR_C
+          FROM DUAL
+         UNION ALL
+        SELECT MO_BR_C
+             , BR_C
+             , BR_NM
+             , BLNG_HQ_BR_C
+          FROM TTL_BR_C_INFO
+         GROUP BY MO_BR_C
+                , BR_C
+                , BR_NM
+                , BLNG_HQ_BR_C
+       ) B
+     , (
+        SELECT USID     AS LAST_CHNG_ID
+             , USER_NM  AS LAST_CHNG_ID_NM
+          FROM TSY_USER_MNG 
+         WHERE USE_YN = 'Y'
+       ) C
+ WHERE A.BR_C         = B.BR_C(+)
+   AND A.LAST_CHNG_ID = C.LAST_CHNG_ID(+)
+ ORDER BY A.SNRO_NO_ORG
+    </select>
+
+
+	<!-- 가정1 가정2 조회 -->
+    <select id="selectTr5213Sub" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+SELECT ORG_CLAS_C
+	<if test="ORG_CLAS_C == '10'">
+     , AC_BUSI_TC
+     , AC_BUSI_TC_NM    /*회계구분명          */
+     </if>
+	<if test="ORG_CLAS_C == '30'">
+     , '2102'            AS AC_BUSI_TC
+     </if>
+     , KIND_C           /*항목레벨2           */
+     , PL_ITEM_C        /*항목레벨3           */
+     , PL_ITEM_NM       /*항목레벨3 명        */
+     , NXTY_AVG_3Y_AMT  /*3개년 평균(차년도)  */
+     , CNCRN_AVG_3Y_AMT /*3개년 평균(당해년도)*/
+     , NXTY_LST_AMT     /*최근년말(차년도)    */
+     , CNCRN_LST_AMT    /*최근년말(당해년도)  */
+     , PAST_YAER1_AMT   /*1년전말             */
+     , PAST_YEAR2_AMT   /*2년전말             */
+     , PAST_YEAR3_AMT   /*3년전말             */
+  FROM (
+         SELECT X.ORG_CLAS_C                                     AS ORG_CLAS_C
+         	  <if test="ORG_CLAS_C == '10'">
+              , X.AC_BUSI_TC                                     AS AC_BUSI_TC
+              , Y.AC_BUSI_TC_NM                                  AS AC_BUSI_TC_NM
+              </if>
+              , X.PL_ITEM_C                                      AS PL_ITEM_C
+              , CASE WHEN PL_ITEM_C LIKE 'PN%'
+                     THEN '비이자수익'
+                     ELSE '비이자비용'
+                END                                              AS KIND_C
+              , X.PL_ITEM_NM                                     AS PL_ITEM_NM
+              , ROUND((
+                 ((X.LST_AMT + X.SCND_AMT + X.TRD_AMT) / 3)
+                 + X.LST_AMT + X.SCND_AMT
+                ) / 3)                                           AS NXTY_AVG_3Y_AMT  /*3개년 평균(차년도)  */
+              , ROUND((X.LST_AMT + X.SCND_AMT + X.TRD_AMT) / 3)  AS CNCRN_AVG_3Y_AMT /*3개년 평균(당해년도)*/
+              , ROUND(X.LST_AMT  )                               AS NXTY_LST_AMT     /*최근년말(차년도)    */
+              , ROUND(X.LST_AMT  )                               AS CNCRN_LST_AMT    /*최근년말(당해년도)  */
+              , ROUND(X.LST_AMT  )                               AS PAST_YAER1_AMT   /*1년전말             */
+              , ROUND(X.SCND_AMT )                               AS PAST_YEAR2_AMT   /*2년전말             */
+              , ROUND(X.TRD_AMT  )                               AS PAST_YEAR3_AMT   /*3년전말             */
+              , TO_NUMBER(REPLACE(X.PL_ITEM_C, SUBSTR(X.PL_ITEM_C, 0,2), ''))   AS ORD   /* 화면 정렬 */
+           FROM (
+                 SELECT R.ORG_CLAS_C                      AS ORG_CLAS_C
+                 		<if test="ORG_CLAS_C == '10'">
+                      , U.AC_BUSI_TC                      AS AC_BUSI_TC
+                      	</if>
+                      , R.PL_ITEM_C                       AS PL_ITEM_C
+                      , R.PL_ITEM_NM                      AS PL_ITEM_NM
+                      , SUM(U.LST_AMG_SESN_PRFT_CST_AMT)  AS LST_AMT     /*최근년말 실적   */
+                      , SUM(U.SCND_AMG_SESN_PRFT_CST_AMT) AS SCND_AMT    /*과거2년도말 실적*/
+                      , SUM(U.TRD_AMG_SESN_PRFT_CST_AMT)  AS TRD_AMT     /*과거3년도말 실적*/
+                   FROM TSI_ASSM_TTRM_PL_ITEM_MNG      R  /* 시뮬레이션_추정당기손익항목관리     */
+                      , TSI_ASSM_TTRM_PL_ITEM_MAP_MNG  S  /* 시뮬레이션_추정당기손익항목매핑관리 */
+                      , (
+                         SELECT A.ORG_CLAS_C                                               AS ORG_CLAS_C
+                         		<if test="ORG_CLAS_C == '10'">
+                              , AC_BUSI_TC                                                 AS AC_BUSI_TC
+                              	</if>
+                              , A.ACCT_C                                                   AS ACCT_C
+                              , SUM(CASE WHEN B.ANL = 1 THEN A.AMG_SESN_PRFT_CST_AMT END)  AS LST_AMG_SESN_PRFT_CST_AMT  /*최근년말 실적   */
+                              , SUM(CASE WHEN B.ANL = 2 THEN A.AMG_SESN_PRFT_CST_AMT END)  AS SCND_AMG_SESN_PRFT_CST_AMT /*과거2년도말 실적*/
+                              , SUM(CASE WHEN B.ANL = 3 THEN A.AMG_SESN_PRFT_CST_AMT END)  AS TRD_AMG_SESN_PRFT_CST_AMT  /*과거3년도말 실적*/
+                           FROM TII_PL_RSLT_INFO_M A    /* 기초_PL실적정보_월 */
+                              , ( /* 과거 3개년 PL실적 추출 - YYYY1231 */
+                                 SELECT CASE WHEN SUBSTR(#{BASE_DATE}, 5, 2) = '12'
+                                             THEN TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE}, 'YYYYMMDD'), -12 * (LEVEL - 1)), 'YYYY') || '1231'
+                                             ELSE TO_CHAR(ADD_MONTHS(TO_DATE(#{BASE_DATE}, 'YYYYMMDD'), -12 * LEVEL),       'YYYY') || '1231'
+                                        END       AS TGT_BASE_DATE
+                                      , LEVEL     AS ANL /* 년차 */
+                                   FROM DUAL
+                                 CONNECT BY LEVEL &lt;= 3
+                                ) B
+                          WHERE A.BASE_DATE  = B.TGT_BASE_DATE
+                            AND A.ORG_CLAS_C = #{ORG_CLAS_C}                            
+                      <choose>
+			              <when test="MO_BR_C == 'ALL'">
+			                  AND BR_C = '000' /*전체조합*/
+			              </when>
+			              <when test="MO_BR_C == '001'">
+			                  AND BR_C = #{BR_C} /*도지회별 합산, 중앙회*/
+			              </when>
+			              <otherwise>
+			                  AND BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{MO_BR_C}) /*단위조합별 조회*/
+			              </otherwise>
+			          </choose>
+                          GROUP BY A.ORG_CLAS_C
+                                 , A.ACCT_C
+                                 <if test="ORG_CLAS_C == '10'">
+                                 , A.AC_BUSI_TC
+                                 </if>
+                        ) U
+                  WHERE R.ORG_CLAS_C = #{ORG_CLAS_C}
+                    AND R.PL_ITEM_TC = '2'   /* 비이자손익항목 */
+                    AND R.LWST_YN    = 'Y'   /* 최하위여부     */
+                    AND R.USE_YN     = 'Y'
+                    AND R.ORG_CLAS_C = S.ORG_CLAS_C
+                    AND R.PL_ITEM_C  = S.PL_ITEM_C
+                    AND S.BS_PL_TC   = 'PL'
+                    AND S.ORG_CLAS_C = U.ORG_CLAS_C
+                    AND S.ACCT_C     = U.ACCT_C
+                  GROUP BY R.ORG_CLAS_C
+                  		 <if test="ORG_CLAS_C == '10'">
+                         , U.AC_BUSI_TC
+                         </if>
+                         , R.PL_ITEM_C
+                         , R.PL_ITEM_NM
+                ) X
+                <if test="ORG_CLAS_C == '10'">
+              , (
+                  SELECT DTL_CLAS_VAL  AS AC_BUSI_TC
+                       , DTL_CLAS_NM   AS AC_BUSI_TC_NM
+                    FROM TSY_CO_MNG
+                   WHERE USE_YN = 'Y'
+                     AND CO_C = 'AC_BUSI_TC'
+                ) Y
+          WHERE X.AC_BUSI_TC = Y.AC_BUSI_TC(+)
+          		</if>
+       ) Z
+ ORDER BY <if test="ORG_CLAS_C == '10'">
+          AC_BUSI_TC
+        , KIND_C DESC
+          </if>
+         <if test="ORG_CLAS_C == '30'">
+         KIND_C DESC
+         </if>
+        , ORD
+    </select>
+
+
+    <select id="selectTr5213Bottom" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+SELECT ORG_CLAS_C
+     , BR_C
+     , AC_BUSI_TC
+     , SNRO_NO
+     , NON_INT_PL_SNRO_SET_METH_C
+     , MAX(CASE WHEN PL_ITEM_C  = 'PN1'  THEN CNCRN_YY_ASSM_AMT END)  AS PN1_CNCRN  /*비이자수익-수수료수익(당해년도추정금액)             */
+     , MAX(CASE WHEN PL_ITEM_C  = 'PN1'  THEN ORD_YY_ASSM_AMT   END)  AS PN1_ORD    /*비이자수익-수수료수익(차년도추정금액)               */
+     , MAX(CASE WHEN PL_ITEM_C  = 'PN2'  THEN CNCRN_YY_ASSM_AMT END)  AS PN2_CNCRN  /*비이자수익-대손충당금환입(당해년도추정금액)         */
+     , MAX(CASE WHEN PL_ITEM_C  = 'PN2'  THEN ORD_YY_ASSM_AMT   END)  AS PN2_ORD    /*비이자수익-대손충당금환입(차년도추정금액)           */
+     , MAX(CASE WHEN PL_ITEM_C  = 'PN3'  THEN CNCRN_YY_ASSM_AMT END)  AS PN3_CNCRN  /*비이자수익-대출채권매각이익(당해년도추정금액)       */
+     , MAX(CASE WHEN PL_ITEM_C  = 'PN3'  THEN ORD_YY_ASSM_AMT   END)  AS PN3_ORD    /*비이자수익-대출채권매각이익(차년도추정금액)         */
+     , MAX(CASE WHEN PL_ITEM_C  = 'PN4'  THEN CNCRN_YY_ASSM_AMT END)  AS PN4_CNCRN  /*비이자수익-사업외수익(당해년도추정금액)             */
+     , MAX(CASE WHEN PL_ITEM_C  = 'PN4'  THEN ORD_YY_ASSM_AMT   END)  AS PN4_ORD    /*비이자수익-사업외수익(차년도추정금액)               */
+     , MAX(CASE WHEN PL_ITEM_C  = 'PN5'  THEN CNCRN_YY_ASSM_AMT END)  AS PN5_CNCRN  /*비이자수익-타회계정산수익(당해년도추정금액)         */
+     , MAX(CASE WHEN PL_ITEM_C  = 'PN5'  THEN ORD_YY_ASSM_AMT   END)  AS PN5_ORD    /*비이자수익-타회계정산수익(차년도추정금액)           */
+     , MAX(CASE WHEN PL_ITEM_C  = 'PN6'  THEN CNCRN_YY_ASSM_AMT END)  AS PN6_CNCRN  /*비이자수익-본지점및타회계이자수익(당해년도추정금액) */
+     , MAX(CASE WHEN PL_ITEM_C  = 'PN6'  THEN ORD_YY_ASSM_AMT   END)  AS PN6_ORD    /*비이자수익-본지점및타회계이자수익(차년도추정금액)   */
+     , MAX(CASE WHEN PL_ITEM_C  = 'PN7'  THEN CNCRN_YY_ASSM_AMT END)  AS PN7_CNCRN  /*비이자수익-본지점정산및기타수익(당해년도추정금액)   */
+     , MAX(CASE WHEN PL_ITEM_C  = 'PN7'  THEN ORD_YY_ASSM_AMT   END)  AS PN7_ORD    /*비이자수익-본지점정산및기타수익(차년도추정금액)     */
+     , MAX(CASE WHEN PL_ITEM_C  = 'PN8'  THEN CNCRN_YY_ASSM_AMT END)  AS PN8_CNCRN  /*비이자수익-기타비이자수익(당해년도추정금액)         */
+     , MAX(CASE WHEN PL_ITEM_C  = 'PN8'  THEN ORD_YY_ASSM_AMT   END)  AS PN8_ORD    /*비이자수익-기타비이자수익(차년도추정금액)           */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN1'  THEN CNCRN_YY_ASSM_AMT END)  AS LN1_CNCRN  /*비이자수익-수수료비용(당해년도추정금액)             */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN1'  THEN ORD_YY_ASSM_AMT   END)  AS LN1_ORD    /*비이자수익-수수료비용(차년도추정금액)               */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN2'  THEN CNCRN_YY_ASSM_AMT END)  AS LN2_CNCRN  /*비이자수익-대손상각비(당해년도추정금액)             */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN2'  THEN ORD_YY_ASSM_AMT   END)  AS LN2_ORD    /*비이자수익-대손상각비(차년도추정금액)               */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN3'  THEN CNCRN_YY_ASSM_AMT END)  AS LN3_CNCRN  /*비이자수익-기금출연금(당해년도추정금액)             */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN3'  THEN ORD_YY_ASSM_AMT   END)  AS LN3_ORD    /*비이자수익-기금출연금(차년도추정금액)               */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN4'  THEN CNCRN_YY_ASSM_AMT END)  AS LN4_CNCRN  /*비이자수익-인건비및퇴직금(당해년도추정금액)         */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN4'  THEN ORD_YY_ASSM_AMT   END)  AS LN4_ORD    /*비이자수익-인건비및퇴직금(차년도추정금액)           */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN5'  THEN CNCRN_YY_ASSM_AMT END)  AS LN5_CNCRN  /*비이자수익-사업관리비(당해년도추정금액)             */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN5'  THEN ORD_YY_ASSM_AMT   END)  AS LN5_ORD    /*비이자수익-사업관리비(차년도추정금액)               */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN6'  THEN CNCRN_YY_ASSM_AMT END)  AS LN6_CNCRN  /*비이자수익-법인세비용(당해년도추정금액)             */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN6'  THEN ORD_YY_ASSM_AMT   END)  AS LN6_ORD    /*비이자수익-법인세비용(차년도추정금액)               */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN7'  THEN CNCRN_YY_ASSM_AMT END)  AS LN7_CNCRN  /*비이자수익-대출채권매각손실(당해년도추정금액)       */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN7'  THEN ORD_YY_ASSM_AMT   END)  AS LN7_ORD    /*비이자수익-대출채권매각손실(차년도추정금액)         */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN8'  THEN CNCRN_YY_ASSM_AMT END)  AS LN8_CNCRN  /*비이자수익-타회계정산비용(당해년도추정금액)         */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN8'  THEN ORD_YY_ASSM_AMT   END)  AS LN8_ORD    /*비이자수익-타회계정산비용(차년도추정금액)           */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN9'  THEN CNCRN_YY_ASSM_AMT END)  AS LN9_CNCRN  /*비이자수익-본지점및타회계이자비용(당해년도추정금액) */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN9'  THEN ORD_YY_ASSM_AMT   END)  AS LN9_ORD    /*비이자수익-본지점및타회계이자비용(차년도추정금액)   */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN10' THEN CNCRN_YY_ASSM_AMT END)  AS LN10_CNCRN /*비이자수익-본지점정산및기타비용(당해년도추정금액)   */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN10' THEN ORD_YY_ASSM_AMT   END)  AS LN10_ORD   /*비이자수익-본지점정산및기타비용(차년도추정금액)     */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN11' THEN CNCRN_YY_ASSM_AMT END)  AS LN11_CNCRN /*비이자수익-기타비이자비용(당해년도추정금액)         */
+     , MAX(CASE WHEN PL_ITEM_C  = 'LN11' THEN ORD_YY_ASSM_AMT   END)  AS LN11_ORD   /*비이자수익-기타비이자비용(차년도추정금액)           */
+  FROM TSI_USER_NON_INT_SNRO_PEST_MNG    /*시뮬레이션_비이자손익시나리오예측관리*/
+ WHERE ORG_CLAS_C = #{ORG_CLAS_C}
+   AND BR_C       = #{BR_C}
+   AND SNRO_NO    = #{SNRO_NO}
+   AND NON_INT_PL_SNRO_SET_METH_C = '08' /* 사용자입력 */
+ GROUP BY ORG_CLAS_C
+        , BR_C
+        , AC_BUSI_TC
+        , SNRO_NO
+        , NON_INT_PL_SNRO_SET_METH_C
+ ORDER BY AC_BUSI_TC
+    </select>
+
+
+    <insert id="saveTr5213UserNonIntSnroPestMng" parameterType="java.util.List">
+MERGE INTO TSI_USER_NON_INT_SNRO_PEST_MNG A 
+USING (
+          <foreach collection="list" item="item" open="" close="" index="index" separator="UNION">
+       SELECT #{item.ORG_CLAS_C}                     AS ORG_CLAS_C                
+            , #{item.BR_C}                           AS BR_C                      
+            , #{item.AC_BUSI_TC}                     AS AC_BUSI_TC                
+            , #{item.SNRO_NO}                        AS SNRO_NO                   
+            , #{item.PL_ITEM_C}                      AS PL_ITEM_C                 
+            , #{item.NON_INT_PL_SNRO_SET_METH_C}     AS NON_INT_PL_SNRO_SET_METH_C
+            , TO_NUMBER(#{item.CNCRN_YY_ASSM_AMT})   AS CNCRN_YY_ASSM_AMT         
+            , TO_NUMBER(#{item.ORD_YY_ASSM_AMT})     AS ORD_YY_ASSM_AMT           
+            , #{item.LAST_CHNG_ID}                   AS LAST_CHNG_ID              
+            , SYSDATE                                AS LAST_CHNG_DT              
+         FROM DUAL
+          </foreach>
+      ) B
+  ON  (
+           A.ORG_CLAS_C                 = B.ORG_CLAS_C
+       AND A.BR_C                       = B.BR_C
+       AND A.AC_BUSI_TC                 = B.AC_BUSI_TC
+       AND A.SNRO_NO                    = B.SNRO_NO
+       AND A.PL_ITEM_C                  = B.PL_ITEM_C
+       AND A.NON_INT_PL_SNRO_SET_METH_C = B.NON_INT_PL_SNRO_SET_METH_C
+      )   
+ WHEN MATCHED THEN
+      UPDATE SET A.CNCRN_YY_ASSM_AMT = B.CNCRN_YY_ASSM_AMT         
+               , A.ORD_YY_ASSM_AMT   = B.ORD_YY_ASSM_AMT           
+               , A.LAST_CHNG_ID      = B.LAST_CHNG_ID              
+               , A.LAST_CHNG_DT      = B.LAST_CHNG_DT
+ WHEN NOT MATCHED THEN
+     INSERT (
+            A.ORG_CLAS_C
+          , A.BR_C
+          , A.AC_BUSI_TC
+          , A.SNRO_NO
+          , A.PL_ITEM_C
+          , A.NON_INT_PL_SNRO_SET_METH_C
+          , A.CNCRN_YY_ASSM_AMT
+          , A.ORD_YY_ASSM_AMT
+          , A.LAST_CHNG_ID
+          , A.LAST_CHNG_DT
+     ) VALUES (
+            B.ORG_CLAS_C
+          , B.BR_C
+          , B.AC_BUSI_TC
+          , B.SNRO_NO
+          , B.PL_ITEM_C
+          , B.NON_INT_PL_SNRO_SET_METH_C
+          , B.CNCRN_YY_ASSM_AMT
+          , B.ORD_YY_ASSM_AMT
+          , B.LAST_CHNG_ID
+          , B.LAST_CHNG_DT
+     )
+    </insert>
+    
+	<!-- Main 저장 -->
+    <insert id="insertTr5213Main" parameterType="java.util.Map">
+        INSERT INTO TSI_USER_SNRO_MNG
+        (
+            ORG_CLAS_C
+          , BR_C
+          , SNRO_KIND_C
+          , SNRO_NO
+          , SNRO_KIND_TC
+          , SNRO_NM
+          , SNRO_CNTN
+          , APLY_AMT_TC
+          , LAST_CHNG_ID
+          , LAST_CHNG_DT
+        ) VALUES (
+            #{ORG_CLAS_C}
+          , #{BR_C}
+          , #{SNRO_KIND_C}
+          , #{SNRO_NO}
+          , #{SNRO_KIND_TC}
+          , #{SNRO_NM}
+          , #{SNRO_CNTN}
+          , NULL
+          , #{LAST_CHNG_ID}
+          , SYSDATE
+        )
+    </insert>
+    
+	<!-- Main 수정 -->
+    <update id="updateTr5213Main" parameterType="java.util.Map">
+        UPDATE TSI_USER_SNRO_MNG
+           SET SNRO_NM      = #{SNRO_NM}
+             , SNRO_CNTN    = #{SNRO_CNTN}
+             , LAST_CHNG_ID = #{LAST_CHNG_ID}
+             , LAST_CHNG_DT = SYSDATE
+         WHERE ORG_CLAS_C   = #{ORG_CLAS_C}
+           AND BR_C         = #{BR_C}
+           AND SNRO_KIND_C  = #{SNRO_KIND_C}
+           AND SNRO_NO      = #{SNRO_NO}
+           AND SNRO_KIND_TC = #{SNRO_KIND_TC}
+    </update>
+    
+	<!-- Main 삭제 -->
+    <delete id="deleteTr5213Main" parameterType="java.util.Map">
+        DELETE FROM TSI_USER_SNRO_MNG
+         WHERE ORG_CLAS_C   = #{ORG_CLAS_C}
+           AND BR_C         = #{BR_C}
+           AND SNRO_KIND_C  = #{SNRO_KIND_C}
+           AND SNRO_NO      = #{SNRO_NO}
+           AND SNRO_KIND_TC = #{SNRO_KIND_TC}
+    </delete>
+
+    <update id="updateTr5213TsiUserSimuMng" parameterType="java.util.Map">
+        UPDATE TSI_USER_SIMU_MNG
+           SET NON_INT_PL_SNRO_NO = ''    /* 비이자 */
+             , LAST_CHNG_ID       = #{LAST_CHNG_ID}
+             , LAST_CHNG_DT       = SYSDATE
+         WHERE ORG_CLAS_C         = #{ORG_CLAS_C}
+           AND BR_C               = #{BR_C}
+           AND NON_INT_PL_SNRO_NO = #{SNRO_NO}
+    </update>
+
+    <delete id="deleteTr5213UserNonIntSnroPestMng" parameterType="java.util.Map">
+        DELETE FROM TSI_USER_NON_INT_SNRO_PEST_MNG
+         WHERE ORG_CLAS_C   = #{ORG_CLAS_C}
+           AND BR_C         = #{BR_C}
+           AND SNRO_NO      = #{SNRO_NO}
+    </delete>
+    
+    <delete id="deleteTr5213Bottom" parameterType="java.util.Map">
+        DELETE FROM TSI_USER_NON_INT_SNRO_PEST_MNG
+         WHERE ORG_CLAS_C   = #{ORG_CLAS_C}
+           AND BR_C         = #{BR_C}
+           AND AC_BUSI_TC   = #{AC_BUSI_TC}
+           AND SNRO_NO      = #{SNRO_NO}
+    </delete>
+    
+	<insert id="insertTr5211UserNonIntSnroPestMngCopy" parameterType="java.util.Map">
+INSERT INTO TSI_USER_NON_INT_SNRO_PEST_MNG
+SELECT ORG_CLAS_C                  AS ORG_CLAS_C
+     , #{BR_C}                     AS BR_C 
+     , AC_BUSI_TC                  AS AC_BUSI_TC 
+     , #{SNRO_NO}                  AS SNRO_NO 
+     , PL_ITEM_C                   AS PL_ITEM_C 
+     , NON_INT_PL_SNRO_SET_METH_C  AS NON_INT_PL_SNRO_SET_METH_C
+     , CNCRN_YY_ASSM_AMT           AS CNCRN_YY_ASSM_AMT
+     , ORD_YY_ASSM_AMT             AS ORD_YY_ASSM_AMT
+     , #{LAST_CHNG_ID}             AS LAST_CHNG_ID 
+     , SYSDATE                     AS LAST_CHNG_DT
+  FROM TSI_USER_NON_INT_SNRO_PEST_MNG     /* 시뮬레이션_비이자손익시나리오예측관리 */
+ WHERE ORG_CLAS_C = #{ORG_CLAS_C}
+   AND BR_C       = #{TARGET_BR_C}
+   AND SNRO_NO    = #{SNRO_NO_ORG}
+	</insert>
+
+</mapper>

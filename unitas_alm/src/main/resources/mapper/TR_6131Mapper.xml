@@ -1,0 +1,585 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_6131Mapper">
+
+    <!-- 자금량 시나리오 코드 조회 -->
+    <select id="selectCapQtySnroNo" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+    SELECT SNRO_NO AS CODE
+         , SNRO_NM AS TEXT
+      FROM TSY_SNRO_SET_MNG
+     WHERE SNRO_KIND_C  = '02'
+       AND USE_YN = 'Y'
+     GROUP BY SNRO_NO, SNRO_NM
+    </select>
+    
+	<!-- 20230904  WT_AVG_APLY_RATE 변경 RATE_WT_PRIN-->
+    <select id="selectTr6131List" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+WITH TEMP AS (
+               SELECT ORG_CLAS_C
+                    , ACCT_C             /*계정코드*/
+                    , AC_BUSI_TC         /*회계사업구분코드*/
+                    , CASE WHEN RATE_SSTV_YN = 'N' THEN '비금리부' ELSE '금리부' END                                AS RATE_SSTV_NM   /*금리민감여부*/
+                    , SUM(CASE WHEN ALM_MTRT_SECT_C = '40'
+                               THEN RMBR_PAY_PRIN_AMT <if test="INT_YN == 'Y'.toString()"> + RMBR_PAY_INT_AMT</if>
+                               ELSE 0
+                          END)                                                                                      AS TOT_AMT           /*합계-금액(이자)*/
+                    , CASE WHEN SUM(CASE WHEN ALM_MTRT_SECT_C = '40' THEN RMBR_PAY_PRIN_AMT ELSE 0 END) != 0
+                           THEN SUM(CASE WHEN ALM_MTRT_SECT_C = '40' THEN RATE_WT_PRIN  ELSE 0 END) / SUM(CASE WHEN ALM_MTRT_SECT_C = '40' THEN RMBR_PAY_PRIN_AMT ELSE 0 END)
+                      END                                                                                           AS TOT_RATE             /*합계-이율*/
+                    , SUM(CASE WHEN ALM_MTRT_SECT_C = '40' THEN RATE_WT_PRIN END)                               AS TOT_RATE_WT_PRIN /* 가중평균금리 합계 */
+                    <foreach collection="SEQ_LIST" item="item" open="" close="" separator=" " index="index">
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( ${item} )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '40' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RMBR_PAY_PRIN_AMT <if test="INT_YN == 'Y'.toString()"> + RMBR_PAY_INT_AMT</if>
+                                    END
+                          END)                                                                                      AS  M${index}_AMT /*월(금액)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( ${item} )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '40' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                                   THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                              END
+                                    END
+                          END)                                                                                      AS  M${index}_RATE /*월(이자)*/
+                    , SUM(CASE WHEN MTRT_SECT_SEQ IN ( ${item} )
+                               THEN CASE WHEN ALM_MTRT_SECT_C = '40' AND ASTS_SDTP_CLAS_C = '10'
+                                         THEN RATE_WT_PRIN
+                                    END
+                          END)                                                                                      AS  M${index}_RATE_WT_PRIN /* 가중평균금리 합계 */
+                    </foreach>
+                    , SUM(CASE WHEN ALM_MTRT_SECT_C = '40' AND ASTS_SDTP_CLAS_C != '10'
+                               THEN RMBR_PAY_PRIN_AMT <if test="INT_YN == 'Y'.toString()"> + RMBR_PAY_INT_AMT </if>
+                          END)                                                                                      AS NDCR_AMT /*요주의이하-금액*/
+                    , SUM(CASE WHEN ALM_MTRT_SECT_C = '40' AND ASTS_SDTP_CLAS_C != '10'
+                               THEN CASE WHEN RMBR_PAY_PRIN_AMT != 0
+                                         THEN RATE_WT_PRIN / RMBR_PAY_PRIN_AMT
+                                    END
+                          END)                                                                                      AS  NDCR_RATE /*월(이자)*/
+                    , SUM(CASE WHEN ALM_MTRT_SECT_C = '40' AND ASTS_SDTP_CLAS_C != '10' THEN RATE_WT_PRIN END)  AS NDCR_RATE_WT_PRIN /*가중평균금리 합계*/
+                      <if test="DIMENSION1 != null and DIMENSION1 != ''">
+                    , DIMENSION1
+                      </if>
+                      <if test="DIMENSION2 != null and DIMENSION2 != ''">
+                    , DIMENSION2
+                      </if>
+                 FROM (
+                           SELECT A.ORG_CLAS_C               AS ORG_CLAS_C
+                                , A.ACCT_C                   AS ACCT_C             /*계정코드*/
+                                <if test="AC_BUSI_TC != null and AC_BUSI_TC != '' and AC_BUSI_TC != '0000'">
+                                , A.AC_BUSI_TC               AS AC_BUSI_TC         /*회계사업구분코드*/
+                                </if>
+                                <if test="AC_BUSI_TC == '0000'">
+                                , '1105'                     AS AC_BUSI_TC         /*전체 합산, 계정마스터와 조인용*/
+                                </if>
+                                , A.RATE_SSTV_YN             AS RATE_SSTV_YN       /*금리민감여부*/
+                                , A.ALM_MTRT_SECT_C          AS ALM_MTRT_SECT_C    /*ALM만기구간코드*/
+                                , A.ASTS_SDTP_CLAS_C         AS ASTS_SDTP_CLAS_C   /*자산건전성분류코드*/
+                                , A.MTRT_SECT_SEQ            AS MTRT_SECT_SEQ      /*만기구간일련번호*/
+                                , SUM(A.RMBR_PAY_PRIN_AMT)   AS RMBR_PAY_PRIN_AMT  /*상환지급원금금액*/
+                                , SUM(A.RMBR_PAY_INT_AMT )   AS RMBR_PAY_INT_AMT   /*상환지급이자금액*/
+                                , SUM(A.RATE_WT_PRIN )   AS RATE_WT_PRIN   /*가중평균적용금리*/
+                                  <if test="DIMENSION1 != null and DIMENSION1 != ''">
+                                , A.${DIMENSION1}            AS DIMENSION1
+                                  </if>
+                                  <if test="DIMENSION2 != null and DIMENSION2 != ''">
+                                , A.${DIMENSION2}            AS DIMENSION2
+                                  </if>
+                             FROM TRT_RATE_GAP_TOT A
+                            WHERE A.BASE_DATE = #{BASE_DATE}    /*기준일자*/
+                              AND A.ALM_WORK_TC       = 'D'                               /*ALM작업구분코드*/
+                              AND A.RATE_SNRO_NO      = '1'                               /*금리시나리오번호*/
+                              AND A.ORG_CLAS_C        = #{ORG_CLAS_C}
+                              <if test="AC_BUSI_TC != null and AC_BUSI_TC != '' and AC_BUSI_TC != '0000'">
+                              AND A.AC_BUSI_TC        = #{AC_BUSI_TC}                     /*회계사업구분코드*/
+                              </if>
+                              <if test="FUTU_POT_SECT_CNT != null and FUTU_POT_SECT_CNT != ''">
+                              AND A.FUTU_POT_SECT_CNT = TO_NUMBER( #{FUTU_POT_SECT_CNT} ) /*미래시점구간수*/
+                              </if>
+                              AND A.NEW_CAP_QTY_TC    = #{NEW_CAP_QTY_TC}                 /*신규자금량구분코드*/
+                              <if test="CAP_QTY_SNRO_NO != null and CAP_QTY_SNRO_NO != ''">
+                              AND A.CAP_QTY_SNRO_NO   = #{CAP_QTY_SNRO_NO}                /*자금량시나리오번호*/
+                              </if>
+                              <if test="CAP_QTY_SNRO_NO == null or CAP_QTY_SNRO_NO == ''">
+                              AND A.CAP_QTY_SNRO_NO = '1'                /*자금량시나리오번호 디폴트:1*/
+                              </if>
+                              AND A.CS_BHOR_REFL_YN   = #{CS_BHOR_REFL_YN}                /*고객행동*/
+                              <if test='BR_C == "ALL"'>
+                                  AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BR_TC = '03') /*전체조합*/
+                              </if>
+                              <if test="BR_C != 'ALL'">
+                                  <if test="BR_C == '001'">
+                                  AND A.BR_C = '001' /*중앙회*/
+                                  </if>
+                                  <if test="BR_C != '001' and (BLNG_HQ_BR_C == '' or BLNG_HQ_BR_C == null)">
+                                  AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{BR_C}) /*도지회별합산*/
+                                  </if>
+                                  <if test="BR_C != '001' and BLNG_HQ_BR_C != '' and BLNG_HQ_BR_C != null and SUB_YN == 'Y'.toString()">
+                                  AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{BR_C}) /*단위조합별조회(지소포함)*/
+                                  </if>
+                                  <if test="BR_C != '001' and BLNG_HQ_BR_C != '' and BLNG_HQ_BR_C != null and SUB_YN == 'N'.toString()">
+                                  AND A.BR_C = #{BR_C}
+                                  </if>
+                              </if>
+                            GROUP BY A.ORG_CLAS_C
+                                   , A.ACCT_C              /*계정코드*/
+                                     <if test="AC_BUSI_TC != null and AC_BUSI_TC != '' and AC_BUSI_TC != '0000'">
+                                   , A.AC_BUSI_TC          /*회계사업구분코드*/
+                                     </if>
+                                   , A.RATE_SSTV_YN        /*금리민감여부*/
+                                   , A.ALM_MTRT_SECT_C     /*ALM만기구간코드*/
+                                   , A.ASTS_SDTP_CLAS_C    /*자산건전성분류코드*/
+                                   , A.MTRT_SECT_SEQ       /*만기구간일련번호*/
+                                   <if test="DIMENSION1 != null and DIMENSION1 != ''">
+                                   , A.${DIMENSION1}
+                                   </if>
+                                   <if test="DIMENSION2 != null and DIMENSION2 != ''">
+                                   , A.${DIMENSION2}
+                                   </if>
+                      )
+             GROUP BY ORG_CLAS_C
+                    , ACCT_C              /*계정코드*/
+                    , AC_BUSI_TC          /*회계사업구분코드*/
+                    , RATE_SSTV_YN        /*금리민감여부*/
+                      <if test="DIMENSION1 != null and DIMENSION1 != ''">
+                    , DIMENSION1
+                      </if>
+                      <if test="DIMENSION2 != null and DIMENSION2 != ''">
+                    , DIMENSION2
+                      </if>
+        )
+       SELECT LVL1                                                                                                                AS L1_NM
+              <if test="LEVEL == 1">
+                  <choose>                                                                                                                                
+                      <when test="DIMENSION1 != '' and DIMENSION1 != null and (DIMENSION2 == '' or DIMENSION2 == null)">
+            , DECODE(GROUPING_ID(RATE_SSTV_NM), 1, LVL1||' 합계', RATE_SSTV_NM)                                                   AS RATE_SSTV_NM
+            , GROUPING_ID (RATE_SSTV_NM, DIMENSION1)                                                                              AS GRP_ID
+            , CASE WHEN LVL1 = '자산' THEN DECODE(GROUPING_ID(RATE_SSTV_NM, DIMENSION1), 1, RATE_SSTV_NM||LVL1||DECODE(RATE_SSTV_NM, '금리부', ' 합계(A)', ' 합계'), DIMENSION1)
+                   WHEN LVL1 = '부채' THEN DECODE(GROUPING_ID(RATE_SSTV_NM, DIMENSION1), 1, RATE_SSTV_NM||LVL1||DECODE(RATE_SSTV_NM, '금리부', ' 합계(B)', ' 합계'), DIMENSION1)
+                   ELSE                    DECODE(GROUPING_ID(RATE_SSTV_NM, DIMENSION1), 1, RATE_SSTV_NM||LVL1||' 합계',    DIMENSION1)
+              END                                                                                                                 AS DIMENSION1
+            , ''                                                                                                                AS DIMENSION2
+                      </when>                                                                                                                 
+                      <when test="DIMENSION1 != '' and DIMENSION1 != null and DIMENSION2 != '' and DIMENSION2 != null">                       
+            , DECODE(GROUPING_ID(RATE_SSTV_NM), 1, LVL1||' 합계', RATE_SSTV_NM)                                                    AS RATE_SSTV_NM
+            , GROUPING_ID (RATE_SSTV_NM, DIMENSION1, DIMENSION2)                                                                   AS GRP_ID
+            , CASE WHEN LVL1 = '자산' THEN DECODE(GROUPING_ID(RATE_SSTV_NM, DIMENSION1, DIMENSION2), 3, RATE_SSTV_NM||LVL1||DECODE(RATE_SSTV_NM, '금리부', ' 합계(A)', ' 합계'), DIMENSION1)
+                   WHEN LVL1 = '부채' THEN DECODE(GROUPING_ID(RATE_SSTV_NM, DIMENSION1, DIMENSION2), 3, RATE_SSTV_NM||LVL1||DECODE(RATE_SSTV_NM, '금리부', ' 합계(B)', ' 합계'), DIMENSION1)
+                   ELSE                    DECODE(GROUPING_ID(RATE_SSTV_NM, DIMENSION1, DIMENSION2), 3, RATE_SSTV_NM||LVL1||' 합계',    DIMENSION1)
+              END                                                                                                                  AS DIMENSION1
+            , DECODE(GROUPING_ID (RATE_SSTV_NM, DIMENSION1, DIMENSION2), 1, DIMENSION1||' 소계', DIMENSION2)                       AS DIMENSION2
+                      </when>
+                      <otherwise>
+            , CASE WHEN LVL1 = '자산' AND RATE_SSTV_NM='금리부'  THEN DECODE(GROUPING_ID(RATE_SSTV_NM), 0, RATE_SSTV_NM||LVL1||DECODE(RATE_SSTV_NM, '금리부', ' 합계(A)', ' 합계'), RATE_SSTV_NM||' 합계')
+                   WHEN LVL1 = '부채' AND RATE_SSTV_NM='금리부'  THEN DECODE(GROUPING_ID(RATE_SSTV_NM), 0, RATE_SSTV_NM||LVL1||DECODE(RATE_SSTV_NM, '금리부', ' 합계(B)', ' 합계'), RATE_SSTV_NM||' 합계')
+                   ELSE                                               DECODE(GROUPING_ID(RATE_SSTV_NM), 1, RATE_SSTV_NM||LVL1||' 합계',    RATE_SSTV_NM||' 합계')
+              END                                                                                                                   AS RATE_SSTV_NM
+            , GROUPING_ID (RATE_SSTV_NM)                                                                                            AS GRP_ID 
+            , ''                                                                                                                  AS DIMENSION1
+            , ''                                                                                                                  AS DIMENSION2
+                      </otherwise>                                                                                                 
+                  </choose>
+              </if>
+              <if test="LEVEL == 2">
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2), 3, LVL1||' 합계', RATE_SSTV_NM)                                               AS RATE_SSTV_NM
+            , CASE WHEN LVL1 = '자산' THEN DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2), 1, RATE_SSTV_NM||LVL1||DECODE(RATE_SSTV_NM, '금리부', ' 합계(A)', ' 합계'), LVL2)
+                   WHEN LVL1 = '부채' THEN DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2), 1, RATE_SSTV_NM||LVL1||DECODE(RATE_SSTV_NM, '금리부', ' 합계(B)', ' 합계'), LVL2)
+                   ELSE                    DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2), 1, RATE_SSTV_NM||LVL1||' 합계',    LVL2)
+              END                                                                                                                   AS L2_NM
+                  <choose>                                                                                                                            
+                      <when test="DIMENSION1 != '' and DIMENSION1 != null and (DIMENSION2 == '' or DIMENSION2 == null)">
+            , GROUPING_ID (RATE_SSTV_NM, LVL2, DIMENSION1)                                                                          AS GRP_ID
+            , DECODE(GROUPING_ID (RATE_SSTV_NM, LVL2, DIMENSION1), 1, LVL2||' 소계', DIMENSION1)                                    AS DIMENSION1
+            , ''                                                                                                                  AS DIMENSION2
+                      </when>
+                      <when test="DIMENSION1 != '' and DIMENSION1 != null and DIMENSION2 != '' and DIMENSION2 != null">                   
+            , GROUPING_ID (RATE_SSTV_NM, LVL2, DIMENSION1, DIMENSION2)                                                              AS GRP_ID
+            , DECODE(GROUPING_ID (RATE_SSTV_NM, LVL2, DIMENSION1, DIMENSION2), 3, LVL2||' 소계', DIMENSION1)                        AS DIMENSION1
+            , DECODE(GROUPING_ID (RATE_SSTV_NM, LVL2, DIMENSION1, DIMENSION2), 1, DIMENSION1||' 소계', DIMENSION2)                  AS DIMENSION2
+                      </when>
+                      <otherwise>
+            , GROUPING_ID (RATE_SSTV_NM, LVL2)                                                                                      AS GRP_ID 
+            , ''                                                                                                                  AS DIMENSION1
+            , ''                                                                                                                  AS DIMENSION2
+                      </otherwise>
+                  </choose>
+              </if>
+              <if test="LEVEL == 3">
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3), 7, LVL1||' 합계', RATE_SSTV_NM)                                         AS RATE_SSTV_NM
+            , CASE WHEN LVL1 = '자산' THEN DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3), 3, RATE_SSTV_NM||LVL1||DECODE(RATE_SSTV_NM, '금리부', ' 합계(A)', ' 합계'), LVL2)
+                   WHEN LVL1 = '부채' THEN DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3), 3, RATE_SSTV_NM||LVL1||DECODE(RATE_SSTV_NM, '금리부', ' 합계(B)', ' 합계'), LVL2)
+                   ELSE                    DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3), 3, RATE_SSTV_NM||LVL1||' 합계',    LVL2)
+              END                                                                                                                   AS L2_NM
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3), 1, LVL2||' 소계', LVL3)                                                 AS L3_NM
+                  <choose>                                                                                                                                
+                      <when test="DIMENSION1 != '' and DIMENSION1 != null and (DIMENSION2 == '' or DIMENSION2 == null)">
+            , GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, DIMENSION1)                                                                    AS GRP_ID
+            , DECODE(GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, DIMENSION1), 1, LVL3||' 소계', DIMENSION1)                              AS DIMENSION1
+            , ''                                                                                                                  AS DIMENSION2
+                      </when>                                                                                                                 
+                      <when test="DIMENSION1 != '' and DIMENSION1 != null and DIMENSION2 != '' and DIMENSION2 != null">                       
+            , GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, DIMENSION1, DIMENSION2)                                                        AS GRP_ID
+            , DECODE(GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, DIMENSION1, DIMENSION2), 3, LVL3||' 소계', DIMENSION1)                  AS DIMENSION1
+            , DECODE(GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, DIMENSION1, DIMENSION2), 1, DIMENSION1||' 소계', DIMENSION2)            AS DIMENSION2
+                      </when>
+                      <otherwise>
+            , GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3)                                                                                AS GRP_ID 
+            , ''                                                                                                                  AS DIMENSION1
+            , ''                                                                                                                  AS DIMENSION2
+                      </otherwise>
+                  </choose>
+              </if>
+              <if test="LEVEL == 4">
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4), 15, LVL1||' 합계', RATE_SSTV_NM)                                  AS RATE_SSTV_NM
+            , CASE WHEN LVL1 = '자산' THEN DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4), 7, RATE_SSTV_NM||LVL1||DECODE(RATE_SSTV_NM, '금리부', ' 합계(A)', ' 합계'), LVL2)
+                   WHEN LVL1 = '부채' THEN DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4), 7, RATE_SSTV_NM||LVL1||DECODE(RATE_SSTV_NM, '금리부', ' 합계(B)', ' 합계'), LVL2)
+                   ELSE                    DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4), 7, RATE_SSTV_NM||LVL1||' 합계',    LVL2)
+              END                                                                                                                   AS L2_NM
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4), 3, LVL2||' 소계', LVL3)                                           AS L3_NM
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4), 1, LVL3||' 소계', LVL4)                                           AS L4_NM
+                  <choose>                                                                                                                                
+                      <when test="DIMENSION1 != '' and DIMENSION1 != null and (DIMENSION2 == '' or DIMENSION2 == null)">                                  
+            , GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, DIMENSION1)                                                              AS GRP_ID
+            , DECODE(GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, DIMENSION1), 1, LVL4||' 소계', DIMENSION1)                        AS DIMENSION1
+            , ''                                                                                                                  AS DIMENSION2
+                      </when>
+                      <when test="DIMENSION1 != '' and DIMENSION1 != null and DIMENSION2 != '' and DIMENSION2 != null">                       
+            , GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, DIMENSION1, DIMENSION2)                                                  AS GRP_ID
+            , DECODE(GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, DIMENSION1, DIMENSION2), 3, LVL4||' 소계', DIMENSION1)            AS DIMENSION1
+            , DECODE(GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, DIMENSION1, DIMENSION2), 1, DIMENSION1||' 소계', DIMENSION2)      AS DIMENSION2
+                      </when>
+                      <otherwise>
+            , GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4)                                                                          AS GRP_ID 
+            , ''                                                                                                                  AS DIMENSION1
+            , ''                                                                                                                  AS DIMENSION2
+                      </otherwise>
+                  </choose>
+              </if>
+              <if test="LEVEL == 5">
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5), 31, LVL1||' 합계', RATE_SSTV_NM)                            AS RATE_SSTV_NM
+            , CASE WHEN LVL1 = '자산' THEN DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5), 15, RATE_SSTV_NM||LVL1||DECODE(RATE_SSTV_NM, '금리부', ' 합계(A)', ' 합계'), LVL2)
+                   WHEN LVL1 = '부채' THEN DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5), 15, RATE_SSTV_NM||LVL1||DECODE(RATE_SSTV_NM, '금리부', ' 합계(B)', ' 합계'), LVL2)
+                   ELSE                    DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5), 15, RATE_SSTV_NM||LVL1||' 합계',    LVL2)
+              END                                                                                                                   AS L2_NM
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5), 7,  LVL2||' 소계', LVL3)                                    AS L3_NM
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5), 3,  LVL3||' 소계', LVL4)                                    AS L4_NM
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5), 1,  LVL4||' 소계', LVL5)                                    AS L5_NM
+                  <choose>                                                                                                                                
+                      <when test="DIMENSION1 != '' and DIMENSION1 != null and (DIMENSION2 == '' or DIMENSION2 == null)">                                  
+            , GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, DIMENSION1)                                                        AS GRP_ID
+            , DECODE(GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, DIMENSION1), 1, LVL5||' 소계', DIMENSION1)                  AS DIMENSION1
+            , ''                                                                                                                  AS DIMENSION2
+                      </when>
+                      <when test="DIMENSION1 != '' and DIMENSION1 != null and DIMENSION2 != '' and DIMENSION2 != null">                       
+            , GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, DIMENSION1, DIMENSION2)                                             AS GRP_ID
+            , DECODE(GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, DIMENSION1, DIMENSION2), 3, LVL5||' 소계', DIMENSION1)       AS DIMENSION1
+            , DECODE(GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, DIMENSION1, DIMENSION2), 1, DIMENSION1||' 소계', DIMENSION2) AS DIMENSION2
+                      </when>
+                      <otherwise>
+            , GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5)                                                                     AS GRP_ID 
+            , ''                                                                                                                   AS DIMENSION1
+            , ''                                                                                                                   AS DIMENSION2
+                      </otherwise>
+                  </choose>
+              </if>
+              <if test="LEVEL == 6">
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6), 63, LVL1||' 합계', RATE_SSTV_NM)                       AS RATE_SSTV_NM
+            , CASE WHEN LVL1 = '자산' THEN DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6), 31, RATE_SSTV_NM||LVL1||DECODE(RATE_SSTV_NM, '금리부', ' 합계(A)', ' 합계'), LVL2)
+                   WHEN LVL1 = '부채' THEN DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6), 31, RATE_SSTV_NM||LVL1||DECODE(RATE_SSTV_NM, '금리부', ' 합계(B)', ' 합계'), LVL2)
+                   ELSE                    DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6), 31, RATE_SSTV_NM||LVL1||' 합계',    LVL2)
+              END                                                                                                                    AS L2_NM
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6), 15, LVL2||' 소계', LVL3)                               AS L3_NM
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6), 7,  LVL3||' 소계', LVL4)                               AS L4_NM
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6), 3,  LVL4||' 소계', LVL5)                               AS L5_NM
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6), 1,  LVL5||' 소계', LVL6)                               AS L6_NM
+                  <choose>                                                                                                                          
+                      <when test="DIMENSION1 != '' and DIMENSION1 != null and (DIMENSION2 == '' or DIMENSION2 == null)">                            
+            , GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, DIMENSION1)                                                   AS GRP_ID
+            , DECODE(GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, DIMENSION1), 1, LVL6||' 소계', DIMENSION1)             AS DIMENSION1
+            , ''                                                                                                                   AS DIMENSION2
+                      </when>
+                      <when test="DIMENSION1 != '' and DIMENSION1 != null and DIMENSION2 != '' and DIMENSION2 != null">
+            , GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, DIMENSION1, DIMENSION2)                                             AS GRP_ID
+            , DECODE(GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, DIMENSION1, DIMENSION2), 3, LVL6||' 소계', DIMENSION1)       AS DIMENSION1
+            , DECODE(GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, DIMENSION1, DIMENSION2), 1, DIMENSION1||' 소계', DIMENSION2) AS DIMENSION2
+                      </when>
+                      <otherwise>
+            , GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6)                                                               AS GRP_ID 
+            , ''                                                                                                                   AS DIMENSION1
+            , ''                                                                                                                   AS DIMENSION2
+                      </otherwise>
+                  </choose>
+              </if>
+              <if test="LEVEL == 7">
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 127, LVL1||' 합계', RATE_SSTV_NM)      AS RATE_SSTV_NM
+            , CASE WHEN LVL1 = '자산' THEN DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 63, RATE_SSTV_NM||LVL1||DECODE(RATE_SSTV_NM, '금리부', ' 합계(A)', ' 합계'), LVL2)
+                   WHEN LVL1 = '부채' THEN DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 63, RATE_SSTV_NM||LVL1||DECODE(RATE_SSTV_NM, '금리부', ' 합계(B)', ' 합계'), LVL2)
+                   ELSE                    DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 63, RATE_SSTV_NM||LVL1||' 합계',    LVL2)
+              END                                                                                                          AS L2_NM
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 31, LVL2||' 소계', LVL3)               AS L3_NM
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 15, LVL3||' 소계', LVL4)               AS L4_NM
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 7,  LVL4||' 소계', LVL5)               AS L5_NM
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 3,  LVL5||' 소계', LVL6)               AS L6_NM
+            , DECODE(GROUPING_ID(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 1,  LVL6||' 소계', LVL7)               AS L7_NM
+                  <choose>                                                                                                                          
+                      <when test="DIMENSION1 != '' and DIMENSION1 != null and (DIMENSION2 == '' or DIMENSION2 == null)">                            
+            , GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMENSION1)                                       AS GRP_ID
+            , DECODE(GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMENSION1), 1, LVL7||' 소계', DIMENSION1) AS DIMENSION1
+            , ''                                                                                                             AS DIMENSION2
+                      </when>
+                      <when test="DIMENSION1 != '' and DIMENSION1 != null and DIMENSION2 != '' and DIMENSION2 != null">
+            , GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMENSION1, DIMENSION2)                                             AS GRP_ID
+            , DECODE(GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMENSION1, DIMENSION2), 3, LVL7||' 소계', DIMENSION1)       AS DIMENSION1
+            , DECODE(GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMENSION1, DIMENSION2), 1, DIMENSION1||' 소계', DIMENSION2) AS DIMENSION2
+                      </when>
+                      <otherwise>
+            , GROUPING_ID (RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7)                                                AS GRP_ID 
+            , ''                                                                                                          AS DIMENSION1
+            , ''                                                                                                          AS DIMENSION2
+                      </otherwise>
+                  </choose>
+              </if>
+              <!-- 합계 계산 -->
+            , CASE WHEN SUM(TOT_AMT) !=0 THEN ROUND(SUM(TOT_AMT) / TO_NUMBER(#{AMT_UNIT}))                END   AS TOT_AMT
+            , CASE WHEN SUM(TOT_AMT) !=0 THEN ROUND(SUM(TOT_RATE_WT_PRIN) / SUM(TOT_AMT) * 100, 2) ELSE 0 END   AS TOT_RATE
+			  <!-- 합계 계산 끝 -->
+			  
+			  <!-- 기간별 값 계산 -->
+			  <foreach collection="SEQ_LIST" item="item" open="" close="" separator=" " index="index">
+            , CASE WHEN SUM(M${index}_AMT) !=0 THEN ROUND(SUM(M${index}_AMT) / TO_NUMBER(#{AMT_UNIT}))                      END  AS M${index}_AMT
+            , CASE WHEN SUM(M${index}_AMT) !=0 THEN ROUND(SUM(M${index}_RATE_WT_PRIN) / SUM(M${index}_AMT) * 100, 2) ELSE 0 END  AS M${index}_RATE
+			  </foreach>
+			  <!-- 기간별 값 계산 끝 -->
+			  
+			  <!-- 요주의 -->
+            , CASE WHEN SUM(NDCR_AMT) !=0 THEN ROUND(SUM(NDCR_AMT) / TO_NUMBER(#{AMT_UNIT}))                  END  AS NDCR_AMT
+            , CASE WHEN SUM(NDCR_AMT) !=0 THEN ROUND(SUM(NDCR_RATE_WT_PRIN) / SUM(NDCR_AMT) * 100, 2) ELSE 0  END  AS NDCR_RATE
+			  <!-- 요주의 끝 -->
+        FROM (
+               SELECT B.LVL1
+                    , A.RATE_SSTV_NM
+                    , B.LVL2
+                    , B.LVL3
+                    , B.LVL4
+                    , B.LVL5
+                    , B.LVL6
+                    , B.LVL7
+                    , B.ACCT_C_NM
+                    , A.TOT_AMT
+                    , A.TOT_RATE
+                    , A.TOT_RATE_WT_PRIN
+                    <foreach collection="SEQ_LIST" item="item" open="" close="" separator=" " index="index">
+                    , A.M${index}_AMT
+                    , A.M${index}_RATE
+                    , A.M${index}_RATE_WT_PRIN
+                    </foreach>
+                    , A.NDCR_AMT
+                    , A.NDCR_RATE
+                    , A.NDCR_RATE_WT_PRIN
+                    , B.PRNT_ORD1
+                    , B.PRNT_ORD2
+                    , B.PRNT_ORD3
+                    , B.PRNT_ORD4
+                    , B.PRNT_ORD5
+                    , B.PRNT_ORD6
+                    , B.PRNT_ORD7
+                      <if test="DIMENSION1 != null and DIMENSION1 != ''">
+                    , A.DIMENSION1               AS PRNT_ORD8
+                    , NVL(B1.DIMS_CDNM, '-')     AS DIMENSION1
+                      </if>
+                      <if test="DIMENSION2 != null and DIMENSION2 != ''">
+                    , A.DIMENSION2               AS PRNT_ORD9
+                    , NVL(B2.DIMS_CDNM, '-')     AS DIMENSION2
+                      </if>
+                FROM TEMP A
+                   , (
+                        SELECT LEVEL
+                             , BASE_DATE
+                             , SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%') AS ACCT_PATH
+                             , REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 1 ) AS LVL1
+                             , REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 2 ) AS LVL2
+                             , REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 3 ) AS LVL3
+                             , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 4 ),TRIM(ACCT_C_NM))  AS LVL4
+                             , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 5 ),TRIM(ACCT_C_NM))  AS LVL5
+                             , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 6 ),TRIM(ACCT_C_NM))  AS LVL6
+                             , NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 7 ),TRIM(ACCT_C_NM))  AS LVL7
+                             , TRIM(ACCT_C_NM) AS ACCT_C_NM
+                             , ORG_CLAS_C
+                             , AC_BUSI_TC
+                             , ACCT_C
+                             , TO_NUMBER(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 1 )                    )  AS PRNT_ORD1
+                             , TO_NUMBER(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 2 )                    )  AS PRNT_ORD2
+                             , TO_NUMBER(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 3 )                    )  AS PRNT_ORD3
+                             , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 4 ),TRIM(PRNT_ORD)))  AS PRNT_ORD4
+                             , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 5 ),TRIM(PRNT_ORD)))  AS PRNT_ORD5
+                             , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 6 ),TRIM(PRNT_ORD)))  AS PRNT_ORD6
+                             , TO_NUMBER(NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(PRNT_ORD), '%'),'[^%]+' , 1 , 7 ),TRIM(PRNT_ORD)))  AS PRNT_ORD7
+                          FROM TSY_ACCT_MSTR_MNG
+                         WHERE BASE_DATE  = (SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE &lt;= TO_CHAR(LAST_DAY(TO_DATE(#{BASE_DATE}, 'YYYYMMDD')), 'YYYYMMDD'))
+                           AND USE_YN     = 'Y'
+                           AND ORG_CLAS_C = #{ORG_CLAS_C}
+                           <if test="AC_BUSI_TC != null and AC_BUSI_TC != '' and AC_BUSI_TC != '0000'">
+                           AND AC_BUSI_TC = #{AC_BUSI_TC}
+                           </if>
+                           <if test="AC_BUSI_TC == '0000'">
+                           AND AC_BUSI_TC = '1105'
+                           </if>
+                         START WITH UP_ACCT_C  = '0000000'
+                       CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+                     ) B
+                     <if test="DIMENSION1 != null and DIMENSION1 != ''">
+                   , TSY_DIMS_ITEM_MNG B1
+                     </if>
+                     <if test="DIMENSION2 != null and DIMENSION2 != ''">
+                   , TSY_DIMS_ITEM_MNG B2
+                     </if>
+               WHERE B.ACCT_C     = A.ACCT_C
+                 AND B.AC_BUSI_TC = A.AC_BUSI_TC
+                 AND B.ORG_CLAS_C = A.ORG_CLAS_C
+                 <if test="DIMENSION1_NUM != null and DIMENSION1_NUM != ''">
+                 AND B1.DIMS_ITEM_NO(+)  = TO_NUMBER(#{DIMENSION1_NUM})
+                 AND B1.DIMS_C_VAL(+)    = A.DIMENSION1
+                 </if>
+                 <if test="DIMENSION2_NUM != null and DIMENSION2_NUM != ''">
+                 AND B2.DIMS_ITEM_NO(+)  = TO_NUMBER(#{DIMENSION2_NUM})
+                 AND B2.DIMS_C_VAL(+)    = A.DIMENSION2
+                 </if>
+              )
+        GROUP BY LVL1 
+                 <if test="LEVEL == 1">
+                     <choose>
+                         <when test="DIMENSION1 != '' and DIMENSION1 != null and (DIMENSION2 == '' or DIMENSION2 == null)">
+                             , ROLLUP(RATE_SSTV_NM, DIMENSION1)
+                         </when>
+                         <when test="DIMENSION1 != '' and DIMENSION2 != null and DIMENSION2 != '' and DIMENSION2 != null">
+                             , ROLLUP(RATE_SSTV_NM, DIMENSION1, DIMENSION2)
+                         </when>
+                         <otherwise>
+                             , ROLLUP(RATE_SSTV_NM)
+                         </otherwise>
+                     </choose>
+                 </if>
+                 <if test="LEVEL == 2">
+                     <choose>
+                         <when test="DIMENSION1 != '' and DIMENSION1 != null and (DIMENSION2 == '' or DIMENSION2 == null)">
+                             , ROLLUP(RATE_SSTV_NM, LVL2, DIMENSION1)
+                         </when>
+                         <when test="DIMENSION1 != '' and DIMENSION2 != null and DIMENSION2 != '' and DIMENSION2 != null">
+                             , ROLLUP(RATE_SSTV_NM, LVL2, DIMENSION1, DIMENSION2)
+                         </when>
+                         <otherwise>
+                             , ROLLUP(RATE_SSTV_NM, LVL2)
+                         </otherwise>
+                     </choose>
+                 </if>
+                 <if test="LEVEL == 3">
+                     <choose>
+                         <when test="DIMENSION1 != '' and DIMENSION1 != null and (DIMENSION2 == '' or DIMENSION2 == null)">
+                             , ROLLUP(RATE_SSTV_NM, LVL2, LVL3, DIMENSION1)
+                         </when>
+                         <when test="DIMENSION1 != '' and DIMENSION2 != null and DIMENSION2 != '' and DIMENSION2 != null">
+                             , ROLLUP(RATE_SSTV_NM, LVL2, LVL3, DIMENSION1, DIMENSION2)
+                         </when>
+                         <otherwise>
+                             , ROLLUP(RATE_SSTV_NM, LVL2, LVL3)
+                         </otherwise>
+                     </choose>
+                 </if>
+                 <if test="LEVEL == 4">
+                     <choose>
+                         <when test="DIMENSION1 != '' and DIMENSION1 != null and (DIMENSION2 == '' or DIMENSION2 == null)">
+                             , ROLLUP(RATE_SSTV_NM, LVL2, LVL3, LVL4, DIMENSION1)
+                         </when>
+                         <when test="DIMENSION1 != '' and DIMENSION2 != null and DIMENSION2 != '' and DIMENSION2 != null">
+                             , ROLLUP(RATE_SSTV_NM, LVL2, LVL3, LVL4, DIMENSION1, DIMENSION2)
+                         </when>
+                         <otherwise>
+                             , ROLLUP(RATE_SSTV_NM, LVL2, LVL3, LVL4)
+                         </otherwise>
+                     </choose>
+                 </if>
+                 <if test="LEVEL == 5">
+                     <choose>
+                         <when test="DIMENSION1 != '' and DIMENSION1 != null and (DIMENSION2 == '' or DIMENSION2 == null)">
+                             , ROLLUP(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, DIMENSION1)
+                         </when>
+                         <when test="DIMENSION1 != '' and DIMENSION2 != null and DIMENSION2 != '' and DIMENSION2 != null">
+                             , ROLLUP(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, DIMENSION1, DIMENSION2)
+                         </when>
+                         <otherwise>
+                             , ROLLUP(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5)
+                         </otherwise>
+                     </choose>
+                 </if>
+                 <if test="LEVEL == 6">
+                     <choose>
+                         <when test="DIMENSION1 != '' and DIMENSION1 != null and (DIMENSION2 == '' or DIMENSION2 == null)">
+                             , ROLLUP(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, DIMENSION1)
+                         </when>
+                         <when test="DIMENSION1 != '' and DIMENSION2 != null and DIMENSION2 != '' and DIMENSION2 != null">
+                             , ROLLUP(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, DIMENSION1, DIMENSION2)
+                         </when>
+                         <otherwise>
+                             , ROLLUP(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6)
+                         </otherwise>
+                     </choose>
+                 </if>
+                 <if test="LEVEL == 7">
+                     <choose>
+                         <when test="DIMENSION1 != '' and DIMENSION1 != null and (DIMENSION2 == '' or DIMENSION2 == null)">
+                             , ROLLUP(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMENSION1)
+                         </when>
+                         <when test="DIMENSION1 != '' and DIMENSION2 != null and DIMENSION2 != '' and DIMENSION2 != null">
+                             , ROLLUP(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7, DIMENSION1, DIMENSION2)
+                         </when>
+                         <otherwise>
+                             , ROLLUP(RATE_SSTV_NM, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7)
+                         </otherwise>
+                     </choose>
+                 </if>
+        ORDER BY MAX(PRNT_ORD1) 
+               , CASE WHEN RATE_SSTV_NM LIKE '금리%'   THEN 1
+                      WHEN RATE_SSTV_NM LIKE '비금리%' THEN 2
+                      ELSE 3
+                 END    
+                 <if test="LEVEL == 2">
+               , MAX(PRNT_ORD2)
+                 </if>
+                 <if test="LEVEL == 3">
+               , MAX(PRNT_ORD2)
+               , MAX(PRNT_ORD3)
+                 </if>
+                 <if test="LEVEL == 4">
+               , MAX(PRNT_ORD2)
+               , MAX(PRNT_ORD3)
+               , MAX(PRNT_ORD4)
+                 </if>
+                 <if test="LEVEL == 5">
+               , MAX(PRNT_ORD2)
+               , MAX(PRNT_ORD3)
+               , MAX(PRNT_ORD4)
+               , MAX(PRNT_ORD5)
+                 </if>
+                 <if test="LEVEL == 6">
+               , MAX(PRNT_ORD2)
+               , MAX(PRNT_ORD3)
+               , MAX(PRNT_ORD4)
+               , MAX(PRNT_ORD5)
+               , MAX(PRNT_ORD6)
+                 </if>
+                 <if test="LEVEL == 7">
+               , MAX(PRNT_ORD2)
+               , MAX(PRNT_ORD3)
+               , MAX(PRNT_ORD4)
+               , MAX(PRNT_ORD5)
+               , MAX(PRNT_ORD6)
+               , MAX(PRNT_ORD7)
+                 </if>
+                 <if test="DIMENSION1 != null and DIMENSION1 != ''">
+               , MAX(PRNT_ORD8)
+                 </if>
+                 <if test="DIMENSION2 != null and DIMENSION2 != ''">
+               , MAX(PRNT_ORD9)
+                 </if>
+               , GRP_ID
+    </select>
+
+</mapper>

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_2202Mapper">
+
+	<!-- 시나리오별 금리갭 조회  -->
+	<select id="selectSnroRateGabList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT 
+		    A.MTRT_SECT_NM
+		    , TO_CHAR(A.RATE_RFM_MDDL_POT_VAL, 'FM90.0000') AS RATE_RFM_MDDL_POT_VAL
+		    , B.S1_MTRT_SECT_AMT
+		    , B.S2_MTRT_SECT_AMT
+		    , B.S3_MTRT_SECT_AMT
+		    , B.S4_MTRT_SECT_AMT
+		    , B.S5_MTRT_SECT_AMT
+		    , B.S6_MTRT_SECT_AMT
+		    , B.S7_MTRT_SECT_AMT
+		FROM TSY_MTRT_SECT_MNG A
+		LEFT JOIN 
+		(
+		    SELECT MTRT_SECT_SEQ
+		        , ROUND(SUM(S1_RMBR_PAY_PRIN_AMT), 0) AS S1_MTRT_SECT_AMT
+		        , ROUND(SUM(S2_RMBR_PAY_PRIN_AMT), 0) AS S2_MTRT_SECT_AMT
+		        , ROUND(SUM(S3_RMBR_PAY_PRIN_AMT), 0) AS S3_MTRT_SECT_AMT
+		        , ROUND(SUM(S4_RMBR_PAY_PRIN_AMT), 0) AS S4_MTRT_SECT_AMT
+		        , ROUND(SUM(S5_RMBR_PAY_PRIN_AMT), 0) AS S5_MTRT_SECT_AMT
+		        , ROUND(SUM(S6_RMBR_PAY_PRIN_AMT), 0) AS S6_MTRT_SECT_AMT
+		        , ROUND(SUM(S7_RMBR_PAY_PRIN_AMT), 0) AS S7_MTRT_SECT_AMT
+		    FROM (
+		        SELECT 
+		            BASE_DATE
+		            , ALM_WORK_TC
+		            , ORG_CLAS_C
+		            , BR_C
+		            , ACCT_C
+		            , CUR_C
+		            , AC_BUSI_TC
+		            , SNRO_NO
+		            , CS_BHOR_RTO_APLY_YN
+		            , ALM_MTRT_SECT_C
+		            , MTRT_SECT_SEQ
+		            , FIX_VAR_TC
+		            , TR_ACC_YN
+		            , IRRBB_CS_CLAS_C
+		            , RATE_SSTV_YN
+		            , CASE
+                        WHEN SNRO_NO=1 
+                        THEN NVL((CASE WHEN SUBSTR(A.ACCT_C,1,1) = '1' THEN 1 ELSE -1 END)* A.RMBR_PAY_PRIN_AMT, 0) 
+                        ELSE 0 
+                    END AS S1_RMBR_PAY_PRIN_AMT
+		            , CASE
+                        WHEN SNRO_NO=2 
+                        THEN NVL((CASE WHEN SUBSTR(A.ACCT_C,1,1) = '1' THEN 1 ELSE -1 END)* A.RMBR_PAY_PRIN_AMT, 0) 
+                        ELSE 0 
+                    END AS S2_RMBR_PAY_PRIN_AMT
+		            , CASE
+                        WHEN SNRO_NO=3 
+                        THEN NVL((CASE WHEN SUBSTR(A.ACCT_C,1,1) = '1' THEN 1 ELSE -1 END)* A.RMBR_PAY_PRIN_AMT, 0) 
+                        ELSE 0 
+                    END AS S3_RMBR_PAY_PRIN_AMT
+		            , CASE
+                        WHEN SNRO_NO=4
+                        THEN NVL((CASE WHEN SUBSTR(A.ACCT_C,1,1) = '1' THEN 1 ELSE -1 END)* A.RMBR_PAY_PRIN_AMT, 0) 
+                        ELSE 0 
+                    END AS S4_RMBR_PAY_PRIN_AMT
+		            , CASE
+                        WHEN SNRO_NO=5
+                        THEN NVL((CASE WHEN SUBSTR(A.ACCT_C,1,1) = '1' THEN 1 ELSE -1 END)* A.RMBR_PAY_PRIN_AMT, 0) 
+                        ELSE 0 
+                    END AS S5_RMBR_PAY_PRIN_AMT
+		            , CASE
+                        WHEN SNRO_NO=6 
+                        THEN NVL((CASE WHEN SUBSTR(A.ACCT_C,1,1) = '1' THEN 1 ELSE -1 END)* A.RMBR_PAY_PRIN_AMT, 0) 
+                        ELSE 0 
+                    END AS S6_RMBR_PAY_PRIN_AMT
+		            , CASE
+                        WHEN SNRO_NO=7 
+                        THEN NVL((CASE WHEN SUBSTR(A.ACCT_C,1,1) = '1' THEN 1 ELSE -1 END)* A.RMBR_PAY_PRIN_AMT, 0) 
+                        ELSE 0 
+                    END AS S7_RMBR_PAY_PRIN_AMT
+		        FROM TBI_RATE_GAP_TOT A
+		        WHERE BASE_DATE = #{sch_base_date}
+		<if test='sch_br_c == "ALL"'>
+				AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BR_TC = '03') /*전체조합*/
+		</if>
+		<if test="sch_br_c != 'ALL'">
+			<if test="sch_br_c == '001'">
+				AND A.BR_C = '001' /*중앙회*/
+			</if>
+			<if test="sch_br_c != '001' and (sch_blng_hq_br_c == '' or sch_blng_hq_br_c == null)">
+				AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{sch_br_c}) /*도지회별합산*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'Y'.toString()">
+				AND A.BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE MO_BR_C = #{sch_br_c}) /*단위조합별조회(지소포함)*/
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'N'.toString()">
+				AND A.BR_C = #{sch_br_c}
+			</if>
+		</if>
+		<choose>
+			<when test="sch_ac_busi_tc == '0000'">
+		        AND AC_BUSI_TC IN ('1105', '1106', '1107')
+		    </when>
+		    <otherwise>
+		    	AND AC_BUSI_TC = #{sch_ac_busi_tc}
+		    </otherwise>
+		</choose>
+		    	AND A.CS_BHOR_RTO_APLY_YN = 'Y'  -- 고객행동비율적용여부 Y
+                AND A.RATE_SSTV_YN = 'Y'  -- 금리민감여부 Y
+                AND SUBSTR(A.ACCT_C,1,1) IN ('1','2') -- 계정코드 1 자산계정 2 부채계정
+		    )
+		    GROUP BY MTRT_SECT_SEQ
+		) B ON B.MTRT_SECT_SEQ = A.MTRT_SECT_SEQ
+		WHERE A.ALM_MTRT_SECT_C = '20'
+		ORDER BY A.MTRT_SECT_SEQ
+	</select>
+	
+	<select id="selectBaseDateSchCbList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT 
+			TO_CHAR(TO_DATE(MAX(BASE_DATE), 'YYYYMMDD'), 'YYYY-MM') AS BASE_DATE 
+		FROM TBI_RATE_GAP_TOT
+	</select>
+
+</mapper>

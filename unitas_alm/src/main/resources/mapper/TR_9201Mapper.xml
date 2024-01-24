@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_9201Mapper">
+
+	<select id="selectTr9201List" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT USID
+			, USER_PSWD
+			, USER_NM
+			, DPNM
+			, AUTH_TC
+			, ING_COND_TC
+			, ASCN_C
+			, BR_C
+			, USE_YN
+			, USER_PSWD AS ORG_USER_PSWD /*수정 비교용*/
+		FROM TSY_USER_MNG
+		<where>
+			<if test="keyword != null and keyword.length() > 0">
+		AND AUTH_TC = #{keyword}	
+			</if>
+			<if test="keyword1 != null and keyword1.length() > 0">
+		AND (UPPER(USER_NM) LIKE '%'||UPPER(#{keyword1})||'%' OR USID = #{keyword1} )	
+			</if>
+		</where>
+	</select>  
+
+	<insert id="insertTr9201" parameterType="java.util.Map">
+	
+		INSERT INTO ALMADM.TSY_MENU_MNG
+		(
+			ALM_MENU_C
+			,ALM_UP_MENU_C
+			,MENU_NM
+			,MENU_LVL
+			,MENU_PATH_URL
+			,MENU_FILE_NM
+			,MENU_PLC_VAL
+			,ALM_MENU_SEQ
+			,USE_YN
+		)
+		VALUES
+		(
+			#{ALM_MENU_C}
+			,NVL(#{ALM_UP_MENU_C,jdbcType=VARCHAR},'-')
+			,#{MENU_NM}
+			,#{MENU_LVL}
+			,NVL(#{MENU_PATH_URL,jdbcType=VARCHAR},'')
+			,NVL(#{MENU_FILE_NM,jdbcType=VARCHAR},'')
+			,NVL(#{MENU_PLC_VAL,jdbcType=VARCHAR},'left')
+			,NVL(#{ALM_MENU_SEQ,jdbcType=VARCHAR},  (SELECT NVL(MAX(ALM_MENU_SEQ),0)+1 FROM ALMADM.TSY_MENU_MNG)  )
+			,NVL(#{USE_YN,jdbcType=VARCHAR},'Y')
+		)
+	</insert>
+
+	<update id="updateTr9201" parameterType="java.util.Map">
+		UPDATE 
+			TSY_USER_MNG 
+		SET
+		    AUTH_TC      = #{AUTH_TC}
+		  , ING_COND_TC  = #{ING_COND_TC}
+		  , USE_YN	     = #{USE_YN}
+		  , LAST_CHNG_ID = #{session.USID}
+		  , CHNG_DT      = SYSDATE
+		<if test="PASS_CHECK == 'Y'.toString()">
+		  , USER_PSWD    = #{USER_PSWD}
+		</if>
+		WHERE
+			USID = #{USID}
+	</update>
+
+</mapper>

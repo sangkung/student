@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_3102Mapper">
+
+	<!-- 현금흐름분석(규제유동성)  -->
+	<select id="selectLqdtGapList" parameterType="java.util.Map" resultType="java.util.HashMap">
+        WITH DATA_TB AS (
+			SELECT 
+			    BASE_DATE
+			    , ORG_CLAS_C
+			    , AC_BUSI_TC
+			    , ACCT_C
+			    , CASE WHEN MTRT_SECT_SEQ = 1 AND ASTS_SDTP_CLAS_C &lt;= '20' THEN KRW_PRIN_AMT ELSE 0 END AS S0_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 2 AND ASTS_SDTP_CLAS_C &lt;= '20' THEN KRW_PRIN_AMT ELSE 0 END AS S1_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 3 AND ASTS_SDTP_CLAS_C &lt;= '20' THEN KRW_PRIN_AMT ELSE 0 END AS S2_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 4 AND ASTS_SDTP_CLAS_C &lt;= '20' THEN KRW_PRIN_AMT ELSE 0 END AS S3_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 5 AND ASTS_SDTP_CLAS_C &lt;= '20' THEN KRW_PRIN_AMT ELSE 0 END AS S4_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 6 AND ASTS_SDTP_CLAS_C &lt;= '20' THEN KRW_PRIN_AMT ELSE 0 END AS S5_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 7 AND ASTS_SDTP_CLAS_C &lt;= '20' THEN KRW_PRIN_AMT ELSE 0 END AS S6_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 8 AND ASTS_SDTP_CLAS_C &lt;= '20' THEN KRW_PRIN_AMT ELSE 0 END AS S7_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 9 AND ASTS_SDTP_CLAS_C &lt;= '20' THEN KRW_PRIN_AMT ELSE 0 END AS S8_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 10 AND ASTS_SDTP_CLAS_C &lt;= '20' THEN KRW_PRIN_AMT ELSE 0 END AS S9_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 11 AND ASTS_SDTP_CLAS_C &lt;= '20' THEN KRW_PRIN_AMT ELSE 0 END AS S10_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 12 AND ASTS_SDTP_CLAS_C &lt;= '20' THEN KRW_PRIN_AMT ELSE 0 END AS S11_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ &gt;= 13 AND MTRT_SECT_SEQ &lt;=18 AND ASTS_SDTP_CLAS_C &lt;= '20' THEN KRW_PRIN_AMT ELSE 0 END AS S12_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ &gt;= 19 AND MTRT_SECT_SEQ &lt;=24 AND ASTS_SDTP_CLAS_C &lt;= '20' THEN KRW_PRIN_AMT ELSE 0 END AS S13_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ &gt;= 25 AND MTRT_SECT_SEQ &lt;=26 AND ASTS_SDTP_CLAS_C &lt;= '20' THEN KRW_PRIN_AMT ELSE 0 END AS S14_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 27 AND ASTS_SDTP_CLAS_C &lt;= '20' THEN KRW_PRIN_AMT ELSE 0 END AS S15_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ = 28 AND ASTS_SDTP_CLAS_C &lt;= '20' THEN KRW_PRIN_AMT ELSE 0 END AS S16_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ &gt;= 29 AND MTRT_SECT_SEQ &lt;=33 AND ASTS_SDTP_CLAS_C &lt;= '20' THEN KRW_PRIN_AMT ELSE 0 END AS S17_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ &gt;= 34 AND MTRT_SECT_SEQ &lt;=38 AND ASTS_SDTP_CLAS_C &lt;= '20' THEN KRW_PRIN_AMT ELSE 0 END AS S18_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ &gt;= 39 AND MTRT_SECT_SEQ &lt;=43 AND ASTS_SDTP_CLAS_C &lt;= '20' THEN KRW_PRIN_AMT ELSE 0 END AS S19_SECT_AMT
+			    , CASE WHEN MTRT_SECT_SEQ &gt;= 44 AND ASTS_SDTP_CLAS_C &lt;= '20' THEN KRW_PRIN_AMT ELSE 0 END AS S20_SECT_AMT
+			    , CASE WHEN ASTS_SDTP_CLAS_C &gt; '20' THEN KRW_PRIN_AMT ELSE 0 END AS ASTS30_BLW_AMT
+			FROM TRT_RGLT_LQDT_TOT
+			WHERE BASE_DATE = #{sch_base_date}
+			AND ALM_WORK_TC = 'M' --월/일
+		<if test='sch_br_c == "ALL"'>
+			AND BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BR_TC = '03') /*전체조합*/
+			AND MNBR_TOT_YN = 'Y'
+		</if>
+		<if test="sch_br_c != 'ALL'">
+			<if test="sch_br_c == '001'">
+			AND BR_C = '001' /*중앙회*/
+			AND MNBR_TOT_YN = 'N'
+			</if>
+			<if test="sch_br_c != '001' and (sch_blng_hq_br_c == '' or sch_blng_hq_br_c == null)">
+			AND BR_C IN (SELECT BR_C FROM TTL_BR_C_INFO WHERE BLNG_HQ_BR_C = #{sch_br_c}) /*도지회별합산*/
+			AND MNBR_TOT_YN = 'Y'
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'Y'.toString()">
+			AND BR_C = #{sch_br_c} /*단위조합별조회(지소포함)*/
+			AND MNBR_TOT_YN = 'Y'
+			</if>
+			<if test="sch_br_c != '001' and sch_blng_hq_br_c != '' and sch_blng_hq_br_c != null and sch_sub_yn == 'N'.toString()">
+			AND BR_C = #{sch_br_c}
+			AND MNBR_TOT_YN = 'N'
+			</if>
+		</if>
+		<choose>
+			<when test="sch_ac_busi_tc == '0000'">
+			AND AC_BUSI_TC IN ('1105', '1106', '1107') --회계구분
+			</when>
+			<otherwise>
+			AND AC_BUSI_TC = #{sch_ac_busi_tc} --회계구분
+			</otherwise>
+		</choose>
+			AND FUTU_POT_SECT_CNT = #{sch_futu_pot} -- 분석시점구분 0:현시점
+			AND NEW_CAP_QTY_TC = #{sch_new_capq} --신규자금량 0:미포함
+		<choose>
+			<when test="sch_new_capq == 0">
+			AND CAP_QTY_SNRO_NO = '1' --자금량시나리오번호
+			</when>
+			<otherwise>
+			AND CAP_QTY_SNRO_NO = #{sch_capq_snro} --자금량시나리오번호
+			</otherwise>
+		</choose>
+		)
+		SELECT
+			MAX(BASE_DATE) AS BASE_DATE 
+		    , LVL1 AS ACCT_C_NM1
+		<if test="sch_acc_tc_lvl == 1">
+			, 0 AS GRP_ID	
+		</if>
+		<if test="sch_acc_tc_lvl == 2">
+			, DECODE(GROUPING_ID (LVL2), 1, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), LVL2) AS ACCT_C_NM2 
+			, GROUPING_ID (LVL2) AS GRP_ID
+		</if>
+		<if test="sch_acc_tc_lvl == 3">
+			, DECODE(GROUPING_ID (LVL2, LVL3), 3, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), LVL2) AS ACCT_C_NM2 
+			, DECODE(GROUPING_ID (LVL2, LVL3), 1, LVL2||' 소계', LVL3) AS ACCT_C_NM3 
+			, GROUPING_ID (LVL2, LVL3) AS GRP_ID
+		</if>
+		<if test="sch_acc_tc_lvl == 4">
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4), 7, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), LVL2) AS ACCT_C_NM2 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4), 3, LVL2||' 소계', LVL3) AS ACCT_C_NM3 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4), 1, LVL3||' 소계', LVL4) AS ACCT_C_NM4
+			, GROUPING_ID (LVL2, LVL3, LVL4) AS GRP_ID
+		</if>
+		<if test="sch_acc_tc_lvl == 5">
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5), 15, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), LVL2) AS ACCT_C_NM2 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5), 7, LVL2||' 소계', LVL3) AS ACCT_C_NM3
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5), 3, LVL3||' 소계', LVL4) AS ACCT_C_NM4
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5), 1, LVL4||' 소계', LVL5) AS ACCT_C_NM5
+			, GROUPING_ID (LVL2, LVL3, LVL4, LVL5) AS GRP_ID
+		</if>
+		<if test="sch_acc_tc_lvl == 6">
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 31, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), LVL2) AS ACCT_C_NM2
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 15, LVL2||' 소계', LVL3) AS ACCT_C_NM3 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 7, LVL3||' 소계', LVL4) AS ACCT_C_NM4 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 3, LVL4||' 소계', LVL5) AS ACCT_C_NM5
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6), 1, LVL5||' 소계', LVL6) AS ACCT_C_NM6
+			, GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6) AS GRP_ID
+		</if>
+		<if test="sch_acc_tc_lvl == 7">
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 63, LVL1||DECODE(LVL1, '자산', ' 합계(A)', ' 합계(B)'), LVL2) AS ACCT_C_NM2
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 31, LVL2||' 소계', LVL3) AS ACCT_C_NM3 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 15, LVL3||' 소계', LVL4) AS ACCT_C_NM4 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 7, LVL4||' 소계', LVL5) AS ACCT_C_NM5
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 3, LVL5||' 소계', LVL6) AS ACCT_C_NM6 
+			, DECODE(GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7), 1, LVL6||' 소계', LVL7) AS ACCT_C_NM7
+			, GROUPING_ID (LVL2, LVL3, LVL4, LVL5, LVL6, LVL7) AS GRP_ID
+		</if>	
+			, SUM(TOT_SECT_AMT) AS TOT_SECT_AMT
+		    , SUM(S0_SECT_AMT) AS S0_SECT_AMT
+            , SUM(S1_SECT_AMT) AS S1_SECT_AMT
+            , SUM(S2_SECT_AMT) AS S2_SECT_AMT
+            , SUM(S3_SECT_AMT) AS S3_SECT_AMT
+            , SUM(S4_SECT_AMT) AS S4_SECT_AMT
+            , SUM(S5_SECT_AMT) AS S5_SECT_AMT
+            , SUM(S6_SECT_AMT) AS S6_SECT_AMT
+            , SUM(S7_SECT_AMT) AS S7_SECT_AMT
+            , SUM(S8_SECT_AMT) AS S8_SECT_AMT
+            , SUM(S9_SECT_AMT) AS S9_SECT_AMT
+            , SUM(S10_SECT_AMT) AS  S10_SECT_AMT
+            , SUM(S11_SECT_AMT) AS  S11_SECT_AMT
+            , SUM(S12_SECT_AMT) AS  S12_SECT_AMT
+            , SUM(S13_SECT_AMT) AS  S13_SECT_AMT
+            , SUM(S14_SECT_AMT) AS  S14_SECT_AMT
+            , SUM(S15_SECT_AMT) AS  S15_SECT_AMT
+            , SUM(S16_SECT_AMT) AS  S16_SECT_AMT
+            , SUM(S17_SECT_AMT) AS  S17_SECT_AMT
+            , SUM(S18_SECT_AMT) AS  S18_SECT_AMT
+            , SUM(S19_SECT_AMT) AS  S19_SECT_AMT
+            , SUM(S20_SECT_AMT) AS  S20_SECT_AMT
+            , SUM(ASTS30_BLW_AMT) AS ASTS30_BLW_AMT
+		    , MAX(PRNT_ORD) AS PRNT_ORD_PATH
+        FROM (
+            SELECT 
+                MAX(BASE_DATE) AS BASE_DATE
+                , LVL1, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7
+                , (ROUND(SUM(S0_SECT_AMT), 0) + ROUND(SUM(S1_SECT_AMT), 0) + ROUND(SUM(S2_SECT_AMT), 0) + ROUND(SUM(S3_SECT_AMT), 0) + ROUND(SUM(S4_SECT_AMT), 0)
+                    + ROUND(SUM(S5_SECT_AMT), 0) + ROUND(SUM(S6_SECT_AMT), 0)+ ROUND(SUM(S7_SECT_AMT), 0)+ ROUND(SUM(S8_SECT_AMT), 0) + ROUND(SUM(S9_SECT_AMT), 0)
+                    + ROUND(SUM(S10_SECT_AMT), 0) + ROUND(SUM(S11_SECT_AMT), 0)+ ROUND(SUM(S12_SECT_AMT), 0)+ ROUND(SUM(S13_SECT_AMT), 0) + ROUND(SUM(S14_SECT_AMT), 0)
+                    + ROUND(SUM(S15_SECT_AMT), 0) + ROUND(SUM(S16_SECT_AMT), 0)+ ROUND(SUM(S17_SECT_AMT), 0)+ ROUND(SUM(S18_SECT_AMT), 0) + ROUND(SUM(S19_SECT_AMT), 0)
+                    + ROUND(SUM(S20_SECT_AMT), 0) + ROUND(SUM(ASTS30_BLW_AMT), 0)
+                ) AS TOT_SECT_AMT
+                , ROUND(SUM(S0_SECT_AMT), 0) AS S0_SECT_AMT
+                , ROUND(SUM(S1_SECT_AMT), 0) AS S1_SECT_AMT
+                , ROUND(SUM(S2_SECT_AMT), 0) AS S2_SECT_AMT
+                , ROUND(SUM(S3_SECT_AMT), 0) AS S3_SECT_AMT
+                , ROUND(SUM(S4_SECT_AMT), 0) AS S4_SECT_AMT
+                , ROUND(SUM(S5_SECT_AMT), 0) AS S5_SECT_AMT
+                , ROUND(SUM(S6_SECT_AMT), 0) AS S6_SECT_AMT
+                , ROUND(SUM(S7_SECT_AMT), 0) AS S7_SECT_AMT
+                , ROUND(SUM(S8_SECT_AMT), 0) AS S8_SECT_AMT
+                , ROUND(SUM(S9_SECT_AMT), 0) AS S9_SECT_AMT
+                , ROUND(SUM(S10_SECT_AMT), 0) AS S10_SECT_AMT
+                , ROUND(SUM(S11_SECT_AMT), 0) AS S11_SECT_AMT
+                , ROUND(SUM(S12_SECT_AMT), 0) AS S12_SECT_AMT
+                , ROUND(SUM(S13_SECT_AMT), 0) AS S13_SECT_AMT
+                , ROUND(SUM(S14_SECT_AMT), 0) AS S14_SECT_AMT
+                , ROUND(SUM(S15_SECT_AMT), 0) AS S15_SECT_AMT
+                , ROUND(SUM(S16_SECT_AMT), 0) AS S16_SECT_AMT
+                , ROUND(SUM(S17_SECT_AMT), 0) AS S17_SECT_AMT
+                , ROUND(SUM(S18_SECT_AMT), 0) AS S18_SECT_AMT
+                , ROUND(SUM(S19_SECT_AMT), 0) AS S19_SECT_AMT
+                , ROUND(SUM(S20_SECT_AMT), 0) AS S20_SECT_AMT
+                , ROUND(SUM(ASTS30_BLW_AMT), 0) AS ASTS30_BLW_AMT
+                , MAX(PRNT_ORD) AS PRNT_ORD
+            FROM (
+                SELECT
+                    A.BASE_DATE
+                    , A.AC_BUSI_TC
+                    , B.LVL1
+                    , B.LVL2
+                    , B.LVL3
+                    , B.LVL4
+                    , B.LVL5
+                    , B.LVL6
+                    , B.LVL7
+                    , B.ACCT_C_NM
+                    , A.S0_SECT_AMT
+                    , A.S1_SECT_AMT
+                    , A.S2_SECT_AMT
+                    , A.S3_SECT_AMT
+                    , A.S4_SECT_AMT
+                    , A.S5_SECT_AMT
+                    , A.S6_SECT_AMT
+                    , A.S7_SECT_AMT
+                    , A.S8_SECT_AMT
+                    , A.S9_SECT_AMT
+                    , A.S10_SECT_AMT
+                    , A.S11_SECT_AMT
+                    , A.S12_SECT_AMT
+                    , A.S13_SECT_AMT
+                    , A.S14_SECT_AMT
+                    , A.S15_SECT_AMT
+                    , A.S16_SECT_AMT
+                    , A.S17_SECT_AMT
+                    , A.S18_SECT_AMT
+                    , A.S19_SECT_AMT
+                    , A.S20_SECT_AMT
+                    , A.ASTS30_BLW_AMT
+                    <if test="sch_acc_tc_lvl == 1">
+                    , B.PRNT_ORD1 AS PRNT_ORD
+                    </if>
+                    <if test="sch_acc_tc_lvl == 2">
+                    , B.PRNT_ORD1||B.PRNT_ORD2 AS PRNT_ORD
+                    </if>
+                    <if test="sch_acc_tc_lvl == 3">
+                    , B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3 AS PRNT_ORD
+                    </if>
+                    <if test="sch_acc_tc_lvl == 4">
+                    , B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||B.PRNT_ORD4 AS PRNT_ORD
+                    </if>
+                    <if test="sch_acc_tc_lvl == 5">
+                    , B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||B.PRNT_ORD4||B.PRNT_ORD5 AS PRNT_ORD
+                    </if>
+                    <if test="sch_acc_tc_lvl == 6">
+                     , B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||B.PRNT_ORD4||B.PRNT_ORD5||B.PRNT_ORD6 AS PRNT_ORD
+                    </if>
+                    <if test="sch_acc_tc_lvl == 7">
+                    , B.PRNT_ORD1||B.PRNT_ORD2||B.PRNT_ORD3||B.PRNT_ORD4||B.PRNT_ORD5||B.PRNT_ORD6||B.PRNT_ORD7 AS PRNT_ORD
+                    </if>
+                    
+                FROM DATA_TB A
+                JOIN (
+			        SELECT 
+			            LEVEL, BASE_DATE, SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%') AS ACCT_PATH,
+			            REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 1 ) AS LVL1,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 2 ),TRIM(ACCT_C_NM)) AS LVL2,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 3 ),TRIM(ACCT_C_NM)) AS LVL3,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 4 ),TRIM(ACCT_C_NM)) AS LVL4,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 5 ),TRIM(ACCT_C_NM)) AS LVL5,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 6 ),TRIM(ACCT_C_NM)) AS LVL6,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TRIM(ACCT_C_NM), '%'),'[^%]+' , 1 , 7 ),TRIM(ACCT_C_NM)) AS LVL7,
+			            TRIM(ACCT_C_NM) AS ACCT_C_NM,
+			            BS_PL_TC,
+			            ORG_CLAS_C,
+			            AC_BUSI_TC,
+			            ACCT_C,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 1 ),'9999') AS PRNT_ORD1,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 2 ),'9999') AS PRNT_ORD2,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 3 ),'9999') AS PRNT_ORD3,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 4 ),'9999') AS PRNT_ORD4,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 5 ),'9999') AS PRNT_ORD5,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 6 ),'9999') AS PRNT_ORD6,
+			            NVL(REGEXP_SUBSTR(SYS_CONNECT_BY_PATH(TO_CHAR(TRIM(PRNT_ORD),'FM0000'), '%'),'[^%]+' , 1 , 7 ),'9999') AS PRNT_ORD7
+			        FROM TSY_ACCT_MSTR_MNG
+			        WHERE BASE_DATE = (SELECT MAX(BASE_DATE) FROM TSY_ACCT_MSTR_MNG WHERE BASE_DATE &lt;= #{sch_base_date})
+		<choose>
+			<when test="sch_ac_busi_tc == '0000'">
+					AND AC_BUSI_TC = '1105' /*회계구분*/
+					START WITH UP_ACCT_C = '0000000'
+			        CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+			    ) B ON B.ACCT_C = A.ACCT_C AND B.ORG_CLAS_C = A.ORG_CLAS_C
+		    </when>
+		    <otherwise>
+			    	AND AC_BUSI_TC = #{sch_ac_busi_tc} /*회계구분*/
+			    	START WITH UP_ACCT_C = '0000000'
+			        CONNECT BY PRIOR ACCT_C = UP_ACCT_C AND PRIOR BASE_DATE = BASE_DATE AND PRIOR ORG_CLAS_C = ORG_CLAS_C AND PRIOR AC_BUSI_TC = AC_BUSI_TC
+			    ) B ON B.ACCT_C = A.ACCT_C AND B.ORG_CLAS_C = A.ORG_CLAS_C AND B.AC_BUSI_TC = A.AC_BUSI_TC
+		    </otherwise>
+		</choose>
+            ) 
+            GROUP BY LVL1, LVL2, LVL3, LVL4, LVL5, LVL6, LVL7
+        )
+		GROUP BY 
+			LVL1
+		<if test="sch_acc_tc_lvl == 1">
+			
+		</if>
+		<if test="sch_acc_tc_lvl == 2">
+			, ROLLUP(LVL2)
+		</if>
+		<if test="sch_acc_tc_lvl == 3">
+			, ROLLUP(LVL2, LVL3)
+		</if>
+		<if test="sch_acc_tc_lvl == 4">
+			, ROLLUP(LVL2, LVL3, LVL4)
+		</if>
+		<if test="sch_acc_tc_lvl == 5">
+			, ROLLUP(LVL2, LVL3, LVL4, LVL5)
+		</if>
+		<if test="sch_acc_tc_lvl == 6">
+			, ROLLUP(LVL2, LVL3, LVL4, LVL5, LVL6)
+		</if>
+		<if test="sch_acc_tc_lvl == 7">
+			, ROLLUP(LVL2, LVL3, LVL4, LVL5, LVL6, LVL7)
+		</if>
+		ORDER BY PRNT_ORD_PATH, GRP_ID
+	</select>
+	
+	<select id="selectBaseDateSchCbList" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT 
+			TO_CHAR(TO_DATE(MAX(BASE_DATE), 'YYYYMMDD'), 'YYYY-MM') AS BASE_DATE 
+		FROM TRT_RGLT_LQDT_TOT
+		WHERE ALM_WORK_TC = 'M'
+	</select>
+	
+	<select id="selectAmtQtySnroList" parameterType="java.util.Map" resultType="java.util.HashMap">
+        SELECT 
+			ORG_CLAS_C, SNRO_NO, SNRO_NM 
+		FROM TSY_SNRO_SET_MNG
+		WHERE SNRO_KIND_C = '02'
+		  AND USE_YN = 'Y' 
+		ORDER BY ORG_CLAS_C, SNRO_NO
+	</select>
+
+</mapper>

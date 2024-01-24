@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_8111Mapper">
+
+	
+	<!-- 공지사항 게시물 리스트 조회 -->
+	<select id="getBoardList" parameterType="java.util.Map" resultType="java.util.HashMap">
+	
+		SELECT 
+				BLBD_TC
+				,BLBD_SEQ
+				,BLBD_TIT
+				,BLBD_CNTN
+				,LAST_CHNG_ID
+				,LAST_CHNG_DT
+				,(
+					SELECT 
+						COUNT(*) 
+					FROM 
+						TSY_BLBD_FILE_MNG F 
+					WHERE 
+						BLBD_TC = 'BOARD' 
+						AND 
+						F.BLBD_SEQ = B.BLBD_SEQ
+						AND
+						F.FILE_NM IS NOT NULL 
+				 ) AS "FILECNT"
+		FROM 
+	        TSY_BLBD_MNG B
+	    WHERE
+	    	1=1
+	    	<if test="keyword != null and keyword.length() > 0">
+						
+						<choose>
+							<when test="category == 02" >							
+								AND 
+								upper(BLBD_TIT) LIKE '%' || upper(#{keyword}) || '%'					
+							</when>
+							<when test="category == 03" >							
+								AND 
+								upper(BLBD_CNTN) LIKE '%' || upper(#{keyword}) || '%'					
+							</when>
+							<when test="category == 04" >					
+								AND 
+								upper(LAST_CHNG_ID) LIKE '%' || upper(#{keyword}) || '%'
+							</when>
+							<otherwise>	
+								AND 
+								(
+								upper(BLBD_TIT) LIKE '%' || upper(#{keyword}) || '%'
+								OR
+								upper(BLBD_CNTN) LIKE '%' || upper(#{keyword}) || '%'
+								OR
+								upper(LAST_CHNG_ID) LIKE '%' || upper(#{keyword}) || '%'
+								)
+							</otherwise>
+						</choose>
+						
+					</if>	    
+		ORDER BY
+			2 DESC  
+	</select>
+  
+  	<select id="getFileList"  parameterType="java.util.Map"  resultType="java.util.HashMap">
+    
+    	SELECT
+    		0 AS "CHECK" 
+    		,BLBD_TC
+    		,BLBD_SEQ
+    		,FILE_SEQ
+    		,FILE_NM  AS "fileName"
+    	FROM 
+    		TSY_BLBD_FILE_MNG	
+    	WHERE 
+    		BLBD_TC = #{BLBD_TC} 
+    		and
+    		BLBD_SEQ = #{BLBD_SEQ}
+    		
+    
+    </select>
+
+
+	<select id="getSeqNo" resultType="int">
+	
+		SELECT 
+			MAX(BLBD_SEQ) 
+		FROM 
+			TSY_BLBD_MNG			
+		
+	</select>
+	
+		<!-- 공지사항 파일정보 인설트문 -->
+	<insert id="inputFileInfo" parameterType="java.util.Map">
+		
+		INSERT INTO TSY_BLBD_FILE_MNG 
+		(
+			BLBD_TC
+			,BLBD_SEQ
+			,FILE_SEQ
+			,FILE_NM
+			
+		)
+		VALUES
+		(
+			'BOARD'
+			,#{BLBD_SEQ}
+			,(
+				SELECT 
+					NVL(MAX(FILE_SEQ),0)+1 
+				FROM 
+					TSY_BLBD_FILE_MNG 
+				WHERE 
+					BLBD_SEQ = #{BLBD_SEQ}
+			  )
+			,#{fileName}
+		)
+		
+	</insert>
+	
+	<!-- 공지사항 게시물 인설트문 -->
+	<insert id="inputPosting" parameterType="java.util.Map">
+		
+		INSERT INTO TSY_BLBD_MNG 
+		(
+			BLBD_TC
+			,BLBD_SEQ
+			,BLBD_TIT
+			,BLBD_CNTN
+			,LAST_CHNG_ID
+			,LAST_CHNG_DT
+		)
+		VALUES
+		(
+			'BOARD'
+			,(SELECT NVL(MAX( BLBD_SEQ ),0 ) +1 FROM TSY_BLBD_MNG WHERE BLBD_TC = 'BOARD')
+			, #{subject}
+			, #{content}
+			, #{userId}
+			, SYSDATE
+		)
+		
+	</insert>
+	
+	
+	<delete id="deleteBoard" parameterType="java.util.Map">
+	
+		DELETE FROM TSY_BLBD_MNG WHERE BLBD_TC = #{BLBD_TC} AND BLBD_SEQ = #{BLBD_SEQ}
+	
+	</delete>
+	
+	<delete id="deleteFileInfo" parameterType="java.util.Map">
+	
+		DELETE FROM TSY_BLBD_FILE_MNG WHERE BLBD_TC = #{BLBD_TC} AND BLBD_SEQ = #{BLBD_SEQ}
+	
+	</delete>
+	
+	
+	<delete id="delFileInfo" parameterType="java.util.Map">
+	
+		DELETE FROM TSY_BLBD_FILE_MNG 
+		WHERE 
+			BLBD_TC = #{BLBD_TC}
+			AND 
+			BLBD_SEQ = #{BLBD_SEQ}
+			AND
+			FILE_SEQ = #{FILE_SEQ}
+	
+	</delete>
+	
+	<update id="postUpdate" parameterType="java.util.Map">
+		UPDATE TSY_BLBD_MNG
+		SET 
+			BLBD_TIT      = #{subject}
+			,BLBD_CNTN    = #{content}
+			,LAST_CHNG_ID = #{userId}
+			,LAST_CHNG_DT = SYSDATE
+		WHERE 
+			BLBD_TC       = #{BLBD_TC}  
+			AND
+			BLBD_SEQ      = #{BLBD_SEQ}
+	</update>
+	
+	
+
+</mapper>
+
+
+
+
+
+

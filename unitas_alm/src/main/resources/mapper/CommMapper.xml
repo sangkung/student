@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.CommMapper">
+
+	<!-- 공통코드 조회 -->
+	<select id="selectCommCodeList" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT CO_C
+		     , CO_CDNM
+		     , DTL_CLAS_VAL
+		     , DTL_CLAS_NM
+		     , CO_C_1_VAL
+		     , CO_C_2_VAL
+		     , CO_C_3_VAL
+		     , PRNT_ORD
+		  FROM TSY_CO_MNG 
+		 WHERE USE_YN = 'Y'
+		   AND DTL_CLAS_VAL != '-'
+		<if test="co_c != null and co_c != ''">
+		   AND CO_C = #{co_c}
+		</if>
+		<if test="co_c_1_val != null and co_c_1_val != ''">
+		   AND CO_C_1_VAL = #{co_c_1_val}
+		</if>
+		<if test="co_c_2_val != null and co_c_2_val != ''">
+		   AND CO_C_2_VAL = #{co_c_2_val}
+		</if>
+		<if test="co_c_3_val != null and co_c_3_val != ''">
+		   AND CO_C_3_VAL = #{co_c_3_val}
+		</if>
+		 ORDER BY CO_C, PRNT_ORD        
+	</select>
+	
+	<!-- 로그 저장 -->
+	<insert id="insertLog" parameterType="java.util.Map">
+		/* NO_LOG */
+		INSERT INTO TSY_SCRN_LOG ( ALM_MENU_C, USID, TR_TC, TR_CNTN, REG_DT, CNCT_DT ) VALUES (#{ALM_MENU_C}, #{USID}, #{TR_TC}, #{TR_CNTN}, SYSDATE, TO_DATE(#{CNCT_DT},'YYYYMMDDHH24MISS') )
+	</insert>
+	
+	<!-- dims항목 조회 -->
+	<select id="selectDimsItemList" resultType="java.util.LinkedHashMap">
+		SELECT DISTINCT
+			DIMS_ITEM_NO
+			, DIMS_ITEM_NM
+		FROM TSY_DIMS_ITEM_MNG
+		WHERE USE_YN = 'Y'
+		ORDER BY DIMS_ITEM_NO      
+	</select>
+	
+	<!-- dims항목 조회 -->
+	<select id="selectDimsItem2List" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT 
+     		TO_NUMBER('') AS DIMS_ITEM_NO
+			, '해당없음' AS DIMS_ITEM_NM
+		FROM DUAL
+		<if test="dims_item_no != '' and dims_item_no != null">
+		UNION ALL
+		SELECT *
+		FROM (
+			SELECT DISTINCT
+				DIMS_ITEM_NO
+				, DIMS_ITEM_NM
+			FROM TSY_DIMS_ITEM_MNG
+			WHERE USE_YN = 'Y'
+			AND DIMS_ITEM_NO != #{dims_item_no}	
+			ORDER BY DIMS_ITEM_NO 
+		)
+		</if>
+	</select>
+	
+	<!-- 마지막일자 조회 -->
+	<select id="selectLastDay" parameterType="java.lang.String" resultType="java.lang.String">
+		SELECT
+			TO_CHAR(LAST_DAY(TO_DATE(SUBSTR(REPLACE(#{base_date}, '-', ''), 1, 6)||'01', 'YYYYMMDD')), 'YYYYMMDD') AS TMP_DATE
+		FROM DUAL
+	</select>
+	
+	<!-- 년월기간목록조회 -->
+	<select id="selectYearsMonthsList" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT
+		    BASE_DATE
+		    , SUBSTR(BASE_DATE, 1,4)||'.'||SUBSTR(BASE_DATE, 5,2) AS BASE_YYMM
+		FROM (
+			SELECT
+		 	<if test="decr_yn == 'Y'.toString()">
+		    	TO_CHAR(ADD_MONTHS(TO_DATE(#{base_date},'YYYYMMDD'), -1*(LEVEL<if test="tmm_excl_yn != 'Y'.toString()">-1</if>)),'YYYYMMDD') BASE_DATE
+		   	</if>
+		   	<if test="decr_yn != 'Y'.toString()">
+		   		TO_CHAR(ADD_MONTHS(TO_DATE(#{base_date},'YYYYMMDD'), (LEVEL<if test="tmm_excl_yn != 'Y'.toString()">-1</if>)),'YYYYMMDD') BASE_DATE
+		   	</if>
+			FROM DUAL
+			CONNECT BY LEVEL &lt;= TO_NUMBER(#{lim_mon})
+		)
+		ORDER BY BASE_YYMM <if test="ord_dsc_yn != 'Y'.toString()">DESC</if> 
+	</select>
+	
+	<!-- 시뮬레이션 시나리오 코드 조회 -->
+    <select id="selectSimuNo" parameterType="java.util.Map" resultType="java.util.LinkedHashMap">
+		SELECT ORG_CLAS_C                    AS ORG_CLAS_C
+		     , BR_C                          AS BR_C
+		     , AC_BUSI_TC                    AS AC_BUSI_TC
+		     , SIMU_NO                       AS SIMU_NO
+		     , '('||SIMU_NO||') '||SIMU_NM   AS SIMU_NM
+		  FROM TSI_USER_SIMU_MNG A
+         WHERE SIMU_ANAL_BASE_DATE = #{base_date}
+           AND SIMU_WORK_STAT_C = 'S'
+           AND BR_C IN (
+           				<if test="mo_br_c == '001' and br_c == '013'"><!-- 리스크관리부 만 표시 --> 
+                        SELECT '000' AS BR_C FROM DUAL 
+                         UNION ALL
+                        </if>                        
+						<if test="br_tc == '30'"><!-- 그외 지역본부 점소일때 표시 --> 
+                        SELECT '000' AS BR_C FROM DUAL 
+                         UNION ALL
+                        </if>
+                        SELECT DISTINCT
+                               CASE WHEN LVL = 1 THEN BR_C
+                                    WHEN LVL = 2 AND A.MA_BR_OF_TOT_YN = 'Y' THEN MO_BR_C
+                                    WHEN LVL = 3 THEN BLNG_HQ_BR_C
+                               END BR_C
+                          FROM TTL_BR_C_INFO A
+                             , (SELECT LEVEL LVL FROM DUAL CONNECT BY LEVEL <![CDATA[<]]> 4) B
+                         WHERE BR_C = #{br_c}
+                       )
+		 GROUP BY ORG_CLAS_C
+		        , BR_C
+		        , AC_BUSI_TC
+		        , SIMU_NO
+		        , SIMU_NM
+		 ORDER BY ORG_CLAS_C
+		        , BR_C
+		        , AC_BUSI_TC
+		        , SIMU_NO
+    </select>
+	
+	<select id="selectSnroCboList" parameterType="java.util.Map" resultType="java.util.HashMap">
+        SELECT 
+			ORG_CLAS_C, SNRO_KIND_C, SNRO_NO, SNRO_NM 
+		FROM TSY_SNRO_SET_MNG
+		WHERE SNRO_KIND_C = #{snro_kind_c}
+		 AND USE_YN = 'Y'
+		<if test="org_clas_c != '' and org_clas_c != null">
+		AND ORG_CLAS_C = #{org_clas_c}
+		</if>
+        ORDER BY ORG_CLAS_C, TO_NUMBER(SNRO_NO)
+	</select>
+   
+</mapper>

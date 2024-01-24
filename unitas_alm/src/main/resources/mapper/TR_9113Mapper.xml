@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.app.almweb.mapper.TR_9113Mapper">
+
+	
+	<select id="selectTR_9113List" parameterType='java.util.Map' resultType="java.util.HashMap">
+
+		SELECT 
+		       A.DATA_VRFC_SEQ        AS DATA_VRFC_SEQ
+		     , A.DATA_VRFC_VAL        AS DATA_VRFC_VAL
+		     , B.DATA_VRFC_CNTN       AS DATA_VRFC_CNTN
+		     , B.DATA_VRFC_DTL_CNTN   AS DATA_VRFC_DTL_CNTN
+		     , A.DATA_VRFC_CNT_10     AS DATA_VRFC_CNT_10
+		     , A.DATA_VRFC_CNT_30     AS DATA_VRFC_CNT_30
+		  FROM 
+		(
+		    SELECT
+		           BASE_DATE
+		         , ALM_WORK_TC
+		         , DATA_VRFC_VAL
+		         , DATA_VRFC_SEQ
+		         , SUM( CASE WHEN ORG_CLAS_C = '10' THEN DATA_VRFC_CNT ELSE 0 END ) AS DATA_VRFC_CNT_10
+		         , SUM( CASE WHEN ORG_CLAS_C = '30' THEN DATA_VRFC_CNT ELSE 0 END ) AS DATA_VRFC_CNT_30
+		      FROM TIG_BASE_DATA_VRFC
+		     WHERE BASE_DATE = #{BASE_DATE}
+		       AND ALM_WORK_TC = #{ALM_TC}
+		       <if test="TAB_TC != null and TAB_TC == 1">--입수데이터 탭
+		       AND 
+		         (
+		            DATA_VRFC_VAL LIKE 'CS%'
+		          OR
+		            DATA_VRFC_VAL LIKE 'CO%'  
+		          OR
+		            DATA_VRFC_VAL LIKE 'LN%'  
+		          OR
+		            DATA_VRFC_VAL LIKE 'DP%'  
+		          OR
+		            DATA_VRFC_VAL LIKE 'SN%'  
+		         )   
+		       </if>
+		       <if test="TAB_TC != null and TAB_TC == 2"> --통합원장 탭
+		       AND 
+		         (
+		            DATA_VRFC_VAL LIKE 'TC%'
+		          OR
+		            DATA_VRFC_VAL LIKE 'TA%'  
+		         )   
+		       </if>
+		     GROUP BY 
+		           BASE_DATE
+		         , ALM_WORK_TC
+		         , DATA_VRFC_VAL
+		         , DATA_VRFC_SEQ
+		 ) A 
+		 ,
+		 (
+		     SELECT
+		            DATA_VRFC_VAL
+		           ,DATA_VRFC_CNTN
+		           ,DATA_VRFC_DTL_CNTN  
+		       FROM TIG_BASE_DATA_VRFC      --검증_기초데이터검증
+		      WHERE BASE_DATE = '00000000'  --기준목록
+		        AND ALM_WORK_TC = #{ALM_TC}
+		 ) B
+		 WHERE 1 = 1
+		   AND A.DATA_VRFC_VAL = B.DATA_VRFC_VAL
+		 ORDER BY
+		       DATA_VRFC_SEQ
+		     , DATA_VRFC_VAL  
+		
+	</select>
+
+
+
+
+</mapper>
